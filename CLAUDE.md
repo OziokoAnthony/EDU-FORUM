@@ -156,6 +156,11 @@ The project sits in OneDrive: if `next build` fails with `EPERM … unlink …\.
 has turned build output into cloud placeholders. `frontend` `prebuild` therefore deletes
 `.next` first (`pnpm clean`). Playwright runs against the production build (`pnpm build &&
 pnpm start`), because dev-server first-visit compiles made the suite slow and flaky.
+It uses 2 workers: more starves the API, ClamAV and Postgres on a dev machine.
+Refresh tokens: re-presenting a just-rotated token inside `REFRESH_REUSE_GRACE_SECONDS` (two
+tabs, or a reload mid-refresh) issues a new token in the same family; outside the window the
+whole family is revoked. Tests default the window to 0 (`test/refresh-grace.e2e-spec.ts`
+covers the window).
 
 ## Confirmed decisions (resolve the PRD's open questions — 2026-10-31)
 
@@ -241,6 +246,16 @@ pnpm start`), because dev-server first-visit compiles made the suite slow and fl
   the openings. CSV export neutralises formula characters (spreadsheet injection).
   Endpoints added beyond the PRD table: `GET /vacancies/:id/applications/export` (CSV) and
   `GET /applications/:id/cv` (the snapshot, 10-minute link, logged).
+
+- **Admin (Phase 9):** no verification queue. Suspending revokes all sessions (the guard
+  already blocks the next request), emails the user, and hides their vacancies from search and
+  the public detail. Admins cannot suspend themselves or other admins. Takedown closes a
+  vacancy for good (`close_reason = taken_down`) and emails the poster. Admin "unpublish" sets
+  `moderation_note`; the teacher cannot republish until an admin restores the profile.
+  Removing a reference item deactivates it (existing profiles/vacancies keep the slug; slugs
+  never change on edit). Reports: one open report per reporter per target; you cannot report
+  your own content. Every admin action is written to `audit_logs`. Endpoints added beyond the
+  PRD table: `POST /admin/teachers/:id/restore`, `GET /admin/meta/:type` (includes inactive).
 
 ## API conventions
 

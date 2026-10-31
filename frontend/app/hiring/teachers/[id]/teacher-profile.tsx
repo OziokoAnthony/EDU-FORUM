@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { EXPERIENCE_KIND_LABELS, GENDER_LABELS, JOB_TYPE_LABELS, type CvLinkResponse, type TeacherViewResponse } from '@edu-forum/shared';
+import { ReportButton } from '@/components/report-button';
 import { Alert } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -163,6 +164,8 @@ export function TeacherProfile({ id }: { id: string }) {
           </ul>
         </section>
       ) : null}
+
+      <ReportButton targetType="teacher_profile" targetId={t.id} label="Report this profile" />
 
       <section className="space-y-2">
         <h2 className="text-lg font-semibold text-slate-900">Experience</h2>

@@ -58,15 +58,22 @@ export class SessionService {
     });
     if (!current) throw invalidSession();
 
+    const { user } = current;
     if (current.revokedAt) {
+      // Re-presented just after it was rotated: a second tab, or a reload while the first
+      // refresh was in flight (its new cookie never reached the browser). Give that client
+      // its own token in the same family instead of signing it out. Outside the grace window
+      // a revoked token means theft: the whole family is revoked.
       const graceMs = this.config.getOrThrow<number>('REFRESH_REUSE_GRACE_SECONDS') * 1000;
       const recentlyRotated = current.replacedBy && Date.now() - current.revokedAt.getTime() < graceMs;
-      if (!recentlyRotated) await this.revokeFamily(current.familyId);
+      if (recentlyRotated && !user.deletedAt && user.status === 'active' && current.expiresAt > new Date()) {
+        return (await this.issue(user, client, current.familyId)).session;
+      }
+      await this.revokeFamily(current.familyId);
       throw invalidSession();
     }
     if (current.expiresAt < new Date()) throw invalidSession();
 
-    const { user } = current;
     if (user.deletedAt || user.status !== 'active') {
       await this.revokeFamily(current.familyId);
       throw invalidSession();
@@ -78,7 +85,9 @@ export class SessionService {
       where: { id: current.id, revokedAt: null },
       data: { revokedAt: new Date(), replacedBy: rowId },
     });
-    if (count === 0) {
+    // A parallel request rotated this token a moment ago: this client keeps the token just
+    // issued (same family), as in the grace case above.
+    if (count === 0 && this.config.getOrThrow<number>('REFRESH_REUSE_GRACE_SECONDS') === 0) {
       await this.prisma.refreshToken.update({ where: { id: rowId }, data: { revokedAt: new Date() } });
       throw invalidSession();
     }

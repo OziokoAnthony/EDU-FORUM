@@ -169,6 +169,11 @@ export class TeachersService implements OnModuleInit {
   /** Publish gate: 422 with details.missing listing exactly what is still required. */
   async publish(userId: string): Promise<TeacherProfileResponse> {
     const profile = await this.profiles.ensure(userId);
+    if (profile.moderationNote) {
+      throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE', `Your profile was hidden by our team: ${profile.moderationNote}`, {
+        reason: 'HIDDEN_BY_ADMIN',
+      });
+    }
     const result = await this.completeness.refresh(profile.id);
     if (!result.canPublish) {
       throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE', 'Complete your profile before publishing', {

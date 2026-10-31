@@ -40,6 +40,17 @@ describe('Teacher onboarding (e2e)', () => {
     await t.http.post(`${API}/cv`).set('Authorization', auth).send({ uploadId }).expect(201);
   }
 
+  it('parallel first requests do not fail while the profile is being created', async () => {
+    const { auth } = await verifiedUser(t);
+    const results = await Promise.all([
+      t.http.get(API).set('Authorization', auth),
+      t.http.get(`${API}/cv`).set('Authorization', auth),
+      t.http.get(`${API}/completeness`).set('Authorization', auth),
+      t.http.get(`${API}/qualifications`).set('Authorization', auth),
+    ]);
+    expect(results.map((r) => r.status)).toEqual([200, 200, 200, 200]);
+  });
+
   it('is for verified teachers only', async () => {
     const director = await verifiedUser(t, 'director');
     await t.http.get(API).set('Authorization', director.auth).expect(403);

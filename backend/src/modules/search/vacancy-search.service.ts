@@ -63,6 +63,8 @@ export class VacancySearchService {
 
     const where: Prisma.Sql[] = [
       Prisma.sql`v.status = 'published' AND v.deleted_at IS NULL AND v.takedown_reason IS NULL`,
+      // A suspended poster's vacancies drop out of search straight away.
+      Prisma.sql`EXISTS (SELECT 1 FROM users pu WHERE pu.id = v.created_by AND pu.status = 'active' AND pu.deleted_at IS NULL)`,
       Prisma.sql`(v.deadline IS NULL OR v.deadline >= CURRENT_DATE)`,
     ];
     if (q.q) {

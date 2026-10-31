@@ -70,7 +70,7 @@ export class ApplicationsService {
     const cv = teacher.cvs[0];
     if (!cv) throw rule('Upload a CV before applying');
 
-    const vacancy = await this.prisma.vacancy.findFirst({ where: { id: vacancyId, deletedAt: null, takedownReason: null } });
+    const vacancy = await this.prisma.vacancy.findFirst({ where: { id: vacancyId, deletedAt: null, takedownReason: null, createdBy: { status: 'active' } } });
     const today = new Date().toISOString().slice(0, 10);
     if (!vacancy || vacancy.status !== 'published' || (vacancy.deadline && vacancy.deadline.toISOString().slice(0, 10) < today)) {
       throw new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'This vacancy is not open for applications');

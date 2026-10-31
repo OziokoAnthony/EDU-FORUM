@@ -8,3 +8,4 @@ export * from './meta';
 export * from './vacancy';
 export * from './search';
 export * from './applications';
+export * from './admin';

@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import type { CvResponse } from '@edu-forum/shared';
 import { ApiException } from '../../common/filters/api-exception.filter';
-import type { Cv, TeacherProfile } from '../../generated/prisma/client';
+import { Prisma, type Cv, type TeacherProfile } from '../../generated/prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { cvViewKey, toCvResponse, type FileStatuses } from './teacher.mapper';
@@ -14,9 +14,20 @@ export class TeacherProfilesService {
     private readonly uploads: UploadsService,
   ) {}
 
-  /** The profile is created on first use, so the wizard can start at any step. */
-  ensure(userId: string): Promise<TeacherProfile> {
-    return this.prisma.teacherProfile.upsert({ where: { userId }, update: {}, create: { userId } });
+  /**
+   * The profile is created on first use, so the wizard can start at any step. Two first
+   * requests can race (e.g. the page loads the profile and the CV at once); the loser of
+   * the insert reads the row the winner created.
+   */
+  async ensure(userId: string): Promise<TeacherProfile> {
+    try {
+      return await this.prisma.teacherProfile.upsert({ where: { userId }, update: {}, create: { userId } });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        return this.prisma.teacherProfile.findUniqueOrThrow({ where: { userId } });
+      }
+      throw err;
+    }
   }
 
   /** Remembers which wizard steps the teacher has saved (resumable onboarding). */

@@ -5,14 +5,17 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtAuthGuard } from './common/auth/jwt-auth.guard';
 import { validateEnv } from './config/env';
+import { AuditModule } from './infra/audit/audit.service';
 import { FilesModule } from './infra/files.module';
 import { MessagingModule } from './infra/messaging.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
+import { AdminModule } from './modules/admin/admin.controller';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CvModule } from './modules/cv/cv.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetaModule } from './modules/meta/meta.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { SearchModule } from './modules/search/search.module';
@@ -36,6 +39,7 @@ import { UsersModule } from './modules/users/users.module';
     PrismaModule,
     MessagingModule,
     FilesModule,
+    AuditModule,
     HealthModule,
     AuthModule,
     UsersModule,
@@ -47,6 +51,8 @@ import { UsersModule } from './modules/users/users.module';
     // After TeachersModule: /teachers/me must match before /teachers/:id.
     SearchModule,
     ApplicationsModule,
+    ReportsModule,
+    AdminModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })

@@ -176,10 +176,10 @@ export class VacanciesService implements OnModuleInit {
    * taken-down ones only exist for their poster.
    */
   async getPublic(viewer: AuthUser | undefined, id: string): Promise<VacancyResponse> {
-    const v = await this.prisma.vacancy.findFirst({ where: { id, deletedAt: null }, include: VACANCY_INCLUDE });
+    const v = await this.prisma.vacancy.findFirst({ where: { id, deletedAt: null }, include: { ...VACANCY_INCLUDE, createdBy: { select: { role: true, status: true } } } });
     if (!v) throw notFound();
     const isOwner = viewer?.id === v.createdById;
-    const isPublic = (v.status === 'published' || v.status === 'closed') && !v.takedownReason;
+    const isPublic = (v.status === 'published' || v.status === 'closed') && !v.takedownReason && v.createdBy.status === 'active';
     if (!isPublic && !isOwner) throw notFound();
     if (!isOwner && v.status === 'published') {
       await this.prisma.vacancy.update({ where: { id }, data: { viewsCount: { increment: 1 } } });
