@@ -11,5 +11,9 @@
     "strictPropertyInitialization": false,
     "incremental": true
   },
-  "include": ["src", "test"]
+  "include": [
+    "src",
+    "test",
+    "prisma"
+  ]
 }

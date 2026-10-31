@@ -19,7 +19,7 @@ describe('Health + error shape (e2e)', () => {
 
   it('GET /api/v1/health returns ok', async () => {
     const res = await request(app.getHttpServer()).get('/api/v1/health').expect(200);
-    expect(res.body).toMatchObject({ status: 'ok', app: 'EDU-FORUM' });
+    expect(res.body).toMatchObject({ status: 'ok', app: 'EDU-FORUM', database: 'ok' });
   });
 
   it('unknown route returns the standard error body', async () => {

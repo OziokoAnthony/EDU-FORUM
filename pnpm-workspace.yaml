@@ -2,3 +2,10 @@ packages:
   - backend
   - frontend
   - shared
+
+# Packages allowed to run install scripts (pnpm blocks them by default).
+allowBuilds:
+  esbuild: true
+  prisma: true
+  '@prisma/engines': true
+  unrs-resolver: false

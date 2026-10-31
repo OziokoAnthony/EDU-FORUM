@@ -123,7 +123,7 @@ backend/               # NestJS (package @edu-forum/backend)
   prisma/schema.prisma
   test/                # Jest + Supertest e2e
 shared/                # Zod schemas + TypeScript types (package @edu-forum/shared)
-docker-compose.yml     # Postgres/PostGIS, Redis, MinIO, ClamAV, Mailpit
+docker-compose.yml     # Postgres/PostGIS, Redis, ClamAV, Mailpit
 ```
 
 pnpm workspaces. One NestJS module per PRD endpoint group. Zod schemas in `shared/` are the
@@ -133,6 +133,12 @@ changing them (root `dev`/`test`/`build` scripts do this first).
 Tooling notes: NestJS 12 is ESM-only, so backend tests run Jest under
 `node --experimental-vm-modules` (see `backend/package.json`). Backend and frontend pin
 TypeScript 5 because the Nest CLI, ts-jest and Next.js use the TypeScript JS API.
+`geog` columns are filled from `lat`/`lng` by the `set_geog_from_lat_lng` trigger (init
+migration). Never make them `GENERATED` columns: Prisma reads those as defaults and every
+later migration tries to `DROP DEFAULT`, which Postgres rejects. Hand-written SQL (PostGIS,
+partial unique index, CHECK constraints) lives at the end of the init migration.
+`prisma migrate dev` can hang waiting for a prompt in non-interactive shells; use
+`--create-only` to write a migration and `prisma migrate deploy` to apply it.
 
 ## Confirmed decisions (resolve the PRD's open questions — 2026-10-31)
 
@@ -142,8 +148,9 @@ TypeScript 5 because the Nest CLI, ts-jest and Next.js use the TypeScript JS API
 - Anonymous vacancies get **no** `JobPosting` JSON-LD, and only verified schools may post them.
 - Unverified schools get no CV view or download, and no teacher phone/email.
 - Scope: PRD MVP + v1.0 + v1.1, web only (mobile-first PWA); native apps deferred.
-- External services sit behind interfaces: MinIO, ClamAV, Mailpit and console/stub
-  adapters locally; Cloudflare R2, Resend, Termii and Google Geocoding in production.
+- File storage is Backblaze B2 (S3-compatible API) both locally and in production (MinIO
+  no longer ships a Docker image). Other services sit behind interfaces: ClamAV, Mailpit and
+  console/stub adapters locally; Resend, Termii and Google Geocoding in production.
   Leaflet + OpenStreetMap for the map pin, Tiptap for rich text, Google Privacy &
   Messaging as the certified consent tool.
 - Testing: Jest + Supertest (backend), Vitest (frontend units), Playwright (E2E).

@@ -1,0 +1,1189 @@
+// EDU-FORUM database schema. Source of truth: PRD "Data model" + CLAUDE.md pillars.
+// Conventions: UUID ids, created_at/updated_at, soft delete via deleted_at, snake_case in the
+// database (@map/@@map), camelCase in code. Subject/level/qualification/certification values
+// in arrays are reference-table slugs (reference rows are deactivated, never hard-deleted).
+// Files are stored as private object keys (*_key); signed URLs are generated on read.
+// Location = country_code, state_id, lga_id, area, address_line (private), lat, lng, geog.
+// geog is a geography(Point, 4326) column filled from lat/lng by a trigger, with a GiST index
+// (see the init migration SQL).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum UserRole {
+  teacher
+  school_owner
+  recruiter
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum AuthTokenType {
+  email_verification
+  phone_otp
+  password_reset
+}
+
+enum Gender {
+  male
+  female
+  prefer_not_to_say
+}
+
+enum JobType {
+  full_time
+  part_time
+  contract
+  tutoring
+}
+
+enum SalaryPeriod {
+  monthly
+  annual
+  hourly
+}
+
+enum VerificationStatus {
+  unverified
+  pending
+  verified
+  rejected
+}
+
+enum ProfileVisibility {
+  visible
+  hidden
+}
+
+enum ExperienceKind {
+  job
+  nysc
+  teaching_practice
+}
+
+enum ScanStatus {
+  pending
+  clean
+  infected
+  failed
+}
+
+enum CvMimeType {
+  pdf
+  doc
+  docx
+}
+
+enum DocumentOwnerType {
+  teacher
+  school
+}
+
+enum IdentityDocType {
+  nin_slip
+  voters_card
+  drivers_licence
+  international_passport
+  cac_certificate
+  moe_approval_letter
+  contact_person_id
+}
+
+enum DocumentStatus {
+  pending
+  verified
+  rejected
+}
+
+enum SchoolType {
+  nursery
+  primary
+  secondary
+  combined
+  tertiary
+  tutorial_centre
+}
+
+enum SchoolOwnership {
+  private
+  public
+  mission
+}
+
+enum PopulationBand {
+  under_100
+  from_100_to_299
+  from_300_to_599
+  from_600_to_999
+  over_1000
+}
+
+enum ContactTitle {
+  director
+  proprietor
+  principal
+  head_teacher
+  hr
+}
+
+enum SchoolMemberRole {
+  owner
+  recruiter
+}
+
+enum SchoolMemberStatus {
+  active
+  removed
+}
+
+enum LocationVisibility {
+  listed
+  anonymous
+}
+
+enum VacancyStatus {
+  draft
+  published
+  paused
+  closed
+}
+
+enum VacancyCloseReason {
+  filled
+  cancelled
+  expired
+  taken_down
+}
+
+enum ApplicationStatus {
+  applied
+  viewed
+  shortlisted
+  interview
+  offered
+  hired
+  rejected
+  withdrawn
+}
+
+enum ApplicationSource {
+  applied
+  invited
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  declined
+  expired
+  cancelled
+}
+
+enum InterviewMode {
+  in_person
+  phone
+  video
+}
+
+enum InterviewStatus {
+  proposed
+  confirmed
+  rescheduled
+  cancelled
+  done
+}
+
+enum SavedItemType {
+  vacancy
+  teacher
+}
+
+enum SavedSearchScope {
+  vacancies
+  teachers
+}
+
+enum AlertFrequency {
+  instant
+  daily
+  weekly
+  off
+}
+
+enum NotificationChannel {
+  in_app
+  email
+  sms
+  whatsapp
+}
+
+enum ProfileViewKind {
+  profile
+  cv_view
+  cv_download
+}
+
+enum ReportTargetType {
+  teacher_profile
+  school
+  vacancy
+  message
+}
+
+enum ReportStatus {
+  open
+  resolved
+  dismissed
+}
+
+enum PostStatus {
+  draft
+  published
+}
+
+enum AdPageType {
+  home
+  job_search
+  landing
+  job_detail
+  school
+  blog_post
+}
+
+enum UploadPurpose {
+  cv
+  profile_photo
+  qualification_file
+  certification_file
+  identity_document
+  identity_selfie
+  school_logo
+  message_attachment
+  post_cover
+}
+
+// ─────────────────────────── Reference data ───────────────────────────
+
+model Country {
+  code      String   @id @db.Char(2) // ISO 3166-1 alpha-2, e.g. NG
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  states State[]
+
+  @@map("countries")
+}
+
+model State {
+  id          String   @id @default(uuid()) @db.Uuid
+  countryCode String   @map("country_code") @db.Char(2)
+  name        String
+  slug        String   @unique
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  country Country @relation(fields: [countryCode], references: [code])
+  lgas    Lga[]
+
+  teacherProfiles TeacherProfile[]
+  schools         School[]
+  vacancies       Vacancy[]
+
+  @@unique([countryCode, name])
+  @@map("states")
+}
+
+model Lga {
+  id        String   @id @default(uuid()) @db.Uuid
+  stateId   String   @map("state_id") @db.Uuid
+  name      String
+  slug      String // unique within its state; URLs are /jobs/{state}/{lga}
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  state State @relation(fields: [stateId], references: [id])
+
+  teacherProfiles TeacherProfile[]
+  schools         School[]
+  vacancies       Vacancy[]
+
+  @@unique([stateId, slug])
+  @@map("lgas")
+}
+
+model Subject {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("subjects")
+}
+
+model Level {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("levels")
+}
+
+model QualificationType {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  /// Higher rank = higher qualification; used for "highest qualification" and match score.
+  rank      Int      @default(0)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  qualifications Qualification[]
+
+  @@map("qualification_types")
+}
+
+model CertificationType {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  issuer    String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  certifications Certification[]
+
+  @@map("certification_types")
+}
+
+// ─────────────────────────── Users and auth ───────────────────────────
+
+model User {
+  id                   String     @id @default(uuid()) @db.Uuid
+  /// One email holds one role type (PRD "Users and roles").
+  email                String?    @unique
+  phone                String?    @unique
+  passwordHash         String?    @map("password_hash")
+  googleId             String?    @unique @map("google_id")
+  role                 UserRole
+  status               UserStatus @default(active)
+  emailVerifiedAt      DateTime?  @map("email_verified_at")
+  phoneVerifiedAt      DateTime?  @map("phone_verified_at")
+  lastLoginAt          DateTime?  @map("last_login_at")
+  /// NDPA consent captured at sign-up.
+  consentAcceptedAt    DateTime?  @map("consent_accepted_at")
+  consentVersion       String?    @map("consent_version")
+  notificationSettings Json       @default("{}") @map("notification_settings")
+  suspendedReason      String?    @map("suspended_reason")
+  /// DELETE /me: data is erased within 30 days of this timestamp.
+  deletionRequestedAt  DateTime?  @map("deletion_requested_at")
+  createdAt            DateTime   @default(now()) @map("created_at")
+  updatedAt            DateTime   @updatedAt @map("updated_at")
+  deletedAt            DateTime?  @map("deleted_at")
+
+  teacherProfile  TeacherProfile?
+  schoolMembers   SchoolMember[]   @relation("MemberUser")
+  invitedMembers  SchoolMember[]   @relation("MemberInvitedBy")
+  sentTeamInvites SchoolInvite[]
+  refreshTokens   RefreshToken[]
+  authTokens      AuthToken[]
+
+  createdVacancies        Vacancy[]                  @relation("VacancyCreatedBy")
+  sentInvitations         Invitation[]               @relation("InvitationInvitedBy")
+  applicationNotes        ApplicationNote[]
+  statusChanges           ApplicationStatusHistory[]
+  savedItems              SavedItem[]
+  savedSearches           SavedSearch[]
+  sentMessages            Message[]
+  notifications           Notification[]
+  profileViews            ProfileView[]              @relation("ProfileViewViewer")
+  reports                 Report[]                   @relation("ReportReporter")
+  resolvedReports         Report[]                   @relation("ReportResolvedBy")
+  auditLogs               AuditLog[]
+  reviewedDocuments       IdentityDocument[]         @relation("DocumentReviewedBy")
+  reviewedCertifications  Certification[]            @relation("CertificationReviewedBy")
+  uploads                 Upload[]
+  posts                   Post[]
+  blockedConversations    Conversation[]             @relation("ConversationBlockedBy")
+
+  @@index([role, status])
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  /// Rotation: every refresh issues a new token in the same family; reuse revokes the family.
+  familyId   String    @map("family_id") @db.Uuid
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  replacedBy String?   @map("replaced_by") @db.Uuid
+  userAgent  String?   @map("user_agent")
+  ip         String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+/// Email verification links, phone OTPs and password reset tokens (stored hashed).
+model AuthToken {
+  id         String        @id @default(uuid()) @db.Uuid
+  userId     String        @map("user_id") @db.Uuid
+  type       AuthTokenType
+  tokenHash  String        @map("token_hash")
+  attempts   Int           @default(0)
+  expiresAt  DateTime      @map("expires_at")
+  consumedAt DateTime?     @map("consumed_at")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([tokenHash])
+  @@map("auth_tokens")
+}
+
+// ─────────────────────────── Uploads ───────────────────────────
+
+/// Every file uploaded through POST /uploads/sign. Nothing is shown to others until scan is clean.
+model Upload {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  purpose     UploadPurpose
+  objectKey   String        @unique @map("object_key")
+  fileName    String        @map("file_name")
+  mimeType    String        @map("mime_type")
+  sizeBytes   Int           @map("size_bytes")
+  scanStatus  ScanStatus    @default(pending) @map("scan_status")
+  scannedAt   DateTime?     @map("scanned_at")
+  confirmedAt DateTime?     @map("confirmed_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, purpose])
+  @@map("uploads")
+}
+
+// ─────────────────────────── Teachers ───────────────────────────
+
+model TeacherProfile {
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String             @unique @map("user_id") @db.Uuid
+  fullName           String?            @map("full_name")
+  gender             Gender?
+  dob                DateTime?          @db.Date
+  photoKey           String?            @map("photo_key")
+  bio                String?
+
+  // Location (required to publish). address_line, lat, lng are never returned to schools.
+  countryCode        String?            @map("country_code") @db.Char(2)
+  stateId            String?            @map("state_id") @db.Uuid
+  lgaId              String?            @map("lga_id") @db.Uuid
+  area               String?
+  addressLine        String?            @map("address_line")
+  lat                Float?
+  lng                Float?
+  geog               Unsupported("geography(Point, 4326)")?
+
+  willingToRelocate  Boolean            @default(false) @map("willing_to_relocate")
+  preferredStates    String[]           @default([]) @map("preferred_states") // state slugs
+  subjects           String[]           @default([]) // subject slugs
+  levels             String[]           @default([]) // level slugs
+  jobTypes           JobType[]          @default([]) @map("job_types")
+  expectedSalaryMin  Int?               @map("expected_salary_min")
+  expectedSalaryMax  Int?               @map("expected_salary_max")
+  availableFrom      DateTime?          @map("available_from") @db.Date
+  /// Fresh graduate: explicit "no experience yet" (requires an NYSC/teaching-practice entry).
+  noExperienceYet    Boolean            @default(false) @map("no_experience_yet")
+  /// Computed from WorkExperience rows by the service on every change.
+  yearsExperience    Float              @default(0) @map("years_experience")
+  completenessScore  Int                @default(0) @map("completeness_score")
+  /// Last completed onboarding step, for the resumable wizard.
+  onboardingSteps    String[]           @default([]) @map("onboarding_steps")
+  verificationStatus VerificationStatus @default(unverified) @map("verification_status")
+  isPublished        Boolean            @default(false) @map("is_published")
+  publishedAt        DateTime?          @map("published_at")
+  visibility         ProfileVisibility  @default(visible)
+  /// Set by admin unpublish (moderation) with a reason.
+  moderationNote     String?            @map("moderation_note")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  deletedAt          DateTime?          @map("deleted_at")
+
+  user  User   @relation(fields: [userId], references: [id])
+  state State? @relation(fields: [stateId], references: [id])
+  lga   Lga?   @relation(fields: [lgaId], references: [id])
+
+  qualifications  Qualification[]
+  certifications  Certification[]
+  experiences     WorkExperience[]
+  cvs             Cv[]
+  documents       IdentityDocument[]
+  applications    Application[]
+  invitations     Invitation[]
+  conversations   Conversation[]
+  profileViews    ProfileView[]
+
+  @@index([isPublished, visibility, verificationStatus])
+  @@index([stateId, lgaId])
+  @@index([subjects], type: Gin)
+  @@index([levels], type: Gin)
+  @@index([geog], type: Gist)
+  @@map("teacher_profiles")
+}
+
+model Qualification {
+  id                  String    @id @default(uuid()) @db.Uuid
+  teacherId           String    @map("teacher_id") @db.Uuid
+  qualificationTypeId String    @map("qualification_type_id") @db.Uuid
+  course              String
+  institution         String
+  yearObtained        Int       @map("year_obtained")
+  fileKey             String?   @map("file_key")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  teacher TeacherProfile    @relation(fields: [teacherId], references: [id])
+  type    QualificationType @relation(fields: [qualificationTypeId], references: [id])
+
+  @@index([teacherId])
+  @@map("qualifications")
+}
+
+model Certification {
+  id                  String             @id @default(uuid()) @db.Uuid
+  teacherId           String             @map("teacher_id") @db.Uuid
+  certificationTypeId String             @map("certification_type_id") @db.Uuid
+  issuer              String
+  number              String
+  issuedAt            DateTime?          @map("issued_at") @db.Date
+  expiresAt           DateTime?          @map("expires_at") @db.Date
+  fileKey             String?            @map("file_key")
+  verificationStatus  DocumentStatus     @default(pending) @map("verification_status")
+  reviewedById        String?            @map("reviewed_by") @db.Uuid
+  reviewedAt          DateTime?          @map("reviewed_at")
+  rejectionReason     String?            @map("rejection_reason")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  deletedAt           DateTime?          @map("deleted_at")
+
+  teacher    TeacherProfile    @relation(fields: [teacherId], references: [id])
+  type       CertificationType @relation(fields: [certificationTypeId], references: [id])
+  reviewedBy User?             @relation("CertificationReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([teacherId])
+  @@index([certificationTypeId, verificationStatus])
+  @@map("certifications")
+}
+
+model WorkExperience {
+  id          String         @id @default(uuid()) @db.Uuid
+  teacherId   String         @map("teacher_id") @db.Uuid
+  kind        ExperienceKind @default(job)
+  schoolName  String         @map("school_name")
+  role        String
+  subjects    String[]       @default([])
+  levels      String[]       @default([])
+  startDate   DateTime       @map("start_date") @db.Date
+  endDate     DateTime?      @map("end_date") @db.Date
+  isCurrent   Boolean        @default(false) @map("is_current")
+  description String?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  deletedAt   DateTime?      @map("deleted_at")
+
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id])
+
+  @@index([teacherId])
+  @@map("work_experiences")
+}
+
+/// One active CV per teacher (partial unique index in migration SQL); old versions kept 90 days.
+model Cv {
+  id          String     @id @default(uuid()) @db.Uuid
+  teacherId   String     @map("teacher_id") @db.Uuid
+  objectKey   String     @map("object_key")
+  /// DOC/DOCX converted to PDF on upload for the CV viewer.
+  pdfKey      String?    @map("pdf_key")
+  fileName    String     @map("file_name")
+  mimeType    CvMimeType @map("mime_type")
+  sizeBytes   Int        @map("size_bytes")
+  isActive    Boolean    @default(false) @map("is_active")
+  scanStatus  ScanStatus @default(pending) @map("scan_status")
+  uploadedAt  DateTime   @default(now()) @map("uploaded_at")
+  /// Set when replaced; purge job deletes the file 90 days after this.
+  replacedAt  DateTime?  @map("replaced_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  deletedAt   DateTime?  @map("deleted_at")
+
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id])
+  snapshots CvSnapshot[]
+
+  @@index([teacherId, isActive])
+  @@map("cvs")
+}
+
+/// Immutable copy of the CV sent with an application; survives CV replacement and the 90-day purge.
+model CvSnapshot {
+  id         String     @id @default(uuid()) @db.Uuid
+  sourceCvId String?    @map("source_cv_id") @db.Uuid
+  objectKey  String     @map("object_key")
+  pdfKey     String?    @map("pdf_key")
+  fileName   String     @map("file_name")
+  mimeType   CvMimeType @map("mime_type")
+  sizeBytes  Int        @map("size_bytes")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  sourceCv     Cv?           @relation(fields: [sourceCvId], references: [id], onDelete: SetNull)
+  applications Application[]
+
+  @@map("cv_snapshots")
+}
+
+/// Teacher government ID, or school CAC / Ministry approval / contact person ID.
+model IdentityDocument {
+  id              String            @id @default(uuid()) @db.Uuid
+  ownerType       DocumentOwnerType @map("owner_type")
+  teacherId       String?           @map("teacher_id") @db.Uuid
+  schoolId        String?           @map("school_id") @db.Uuid
+  docType         IdentityDocType   @map("doc_type")
+  /// AES-256-GCM ciphertext; never returned in plain text except to admins (audit-logged).
+  docNumberEnc    String?           @map("doc_number_enc")
+  fileKey         String            @map("file_key")
+  selfieKey       String?           @map("selfie_key")
+  status          DocumentStatus    @default(pending)
+  reviewedById    String?           @map("reviewed_by") @db.Uuid
+  reviewedAt      DateTime?         @map("reviewed_at")
+  rejectionReason String?           @map("rejection_reason")
+  /// Previous submission this one replaces (POST /verifications/:id/resubmit).
+  resubmissionOfId String?          @map("resubmission_of") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  deletedAt       DateTime?         @map("deleted_at")
+
+  teacher        TeacherProfile?    @relation(fields: [teacherId], references: [id])
+  school         School?            @relation(fields: [schoolId], references: [id])
+  reviewedBy     User?              @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
+  resubmissionOf IdentityDocument?  @relation("Resubmission", fields: [resubmissionOfId], references: [id])
+  resubmissions  IdentityDocument[] @relation("Resubmission")
+
+  @@index([status, ownerType, createdAt])
+  @@index([teacherId])
+  @@index([schoolId])
+  @@map("identity_documents")
+}
+
+// ─────────────────────────── Schools ───────────────────────────
+
+model School {
+  id                 String             @id @default(uuid()) @db.Uuid
+  name               String
+  /// Never changes once published (301 if forced).
+  slug               String             @unique
+  type               SchoolType
+  ownership          SchoolOwnership
+  curriculum         String[]           @default([]) // nigerian, british, american, ib, montessori
+  populationBand     PopulationBand?    @map("population_band")
+  logoKey            String?            @map("logo_key")
+  website            String?
+  description        String?
+
+  countryCode        String?            @map("country_code") @db.Char(2)
+  stateId            String?            @map("state_id") @db.Uuid
+  lgaId              String?            @map("lga_id") @db.Uuid
+  area               String?
+  addressLine        String?            @map("address_line")
+  lat                Float?
+  lng                Float?
+  geog               Unsupported("geography(Point, 4326)")?
+
+  contactName        String?            @map("contact_name")
+  contactTitle       ContactTitle?      @map("contact_title")
+  contactPhone       String?            @map("contact_phone")
+  contactEmail       String?            @map("contact_email")
+  verificationStatus VerificationStatus @default(unverified) @map("verification_status")
+  verifiedAt         DateTime?          @map("verified_at")
+  onboardingSteps    String[]           @default([]) @map("onboarding_steps")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  deletedAt          DateTime?          @map("deleted_at")
+
+  state State? @relation(fields: [stateId], references: [id])
+  lga   Lga?   @relation(fields: [lgaId], references: [id])
+
+  members       SchoolMember[]
+  teamInvites   SchoolInvite[]
+  vacancies     Vacancy[]
+  documents     IdentityDocument[]
+  conversations Conversation[]
+  profileViews  ProfileView[]
+
+  @@index([stateId, lgaId])
+  @@index([verificationStatus])
+  @@index([geog], type: Gist)
+  @@map("schools")
+}
+
+model SchoolMember {
+  id          String             @id @default(uuid()) @db.Uuid
+  schoolId    String             @map("school_id") @db.Uuid
+  userId      String             @map("user_id") @db.Uuid
+  role        SchoolMemberRole
+  invitedById String?            @map("invited_by") @db.Uuid
+  status      SchoolMemberStatus @default(active)
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+  deletedAt   DateTime?          @map("deleted_at")
+
+  school    School @relation(fields: [schoolId], references: [id])
+  user      User   @relation("MemberUser", fields: [userId], references: [id])
+  invitedBy User?  @relation("MemberInvitedBy", fields: [invitedById], references: [id])
+
+  @@unique([schoolId, userId])
+  @@index([userId])
+  @@map("school_members")
+}
+
+/// Team invite by email (POST /schools/me/members/invite → /schools/invites/:token/accept).
+model SchoolInvite {
+  id          String           @id @default(uuid()) @db.Uuid
+  schoolId    String           @map("school_id") @db.Uuid
+  email       String
+  role        SchoolMemberRole @default(recruiter)
+  tokenHash   String           @unique @map("token_hash")
+  invitedById String           @map("invited_by") @db.Uuid
+  expiresAt   DateTime         @map("expires_at")
+  acceptedAt  DateTime?        @map("accepted_at")
+  revokedAt   DateTime?        @map("revoked_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  school    School @relation(fields: [schoolId], references: [id])
+  invitedBy User   @relation(fields: [invitedById], references: [id])
+
+  @@index([schoolId, email])
+  @@map("school_invites")
+}
+
+// ─────────────────────────── Vacancies ───────────────────────────
+
+model Vacancy {
+  id                     String              @id @default(uuid()) @db.Uuid
+  schoolId               String              @map("school_id") @db.Uuid
+  createdById            String              @map("created_by") @db.Uuid
+  /// SEO URL is /jobs/{slug}-{shortId}; never changes once published.
+  slug                   String
+  shortId                String              @unique @map("short_id")
+  title                  String
+  subjects               String[]            @default([])
+  levels                 String[]            @default([])
+  jobType                JobType             @map("job_type")
+  salaryMin              Int                 @map("salary_min")
+  salaryMax              Int                 @map("salary_max")
+  salaryCurrency         String              @default("NGN") @map("salary_currency") @db.Char(3)
+  salaryPeriod           SalaryPeriod        @default(monthly) @map("salary_period")
+  /// Rich text (sanitised HTML), ≥ 100 characters of text.
+  description            String
+
+  countryCode            String              @default("NG") @map("country_code") @db.Char(2)
+  stateId                String              @map("state_id") @db.Uuid
+  lgaId                  String              @map("lga_id") @db.Uuid
+  area                   String?
+  addressLine            String?             @map("address_line")
+  lat                    Float?
+  lng                    Float?
+  geog                   Unsupported("geography(Point, 4326)")?
+  locationVisibility     LocationVisibility  @map("location_visibility")
+
+  requiredQualifications String[]            @default([]) @map("required_qualifications")
+  minExperienceYears     Int?                @map("min_experience_years")
+  requiredCertifications String[]            @default([]) @map("required_certifications")
+  openings               Int                 @default(1)
+  benefits               String[]            @default([]) // accommodation, transport, feeding, hmo
+  /// Up to 5: [{ id, question, type: "text" | "yes_no" }]
+  screeningQuestions     Json                @default("[]") @map("screening_questions")
+  deadline               DateTime?           @db.Date
+  startDate              DateTime?           @map("start_date") @db.Date
+  status                 VacancyStatus       @default(draft)
+  publishedAt            DateTime?           @map("published_at")
+  closedAt               DateTime?           @map("closed_at")
+  closeReason            VacancyCloseReason? @map("close_reason")
+  /// First vacancy from an unverified school is held for admin review (PRD abuse rule).
+  needsReview            Boolean             @default(false) @map("needs_review")
+  takedownReason         String?             @map("takedown_reason")
+  viewsCount             Int                 @default(0) @map("views_count")
+  createdAt              DateTime            @default(now()) @map("created_at")
+  updatedAt              DateTime            @updatedAt @map("updated_at")
+  deletedAt              DateTime?           @map("deleted_at")
+
+  school    School @relation(fields: [schoolId], references: [id])
+  createdBy User   @relation("VacancyCreatedBy", fields: [createdById], references: [id])
+  state     State  @relation(fields: [stateId], references: [id])
+  lga       Lga    @relation(fields: [lgaId], references: [id])
+
+  applications Application[]
+  invitations  Invitation[]
+
+  @@index([status, publishedAt])
+  @@index([schoolId, status])
+  @@index([stateId, lgaId, status])
+  @@index([subjects], type: Gin)
+  @@index([levels], type: Gin)
+  @@index([geog], type: Gist)
+  @@map("vacancies")
+}
+
+// ─────────────────────────── Applications ───────────────────────────
+
+model Application {
+  id                String            @id @default(uuid()) @db.Uuid
+  vacancyId         String            @map("vacancy_id") @db.Uuid
+  teacherId         String            @map("teacher_id") @db.Uuid
+  cvSnapshotId      String            @map("cv_snapshot_id") @db.Uuid
+  coverNote         String?           @map("cover_note")
+  /// [{ questionId, answer }]
+  screeningAnswers  Json              @default("[]") @map("screening_answers")
+  source            ApplicationSource @default(applied)
+  status            ApplicationStatus @default(applied)
+  rating            Int?              // 1–5 (check constraint in migration SQL)
+  matchScore        Int               @default(0) @map("match_score")
+  shortlistedAt     DateTime?         @map("shortlisted_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  deletedAt         DateTime?         @map("deleted_at")
+
+  vacancy    Vacancy        @relation(fields: [vacancyId], references: [id])
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id])
+  cvSnapshot CvSnapshot     @relation(fields: [cvSnapshotId], references: [id])
+
+  history       ApplicationStatusHistory[]
+  notes         ApplicationNote[]
+  interviews    Interview[]
+  invitation    Invitation?
+  conversations Conversation[]
+
+  /// One application per teacher per vacancy (409 on duplicate).
+  @@unique([vacancyId, teacherId])
+  @@index([teacherId, status])
+  @@index([vacancyId, status])
+  @@map("applications")
+}
+
+model ApplicationStatusHistory {
+  id            String             @id @default(uuid()) @db.Uuid
+  applicationId String             @map("application_id") @db.Uuid
+  fromStatus    ApplicationStatus? @map("from_status")
+  toStatus      ApplicationStatus  @map("to_status")
+  changedById   String             @map("changed_by") @db.Uuid
+  message       String?
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  application Application @relation(fields: [applicationId], references: [id])
+  changedBy   User        @relation(fields: [changedById], references: [id])
+
+  @@index([applicationId, createdAt])
+  @@map("application_status_history")
+}
+
+/// Private to the school.
+model ApplicationNote {
+  id            String    @id @default(uuid()) @db.Uuid
+  applicationId String    @map("application_id") @db.Uuid
+  authorId      String    @map("author_id") @db.Uuid
+  body          String
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  application Application @relation(fields: [applicationId], references: [id])
+  author      User        @relation(fields: [authorId], references: [id])
+
+  @@index([applicationId])
+  @@map("application_notes")
+}
+
+model Invitation {
+  id            String           @id @default(uuid()) @db.Uuid
+  vacancyId     String           @map("vacancy_id") @db.Uuid
+  teacherId     String           @map("teacher_id") @db.Uuid
+  invitedById   String           @map("invited_by") @db.Uuid
+  message       String?
+  status        InvitationStatus @default(pending)
+  /// Set when accepted (accept creates an Application).
+  applicationId String?          @unique @map("application_id") @db.Uuid
+  respondedAt   DateTime?        @map("responded_at")
+  expiresAt     DateTime?        @map("expires_at")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  deletedAt     DateTime?        @map("deleted_at")
+
+  vacancy     Vacancy        @relation(fields: [vacancyId], references: [id])
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  invitedBy   User           @relation("InvitationInvitedBy", fields: [invitedById], references: [id])
+  application Application?   @relation(fields: [applicationId], references: [id])
+
+  @@index([teacherId, status])
+  @@index([vacancyId])
+  @@map("invitations")
+}
+
+model Interview {
+  id              String          @id @default(uuid()) @db.Uuid
+  applicationId   String          @map("application_id") @db.Uuid
+  scheduledAt     DateTime        @map("scheduled_at")
+  durationMinutes Int?            @map("duration_minutes")
+  mode            InterviewMode
+  /// Address (in person), phone number, or Meet/Zoom link.
+  locationOrLink  String          @map("location_or_link")
+  status          InterviewStatus @default(proposed)
+  /// Teacher's counter-proposal (POST /interviews/:id/propose).
+  proposedAt      DateTime?       @map("proposed_at")
+  proposalNote    String?         @map("proposal_note")
+  notes           String?
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+
+  application Application @relation(fields: [applicationId], references: [id])
+
+  @@index([applicationId])
+  @@index([scheduledAt])
+  @@map("interviews")
+}
+
+// ─────────────────────────── Saved items and searches ───────────────────────────
+
+model SavedItem {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  itemType  SavedItemType @map("item_type")
+  itemId    String        @map("item_id") @db.Uuid
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, itemType, itemId])
+  @@map("saved_items")
+}
+
+model SavedSearch {
+  id             String           @id @default(uuid()) @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  scope          SavedSearchScope
+  name           String?
+  filters        Json
+  alertFrequency AlertFrequency   @default(daily) @map("alert_frequency")
+  lastAlertedAt  DateTime?        @map("last_alerted_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  deletedAt      DateTime?        @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([alertFrequency, lastAlertedAt])
+  @@map("saved_searches")
+}
+
+// ─────────────────────────── Messaging ───────────────────────────
+
+/// Opened only after shortlist or accepted invite.
+model Conversation {
+  id            String    @id @default(uuid()) @db.Uuid
+  schoolId      String    @map("school_id") @db.Uuid
+  teacherId     String    @map("teacher_id") @db.Uuid
+  applicationId String?   @map("application_id") @db.Uuid
+  blockedById   String?   @map("blocked_by") @db.Uuid
+  blockedAt     DateTime? @map("blocked_at")
+  lastMessageAt DateTime? @map("last_message_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  school      School         @relation(fields: [schoolId], references: [id])
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
+  application Application?   @relation(fields: [applicationId], references: [id])
+  blockedBy   User?          @relation("ConversationBlockedBy", fields: [blockedById], references: [id])
+  messages    Message[]
+
+  @@unique([schoolId, teacherId])
+  @@index([teacherId, lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String    @id @default(uuid()) @db.Uuid
+  conversationId String    @map("conversation_id") @db.Uuid
+  senderId       String    @map("sender_id") @db.Uuid
+  body           String?
+  attachmentKey  String?   @map("attachment_key")
+  attachmentName String?   @map("attachment_name")
+  readAt         DateTime? @map("read_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  /// Cursor pagination: (conversation_id, created_at desc, id).
+  @@index([conversationId, createdAt(sort: Desc), id])
+  @@map("messages")
+}
+
+// ─────────────────────────── Notifications, views, reports, audit ───────────────────────────
+
+model Notification {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  type      String // verification_result, new_application, status_change, invite, interview, …
+  payload   Json                @default("{}")
+  channel   NotificationChannel @default(in_app)
+  sentAt    DateTime?           @map("sent_at")
+  readAt    DateTime?           @map("read_at")
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+/// Every profile view and CV view/download; feeds "X schools viewed your CV this week".
+model ProfileView {
+  id        String          @id @default(uuid()) @db.Uuid
+  teacherId String          @map("teacher_id") @db.Uuid
+  schoolId  String          @map("school_id") @db.Uuid
+  viewerId  String          @map("viewer_id") @db.Uuid
+  kind      ProfileViewKind
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id])
+  school  School         @relation(fields: [schoolId], references: [id])
+  viewer  User           @relation("ProfileViewViewer", fields: [viewerId], references: [id])
+
+  @@index([teacherId, createdAt(sort: Desc)])
+  @@map("profile_views")
+}
+
+model Report {
+  id           String           @id @default(uuid()) @db.Uuid
+  reporterId   String           @map("reporter_id") @db.Uuid
+  targetType   ReportTargetType @map("target_type")
+  targetId     String           @map("target_id") @db.Uuid
+  reason       String
+  details      String?
+  status       ReportStatus     @default(open)
+  resolvedById String?          @map("resolved_by") @db.Uuid
+  resolvedAt   DateTime?        @map("resolved_at")
+  resolution   String?
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  reporter   User  @relation("ReportReporter", fields: [reporterId], references: [id])
+  resolvedBy User? @relation("ReportResolvedBy", fields: [resolvedById], references: [id])
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
+
+/// Admin actions and every admin document access.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  targetType String   @map("target_type")
+  targetId   String?  @map("target_id")
+  metadata   Json     @default("{}")
+  ip         String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────── Blog and ads ───────────────────────────
+
+model Post {
+  id              String     @id @default(uuid()) @db.Uuid
+  authorId        String     @map("author_id") @db.Uuid
+  title           String
+  slug            String     @unique
+  category        String?
+  excerpt         String?
+  body            String
+  coverImageKey   String?    @map("cover_image_key")
+  metaTitle       String?    @map("meta_title")
+  metaDescription String?    @map("meta_description")
+  status          PostStatus @default(draft)
+  publishedAt     DateTime?  @map("published_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  deletedAt       DateTime?  @map("deleted_at")
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([status, publishedAt])
+  @@map("posts")
+}
+
+/// Admin can switch ad slots off per page type without a deploy.
+model AdSettings {
+  id        String     @id @default(uuid()) @db.Uuid
+  pageType  AdPageType @map("page_type")
+  slotName  String     @map("slot_name") // e.g. in_feed, sidebar, below_description
+  enabled   Boolean    @default(false)
+  slotId    String?    @map("slot_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@unique([pageType, slotName])
+  @@map("ad_settings")
+}
