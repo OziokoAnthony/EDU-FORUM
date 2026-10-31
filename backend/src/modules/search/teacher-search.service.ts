@@ -34,7 +34,8 @@ export class TeacherSearchService {
     private readonly config: ConfigService,
   ) {}
 
-  async search(q: Query): Promise<Paginated<TeacherListItem>> {
+  /** `since` (saved-search alerts only): profiles published after that moment. */
+  async search(q: Query, opts: { since?: Date } = {}): Promise<Paginated<TeacherListItem>> {
     const wanted: Wanted = {
       subjects: q.subjects ?? [],
       levels: q.levels ?? [],
@@ -64,6 +65,7 @@ export class TeacherSearchService {
     if (q.availableBy) where.push(Prisma.sql`(t.available_from IS NULL OR t.available_from <= ${q.availableBy}::date)`);
     if (q.maxSalary != null) where.push(Prisma.sql`(t.expected_salary_min IS NULL OR t.expected_salary_min <= ${q.maxSalary})`);
     if (origin && q.radiusKm) where.push(Prisma.sql`ST_DWithin(t.geog, ${point(origin.lat, origin.lng)}, ${q.radiusKm * 1000})`);
+    if (opts.since) where.push(Prisma.sql`t.published_at > ${opts.since}`);
 
     return this.run(wanted, origin, where, q.sort, q.page, q.limit);
   }

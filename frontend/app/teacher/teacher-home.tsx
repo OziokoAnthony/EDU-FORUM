@@ -126,6 +126,10 @@ export function TeacherHome() {
           <p className="font-semibold text-slate-900">My applications</p>
           <p className="text-sm text-slate-600">Status of every job you applied for</p>
         </Link>
+        <Link href="/teacher/saved" className="lift rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+          <p className="font-semibold text-slate-900">Saved jobs and alerts</p>
+          <p className="text-sm text-slate-600">Jobs you saved and your job alerts</p>
+        </Link>
         <Link href="/teacher/messages" className="lift rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <p className="font-semibold text-slate-900">Messages</p>
           <p className="text-sm text-slate-600">Chats with principals and directors</p>

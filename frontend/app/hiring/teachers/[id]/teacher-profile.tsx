@@ -7,6 +7,7 @@ import { EXPERIENCE_KIND_LABELS, GENDER_LABELS, JOB_TYPE_LABELS, type CvLinkResp
 import { MessageButton } from '@/components/chat/message-button';
 import { InvitePanel } from '@/components/invite-panel';
 import { ReportButton } from '@/components/report-button';
+import { SaveButton } from '@/components/saved';
 import { Alert } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -94,6 +95,8 @@ export function TeacherProfile({ id }: { id: string }) {
         ) : null}
         <MessageButton teacherId={t.id} label={`Message ${t.fullName ?? 'teacher'}`} />
       </section>
+
+      <SaveButton itemType="teacher" itemId={t.id} />
 
       <InvitePanel teacherId={t.id} teacherName={t.fullName ?? 'this teacher'} />
 

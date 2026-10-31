@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { salaryRange, shortDate } from '@/lib/format';
 import { nameBySlug, useCertificationTypes, useLevels, useQualificationTypes, useSubjects } from '@/lib/meta';
 import { ReportButton } from '@/components/report-button';
+import { SaveButton } from '@/components/saved';
 import { ApplyPanel } from './apply-panel';
 
 /**
@@ -85,7 +86,10 @@ export function JobDetail({ id }: { id: string }) {
       ) : null}
 
       <ApplyPanel v={v} />
-      <ReportButton targetType="vacancy" targetId={v.id} label="Report this job" />
+      <div className="flex flex-wrap items-center gap-4">
+        <SaveButton itemType="vacancy" itemId={v.id} />
+        <ReportButton targetType="vacancy" targetId={v.id} label="Report this job" />
+      </div>
     </main>
   );
 }

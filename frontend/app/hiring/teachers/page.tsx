@@ -4,6 +4,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { Paginated, TeacherListItem } from '@edu-forum/shared';
 import { Checkbox, SecondaryButton, Select } from '@/components/form';
+import { SaveSearch, useFiltersFromUrl } from '@/components/saved';
 import { TeacherCard } from '@/components/teacher-card';
 import { Alert, Button, Field } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
@@ -53,6 +54,11 @@ export default function Page() {
     setDraft((d) => ({ ...d, [k]: e.target instanceof HTMLInputElement && e.target.type === 'checkbox' ? e.target.checked : e.target.value, ...(k === 'state' ? { lga: '' } : {}) }));
   const opts = (items: { slug: string; name: string }[] | undefined) => (items ?? []).map((i) => ({ value: i.slug, label: i.name }));
   const total = results.data?.pages[0]?.meta.total ?? 0;
+  useFiltersFromUrl<Filters>((v) => {
+    const f = { ...EMPTY, ...v };
+    setDraft(f);
+    setFilters(f);
+  });
   const items = results.data?.pages.flatMap((p) => p.data) ?? [];
 
   return (
@@ -105,6 +111,7 @@ export default function Page() {
         </div>
       </form>
 
+      <SaveSearch filters={filters} savedHref="/hiring/saved" />
       {results.isPending ? (
         <p className="text-slate-500">Searching…</p>
       ) : results.isError ? (

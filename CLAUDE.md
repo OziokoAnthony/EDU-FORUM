@@ -303,6 +303,15 @@ covers the window).
   of a run notifies/emails. Only chat participants can report a message. Endpoints added beyond
   the PRD table: `GET /conversations/:id`, `POST /conversations/:id/unblock`,
   `DELETE /conversations/:id/messages/:messageId`, `GET /conversations/:id/messages/:messageId/attachment`.
+- **Saved items and alerts (Phase 11, confirmed 2026-10-31):** teachers save vacancies,
+  principals/directors save teachers (`POST /saved` is idempotent; `GET /saved?itemId=` answers
+  "is this saved?"). Saved jobs that close stay, marked closed; hidden teachers show as
+  unavailable. Saved searches (max 10 per user) store the search page's URL-style filters,
+  validated against the vacancy/teacher search schema, minus page/limit/sort; scope comes from the
+  role. Alerts: `saved-search-alerts-instant` every 15 min, `-daily` 06:00 UTC (7am WAT),
+  `-weekly` Monday 06:00 UTC; each run lists up to 10 matches published since `last_alerted_at`
+  (searches take an internal `since`), one notice + email per search, link back to the search
+  page with the filters in the URL. Turning alerts back on starts from now.
 
 - **Look (user, 2026-10-31):** dark portal style inspired by zone94.com, done by remapping the
   Tailwind palette in `globals.css` (slate = dark neutrals, emerald-800/900 = gold text), Oswald

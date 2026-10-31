@@ -25,6 +25,36 @@ function excerpt(html: string): string {
   return text.length > 200 ? `${text.slice(0, 197).trimEnd()}…` : text;
 }
 
+type ListRow = Prisma.VacancyGetPayload<{ include: { state: { select: { id: true; name: true; slug: true } }; lga: { select: { id: true; name: true; slug: true } } } }>;
+
+/** The public card for a vacancy (search results, saved jobs). */
+export function toVacancyListItem(v: ListRow, km: number | null, score: number | null): VacancyListItem {
+  const anonymous = v.locationVisibility === 'anonymous';
+  return {
+    id: v.id,
+    slug: v.slug,
+    shortId: v.shortId,
+    title: v.title,
+    schoolLabel: anonymous || !v.schoolName ? CONFIDENTIAL_SCHOOL : v.schoolName,
+    isAnonymous: anonymous,
+    schoolType: v.schoolType,
+    state: v.state,
+    lga: v.lga,
+    subjects: v.subjects,
+    levels: v.levels,
+    jobType: v.jobType,
+    salaryMin: v.salaryMin,
+    salaryMax: v.salaryMax,
+    salaryPeriod: v.salaryPeriod,
+    excerpt: excerpt(v.description),
+    publishedAt: (v.publishedAt ?? v.createdAt).toISOString(),
+    deadline: fromDbDate(v.deadline),
+    // Exact distances to a hidden school could pinpoint it, so anonymous ones show none.
+    distanceKm: anonymous || km == null ? null : Math.round(km),
+    matchScore: score,
+  };
+}
+
 /**
  * GET /vacancies and /vacancies/recommended. Live vacancies only. Origin = lat/lng given,
  * else the teacher's saved pin; without one, state/LGA filters do the work (CLAUDE.md).
@@ -33,10 +63,12 @@ function excerpt(html: string): string {
 export class VacancySearchService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async search(viewer: AuthUser | undefined, q: Query): Promise<Paginated<VacancyListItem>> {
+  /** `since` (saved-search alerts only): vacancies published after that moment. */
+  async search(viewer: AuthUser | undefined, q: Query, opts: { since?: Date } = {}): Promise<Paginated<VacancyListItem>> {
     const teacher = viewer?.role === 'teacher' ? await this.teacherFacts(viewer.id) : null;
     const origin: Origin = q.lat != null && q.lng != null ? { lat: q.lat, lng: q.lng } : (teacher?.origin ?? null);
-    return this.run({ q, teacher, origin, page: q.page, limit: q.limit });
+    const extra = opts.since ? Prisma.sql`v.published_at > ${opts.since}` : undefined;
+    return this.run({ q, teacher, origin, page: q.page, limit: q.limit, extra });
   }
 
   /** Vacancies that match the teacher's profile best (at least one subject or level in common). */
@@ -105,33 +137,7 @@ export class VacancySearchService {
       include: { state: { select: { id: true, name: true, slug: true } }, lga: { select: { id: true, name: true, slug: true } } },
     });
     const byId = new Map(vacancies.map((v) => [v.id, v]));
-    const data = rows.map((r): VacancyListItem => {
-      const v = byId.get(r.id)!;
-      const anonymous = v.locationVisibility === 'anonymous';
-      return {
-        id: v.id,
-        slug: v.slug,
-        shortId: v.shortId,
-        title: v.title,
-        schoolLabel: anonymous || !v.schoolName ? CONFIDENTIAL_SCHOOL : v.schoolName,
-        isAnonymous: anonymous,
-        schoolType: v.schoolType,
-        state: v.state,
-        lga: v.lga,
-        subjects: v.subjects,
-        levels: v.levels,
-        jobType: v.jobType,
-        salaryMin: v.salaryMin,
-        salaryMax: v.salaryMax,
-        salaryPeriod: v.salaryPeriod,
-        excerpt: excerpt(v.description),
-        publishedAt: v.publishedAt!.toISOString(),
-        deadline: fromDbDate(v.deadline),
-        // Exact distances to a hidden school could pinpoint it, so anonymous ones show none.
-        distanceKm: anonymous || r.km == null ? null : Math.round(r.km),
-        matchScore: r.score,
-      };
-    });
+    const data = rows.map((r) => toVacancyListItem(byId.get(r.id)!, r.km, r.score));
     return { data, meta: { page, limit, total } };
   }
 

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { JOB_TYPE_LABELS, JOB_TYPES, RADIUS_OPTIONS_KM, type Paginated, type VacancyListItem } from '@edu-forum/shared';
 import { SecondaryButton, Select } from '@/components/form';
 import { Alert, Button, Field } from '@/components/ui';
+import { SaveSearch, useFiltersFromUrl } from '@/components/saved';
 import { VacancyCard } from '@/components/vacancy-card';
 import { useAuth } from '@/lib/auth';
 import { useLevels, useLgas, useStates, useSubjects } from '@/lib/meta';
@@ -32,6 +33,13 @@ export default function Page() {
   const states = useStates();
   const lgas = useLgas(states.data?.find((s) => s.slug === draft.state)?.id);
   const hasPin = profile.data?.location.lat != null;
+  // Opened from an alert or a saved search: start on the search tab with those filters.
+  useFiltersFromUrl<Filters>((v) => {
+    const f = { ...EMPTY, ...v };
+    setDraft(f);
+    setFilters(f);
+    setTab('search');
+  });
 
   const recommended = useQuery({
     queryKey: ['vacancies', 'recommended'],
@@ -148,6 +156,7 @@ export default function Page() {
               </SecondaryButton>
             </div>
           </form>
+          <SaveSearch filters={filters} savedHref="/teacher/saved" />
           {results.isPending ? (
             <p className="text-slate-500">Searching…</p>
           ) : results.isError ? (

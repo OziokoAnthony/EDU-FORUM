@@ -90,7 +90,7 @@ test('director finds a teacher and opens the CV; the teacher sees the job in rec
   await page.getByRole('link', { name: 'Find teachers' }).click();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
   await page.getByLabel('Keyword').fill(tag);
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.getByText('1 teacher found')).toBeVisible();
   await expect(page.getByText('Secret Close')).toHaveCount(0);
   await page.getByRole('link', { name: new RegExp(`Ada ${tag}`) }).click();

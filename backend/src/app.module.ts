@@ -21,6 +21,7 @@ import { ConversationsModule } from './modules/messaging/messaging.module';
 import { MetaModule } from './modules/meta/meta.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { SavedModule } from './modules/saved/saved.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { SearchModule } from './modules/search/search.module';
@@ -61,6 +62,7 @@ import { UsersModule } from './modules/users/users.module';
     InvitationsModule,
     InterviewsModule,
     ConversationsModule,
+    SavedModule,
     ReportsModule,
     AdminModule,
   ],
