@@ -17,6 +17,7 @@ import { CvModule } from './modules/cv/cv.module';
 import { HealthModule } from './modules/health/health.module';
 import { InterviewsModule } from './modules/interviews/interviews.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
+import { ConversationsModule } from './modules/messaging/messaging.module';
 import { MetaModule } from './modules/meta/meta.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
@@ -59,6 +60,7 @@ import { UsersModule } from './modules/users/users.module';
     ApplicationsModule,
     InvitationsModule,
     InterviewsModule,
+    ConversationsModule,
     ReportsModule,
     AdminModule,
   ],

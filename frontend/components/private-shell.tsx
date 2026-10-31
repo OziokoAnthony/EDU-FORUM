@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import type { UserRole } from '@edu-forum/shared';
 import { AuthProvider, homeFor, useAuth } from '@/lib/auth';
+import { RealtimeProvider } from '@/lib/realtime';
 import { NotificationBell } from './notification-bell';
 import { SiteBanner } from './site-banner';
 
@@ -35,7 +36,7 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
   }
 
   return (
-    <>
+    <RealtimeProvider enabled={user.role !== 'admin'}>
       <header className="mx-auto max-w-6xl sm:px-4">
         <SiteBanner compact>
         <div className="flex items-center gap-2">
@@ -54,6 +55,6 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
         </SiteBanner>
       </header>
       <div className="animate-fade-in">{children}</div>
-    </>
+    </RealtimeProvider>
   );
 }

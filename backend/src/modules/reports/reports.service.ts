@@ -11,7 +11,7 @@ export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(user: AuthUser, input: z.output<typeof reportSchema>): Promise<{ id: string }> {
-    const ownerId = await this.ownerOf(input.targetType, input.targetId);
+    const ownerId = await this.ownerOf(input.targetType, input.targetId, user.id);
     if (ownerId === null) throw new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Nothing to report here');
     if (ownerId === user.id) throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE', 'You cannot report your own content');
     const open = await this.prisma.report.findFirst({
@@ -26,13 +26,18 @@ export class ReportsService {
   }
 
   /** The user who owns the reported thing, or null if it does not exist. */
-  private async ownerOf(type: z.output<typeof reportSchema>['targetType'], id: string): Promise<string | null> {
+  private async ownerOf(type: z.output<typeof reportSchema>['targetType'], id: string, reporterId: string): Promise<string | null> {
     if (type === 'teacher_profile') {
       return (await this.prisma.teacherProfile.findFirst({ where: { id, deletedAt: null }, select: { userId: true } }))?.userId ?? null;
     }
     if (type === 'vacancy') {
       return (await this.prisma.vacancy.findFirst({ where: { id, deletedAt: null }, select: { createdById: true } }))?.createdById ?? null;
     }
-    return (await this.prisma.message.findFirst({ where: { id }, select: { senderId: true } }))?.senderId ?? null;
+    // Only someone in the chat can report one of its messages (others would learn it exists).
+    const message = await this.prisma.message.findFirst({
+      where: { id, conversation: { OR: [{ employerId: reporterId }, { teacher: { userId: reporterId } }] } },
+      select: { senderId: true },
+    });
+    return message?.senderId ?? null;
   }
 }

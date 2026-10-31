@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { EXPERIENCE_KIND_LABELS, GENDER_LABELS, JOB_TYPE_LABELS, type CvLinkResponse, type TeacherViewResponse } from '@edu-forum/shared';
+import { MessageButton } from '@/components/chat/message-button';
 import { InvitePanel } from '@/components/invite-panel';
 import { ReportButton } from '@/components/report-button';
 import { Alert } from '@/components/ui';
@@ -91,7 +92,7 @@ export function TeacherProfile({ id }: { id: string }) {
             </a>
           </p>
         ) : null}
-        <p className="text-sm text-slate-600">Chat with teachers arrives with messaging.</p>
+        <MessageButton teacherId={t.id} label={`Message ${t.fullName ?? 'teacher'}`} />
       </section>
 
       <InvitePanel teacherId={t.id} teacherName={t.fullName ?? 'this teacher'} />

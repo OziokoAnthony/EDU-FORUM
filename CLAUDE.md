@@ -292,6 +292,17 @@ covers the window).
   needs confirming again. Done only once the time has passed. Reminder to both sides 24 h before
   (`interview-reminders` job every 15 min, `reminder_sent_at`, cleared on reschedule). Times show
   in Africa/Lagos. Endpoint added beyond the PRD table: `GET /applications/:id/interviews`.
+- **Chat (Phase 11, confirmed 2026-10-31):** one conversation per principal/director + teacher
+  (`POST /conversations` reopens it); leaders can message published teachers or anyone who applied
+  to their vacancies; teachers only reply. Text ≤ 4,000 chars and/or one PDF/JPG/PNG/WebP ≤ 5 MB
+  (`message_attachment` upload, claimed on send, ClamAV-scanned; opened only via a 10-minute
+  signed link once clean; infected files are removed). "Seen" = `read_at`, set by
+  `POST /conversations/:id/read` and pushed live. Senders delete their own messages (text and
+  file erased, "Message deleted" stays); no editing. Either side blocks; while blocked nobody
+  sends, a blocked leader cannot reopen, only the blocker unblocks. Only the first unread message
+  of a run notifies/emails. Only chat participants can report a message. Endpoints added beyond
+  the PRD table: `GET /conversations/:id`, `POST /conversations/:id/unblock`,
+  `DELETE /conversations/:id/messages/:messageId`, `GET /conversations/:id/messages/:messageId/attachment`.
 
 - **Look (user, 2026-10-31):** dark portal style inspired by zone94.com, done by remapping the
   Tailwind palette in `globals.css` (slate = dark neutrals, emerald-800/900 = gold text), Oswald

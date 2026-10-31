@@ -66,4 +66,6 @@ export const WS_EVENTS = {
   unreadCount: 'notifications:unread',
   message: 'message',
   conversationRead: 'conversation:read',
+  // Blocked or unblocked: refetch the conversation.
+  conversationUpdated: 'conversation:updated',
 } as const;

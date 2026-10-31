@@ -13,6 +13,7 @@ import {
   type MoveStatusResponse,
 } from '@edu-forum/shared';
 import { Checkbox, Select, TextArea } from '@/components/form';
+import { MessageButton } from '@/components/chat/message-button';
 import { ApplicantInterviews } from '@/components/schedule-interview';
 import { StatusBadge } from '@/components/status-badge';
 import { Alert, Button } from '@/components/ui';
@@ -109,6 +110,7 @@ export function ApplicantDetail({ id }: { id: string }) {
             </a>
           </p>
         ) : null}
+        <MessageButton teacherId={t.id} applicationId={a.id} />
       </section>
 
       <section className="space-y-2">

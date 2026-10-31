@@ -5,7 +5,7 @@ import { useLiveNotifications, useUnreadCount } from '@/lib/notifications';
 
 /** Header bell with the unread count, kept live over `/ws`. */
 export function NotificationBell({ href }: { href: string }) {
-  useLiveNotifications(true);
+  useLiveNotifications();
   const unread = useUnreadCount(true);
   const count = unread.data?.count ?? 0;
   return (
