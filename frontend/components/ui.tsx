@@ -61,12 +61,21 @@ export function Alert({ kind = 'error', children }: { kind?: 'error' | 'success'
   );
 }
 
+/** Sign-in, sign-up, verify and reset pages: a card that rises in over slowly drifting colour. */
 export function AuthCard({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
   return (
-    <main className="mx-auto w-full max-w-md px-4 py-10">
-      <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-      <div className="mt-6 space-y-5">{children}</div>
-      {footer ? <div className="mt-6 text-sm text-slate-600">{footer}</div> : null}
-    </main>
+    <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-amber-50">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 -top-24 h-72 w-72 animate-float rounded-full bg-emerald-200/50 blur-3xl" />
+        <div className="absolute -bottom-24 -right-16 h-80 w-80 animate-float rounded-full bg-amber-200/40 blur-3xl [animation-delay:-3s]" />
+      </div>
+      <main className="relative mx-auto w-full max-w-md px-4 py-10">
+        <div className="animate-fade-up rounded-2xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-emerald-900/5 backdrop-blur sm:p-8">
+          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+          <div className="mt-6 space-y-5">{children}</div>
+          {footer ? <div className="mt-6 text-sm text-slate-600">{footer}</div> : null}
+        </div>
+      </main>
+    </div>
   );
 }

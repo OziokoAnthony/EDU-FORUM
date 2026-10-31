@@ -10,7 +10,7 @@ export function TeacherCard({ t, showMatch = true }: { t: TeacherListItem; showM
   const subjectName = nameBySlug(useSubjects().data);
   const levelName = nameBySlug(useLevels().data);
   return (
-    <li className="rounded-lg border border-slate-200 p-4">
+    <li className="lift rounded-lg border border-slate-200 bg-white p-4">
       <Link href={`/hiring/teachers/${t.id}`} className="flex gap-3">
         {t.photoUrl ? (
           // Signed, short-lived URL from private storage: next/image cannot optimise it.

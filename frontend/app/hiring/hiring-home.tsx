@@ -31,7 +31,7 @@ export function HiringHome() {
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
       <HiringNav current="vacancies" />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">Your vacancies</h1>
+        <h1 className="animate-fade-up text-2xl font-bold text-slate-900">Your vacancies</h1>
         <Link href="/hiring/vacancies/new" className="rounded-lg bg-emerald-700 px-4 py-2.5 font-semibold text-white hover:bg-emerald-800">
           Post a vacancy
         </Link>
@@ -61,7 +61,7 @@ export function HiringHome() {
           {tab ? 'No vacancies here yet.' : 'You have not posted a vacancy yet.'}
         </p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="stagger space-y-3">
           {vacancies.data.data.map((v) => (
             <VacancyCard key={v.id} v={v} />
           ))}
@@ -97,7 +97,7 @@ function VacancyCard({ v }: { v: MyVacancyResponse }) {
   );
 
   return (
-    <li className="rounded-lg border border-slate-200 p-4">
+    <li className="lift rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-semibold text-slate-900">{v.title}</p>

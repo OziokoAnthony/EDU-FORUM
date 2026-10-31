@@ -15,7 +15,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'pnpm --dir ../backend dev',
+      // No file watching: a watcher restart mid-run made tests fail with "could not reach".
+      command: 'pnpm --dir ../backend exec nest start',
       url: 'http://localhost:4000/api/v1/health',
       reuseExistingServer: true,
       timeout: 120_000,

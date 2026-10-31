@@ -50,7 +50,7 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
           Sign out
         </button>
       </header>
-      {children}
+      <div className="animate-fade-in">{children}</div>
     </>
   );
 }

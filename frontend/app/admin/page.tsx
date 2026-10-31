@@ -15,7 +15,7 @@ function Tile({ label, value, href }: { label: string; value: number; href?: str
     </>
   );
   return href ? (
-    <Link href={href} className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+    <Link href={href} className="lift rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
       {body}
     </Link>
   ) : (
@@ -38,7 +38,7 @@ export default function Page() {
       ) : stats.isError || !s ? (
         <Alert>Could not load the stats.</Alert>
       ) : (
-        <div className="space-y-6">
+        <div className="stagger space-y-6">
           {s.reports.open ? (
             <Alert kind="info">
               {s.reports.open} open report{s.reports.open === 1 ? '' : 's'} waiting.{' '}
@@ -49,7 +49,7 @@ export default function Page() {
           ) : null}
           <section className="space-y-2">
             <h2 className="font-semibold text-slate-900">People</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-5">
               <Tile label="Teachers" value={s.users.teachers} href="/admin/users?role=teacher" />
               <Tile label="Principals" value={s.users.principals} href="/admin/users?role=principal" />
               <Tile label="Directors" value={s.users.directors} href="/admin/users?role=director" />
@@ -59,7 +59,7 @@ export default function Page() {
           </section>
           <section className="space-y-2">
             <h2 className="font-semibold text-slate-900">Teacher profiles</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-3">
               <Tile label="Published" value={s.teachers.published} />
               <Tile label="With a CV" value={s.teachers.withCv} />
               <Tile label="Hidden by admin" value={s.teachers.hiddenByAdmin} href="/admin/teachers?hidden=true" />
@@ -67,7 +67,7 @@ export default function Page() {
           </section>
           <section className="space-y-2">
             <h2 className="font-semibold text-slate-900">Vacancies and applications</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Tile label="Live vacancies" value={s.vacancies.live} href="/admin/vacancies?status=published" />
               <Tile label="Posted this week" value={s.vacancies.postedThisWeek} />
               <Tile label="Taken down" value={s.vacancies.takenDown} href="/admin/vacancies?takenDown=true" />

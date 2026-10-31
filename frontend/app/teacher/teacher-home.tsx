@@ -58,7 +58,7 @@ export function TeacherHome() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-8 px-4 py-6">
+    <main className="stagger mx-auto max-w-2xl space-y-8 px-4 py-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">{p.fullName ? `Welcome, ${p.fullName.split(' ')[0]}` : 'Welcome'}</h1>
         <p className="mt-1 text-slate-600">
@@ -74,9 +74,9 @@ export function TeacherHome() {
           <span className="text-2xl font-bold text-emerald-800">{completeness.score}%</span>
         </div>
         <div className="h-2 rounded-full bg-slate-200" role="progressbar" aria-valuenow={completeness.score} aria-valuemin={0} aria-valuemax={100}>
-          <div className="h-2 rounded-full bg-emerald-700" style={{ width: `${completeness.score}%` }} />
+          <div className="h-2 origin-left animate-grow-x rounded-full bg-emerald-700" style={{ width: `${completeness.score}%` }} />
         </div>
-        <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200">
+        <ul className="stagger divide-y divide-slate-200 rounded-lg border border-slate-200">
           {completeness.items.map((i) => (
             <li key={i.key} className="flex items-center justify-between gap-3 px-4 py-3">
               <span className="text-slate-800">
@@ -118,19 +118,19 @@ export function TeacherHome() {
       )}
 
       <section className="grid gap-3 sm:grid-cols-2">
-        <Link href="/teacher/jobs" className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 hover:bg-emerald-100 sm:col-span-2">
+        <Link href="/teacher/jobs" className="lift rounded-lg border border-emerald-200 bg-emerald-50 p-4 hover:bg-emerald-100 sm:col-span-2">
           <p className="font-semibold text-emerald-900">Find teaching jobs</p>
           <p className="text-sm text-slate-600">Jobs that match your subjects, levels and location</p>
         </Link>
-        <Link href="/teacher/applications" className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+        <Link href="/teacher/applications" className="lift rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <p className="font-semibold text-slate-900">My applications</p>
           <p className="text-sm text-slate-600">Status of every job you applied for</p>
         </Link>
-        <Link href="/teacher/cv" className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+        <Link href="/teacher/cv" className="lift rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <p className="font-semibold text-slate-900">My CV</p>
           <p className="text-sm text-slate-600">{p.cv ? p.cv.fileName : 'Not uploaded yet'}</p>
         </Link>
-        <Link href={stepHref('personal')} className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+        <Link href={stepHref('personal')} className="lift rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <p className="font-semibold text-slate-900">Edit profile</p>
           <p className="text-sm text-slate-600">Details, location, qualifications, experience, preferences</p>
         </Link>

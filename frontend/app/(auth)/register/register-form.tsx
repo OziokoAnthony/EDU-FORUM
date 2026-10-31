@@ -76,7 +76,7 @@ export function RegisterForm({ next }: { next?: string | null }) {
             ).map(([value, label, hint]) => (
               <label
                 key={value}
-                className={`cursor-pointer rounded-lg border px-2 py-3 ${role === value ? 'border-emerald-700 bg-emerald-50' : 'border-slate-300'}`}
+                className={`lift cursor-pointer rounded-lg border px-2 py-3 ${role === value ? 'border-emerald-700 bg-emerald-50' : 'border-slate-300'}`}
               >
                 <input type="radio" value={value} {...register('role')} className="sr-only" />
                 <span className="block font-semibold">{label}</span>

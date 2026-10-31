@@ -95,7 +95,7 @@ export default async function Page({ searchParams }: Props) {
       {jobs.length === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-slate-600">No jobs match. Try fewer filters.</p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="stagger space-y-3">
           {jobs.map((v) => (
             <VacancyCard key={v.id} v={v} href={jobPath(v)} />
           ))}

@@ -23,7 +23,7 @@ export async function LandingView({ meta, page }: { meta: SeoMeta; page: number 
       <JsonLd data={breadcrumbJsonLd(meta.breadcrumbs, SITE_URL)} />
       <Breadcrumbs crumbs={meta.breadcrumbs} />
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{meta.h1}</h1>
+        <h1 className="animate-fade-up text-2xl font-bold text-slate-900">{meta.h1}</h1>
         <p className="mt-1 text-slate-600">
           {total} live job{total === 1 ? '' : 's'}. Free to apply.
         </p>
@@ -36,7 +36,7 @@ export async function LandingView({ meta, page }: { meta: SeoMeta; page: number 
           </Link>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="stagger space-y-3">
           {jobs.map((v) => (
             <VacancyCard key={v.id} v={v} href={jobPath(v)} />
           ))}
