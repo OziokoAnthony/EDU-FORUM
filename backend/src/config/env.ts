@@ -19,6 +19,35 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().default(1025),
   MAIL_FROM: z.string().default('EDU-FORUM <no-reply@edu-forum.local>'),
   SMS_DRIVER: z.enum(['console', 'memory']).default('console'),
+
+  // Background jobs (virus scan, DOC→PDF, purges). "inline" runs a job inside the request (tests).
+  QUEUE_DRIVER: z.enum(['bullmq', 'inline']).default('bullmq'),
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+
+  // Backblaze B2 through its S3-compatible API. "memory" keeps files in RAM (tests).
+  STORAGE_DRIVER: z.enum(['s3', 'memory']).default('s3'),
+  S3_ENDPOINT: z.string().default(''),
+  S3_REGION: z.string().default(''),
+  S3_BUCKET: z.string().default(''),
+  S3_ACCESS_KEY: z.string().default(''),
+  S3_SECRET_KEY: z.string().default(''),
+  SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(600),
+
+  SCANNER_DRIVER: z.enum(['clamav', 'memory']).default('clamav'),
+  CLAMAV_HOST: z.string().default('localhost'),
+  CLAMAV_PORT: z.coerce.number().int().default(3310),
+  /** Shared secret for POST /webhooks/storage/scan-result; the webhook is off when empty. */
+  SCAN_WEBHOOK_SECRET: z.string().default(''),
+
+  CONVERTER_DRIVER: z.enum(['gotenberg', 'memory']).default('gotenberg'),
+  GOTENBERG_URL: z.string().default('http://localhost:3100'),
+
+  GEOCODER_DRIVER: z.enum(['stub']).default('stub'),
+}).superRefine((v, ctx) => {
+  if (v.STORAGE_DRIVER !== 's3') return;
+  for (const key of ['S3_ENDPOINT', 'S3_REGION', 'S3_BUCKET', 'S3_ACCESS_KEY', 'S3_SECRET_KEY'] as const) {
+    if (!v[key]) ctx.addIssue({ code: 'custom', path: [key], message: 'Required when STORAGE_DRIVER=s3' });
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

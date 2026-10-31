@@ -5,10 +5,15 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtAuthGuard } from './common/auth/jwt-auth.guard';
 import { validateEnv } from './config/env';
+import { FilesModule } from './infra/files.module';
 import { MessagingModule } from './infra/messaging.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CvModule } from './modules/cv/cv.module';
 import { HealthModule } from './modules/health/health.module';
+import { MetaModule } from './modules/meta/meta.module';
+import { TeachersModule } from './modules/teachers/teachers.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -27,9 +32,14 @@ import { UsersModule } from './modules/users/users.module';
     }),
     PrismaModule,
     MessagingModule,
+    FilesModule,
     HealthModule,
     AuthModule,
     UsersModule,
+    MetaModule,
+    UploadsModule,
+    TeachersModule,
+    CvModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })

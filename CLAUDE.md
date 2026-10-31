@@ -117,7 +117,7 @@ frontend/              # Next.js (package @edu-forum/frontend)
   e2e/                 # Playwright (mobile-360 + desktop projects)
 backend/               # NestJS (package @edu-forum/backend)
   src/modules/         # auth, users, teachers, cv, verifications, schools, vacancies,
-                       # search, applications, invitations, interviews, saved,
+                       # search, applications, invitations, interviews, saved, community,
                        # messaging, notifications, reports, meta, admin, uploads
   src/common/          # guards, filters, pipes, serializers
   prisma/schema.prisma
@@ -139,6 +139,14 @@ later migration tries to `DROP DEFAULT`, which Postgres rejects. Hand-written SQ
 partial unique index, CHECK constraints) lives at the end of the init migration.
 `prisma migrate dev` can hang waiting for a prompt in non-interactive shells; use
 `--create-only` to write a migration and `prisma migrate deploy` to apply it.
+External services are picked by `*_DRIVER` env vars (`STORAGE_DRIVER`, `SCANNER_DRIVER`,
+`CONVERTER_DRIVER`, `QUEUE_DRIVER`, `MAIL_DRIVER`, `SMS_DRIVER`); `backend/test/setup-env.ts`
+switches them all to in-memory/inline so tests never touch B2, ClamAV, Gotenberg or Redis.
+BullMQ 6 needs `ioredis` installed alongside it. Gotenberg (DOC/DOCX→PDF) runs on port 3100.
+The B2 bucket's CORS rule allows browser uploads from `http://localhost:3000` only; add the
+production origin before launch. Upload flow: `POST /uploads/sign` → browser PUT to B2 →
+feature endpoint claims the upload (size + file-signature check) → background ClamAV scan →
+the feature's scan listener (`UploadsService.onScanned`).
 
 ## Confirmed decisions (resolve the PRD's open questions — 2026-10-31)
 
@@ -154,6 +162,20 @@ partial unique index, CHECK constraints) lives at the end of the init migration.
   Leaflet + OpenStreetMap for the map pin, Tiptap for rich text, Google Privacy &
   Messaging as the certified consent tool.
 - Testing: Jest + Supertest (backend), Vitest (frontend units), Playwright (E2E).
+- Profile completeness weights: CV 20, qualification 15, experience 15, preferences 15,
+  location 10, personal details 10 (required = 85%); photo 5, bio 5, verified ID 5.
+  Publishing also requires personal details (name, gender, date of birth).
+- Editing a certification resets it to pending review. A published profile cannot delete its
+  last experience entry (unpublish first).
+- BullMQ job queue arrived in Phase 3 (scan + convert jobs); Gotenberg converts DOC/DOCX.
+- Recommendations = the PRD's matching (recommended vacancies / recommended teachers, Phase 7).
+- Teacher↔school messaging keeps the PRD gate: only after shortlisting or an accepted invite.
+- **Community (added by the user, 2026-10-31; not in the PRD):** forum-style posts with comments,
+  updating live over `/ws`, in two spaces: **Teachers' Lounge** (teachers only) and
+  **Community Board** (teachers + verified school staff). Members only: `noindex`, robots
+  disallow, no ads. Moderation: report, admin remove, block, and a warning not to share phone
+  numbers (so contact gating cannot be bypassed). Built right after Phase 11 messaging; its
+  endpoints are listed here when built, since the PRD is a PDF.
 - PRD PDF garbles some paths; use the hyphenated forms (`/auth/resend-verification`,
   `/auth/change-password`, `/vacancies/:id/applications/bulk-status`, `/saved-searches/:id`,
   `/webhooks/storage/scan-result`, `/vacancies/by-slug/:slug`,

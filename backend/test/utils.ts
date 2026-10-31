@@ -6,6 +6,8 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { MAILER, type MemoryMailer } from '../src/infra/mail/mailer';
+import { JOB_QUEUE, type InlineJobQueue } from '../src/infra/queue/job-queue';
+import { OBJECT_STORAGE, type MemoryStorage } from '../src/infra/storage/object-storage';
 import { PrismaService } from '../src/infra/prisma/prisma.service';
 import { SMS_SENDER, type MemorySmsSender } from '../src/infra/sms/sms-sender';
 
@@ -18,6 +20,8 @@ export interface TestApp {
   prisma: PrismaService;
   mailer: MemoryMailer;
   sms: MemorySmsSender;
+  storage: MemoryStorage;
+  queue: InlineJobQueue;
   close(): Promise<void>;
 }
 
@@ -33,6 +37,8 @@ export async function createTestApp(): Promise<TestApp> {
     prisma,
     mailer: app.get(MAILER),
     sms: app.get(SMS_SENDER),
+    storage: app.get(OBJECT_STORAGE),
+    queue: app.get(JOB_QUEUE),
     close: () => app.close(),
   };
 }
@@ -74,6 +80,58 @@ export async function deleteTestUsers(prisma: PrismaService, phones: string[] = 
   });
   const ids = users.map((u) => u.id);
   if (ids.length === 0) return;
+  const teacherId = { teacher: { userId: { in: ids } } };
+  await prisma.cv.deleteMany({ where: teacherId });
+  await prisma.qualification.deleteMany({ where: teacherId });
+  await prisma.certification.deleteMany({ where: teacherId });
+  await prisma.workExperience.deleteMany({ where: teacherId });
+  await prisma.upload.deleteMany({ where: { userId: { in: ids } } });
   await prisma.teacherProfile.deleteMany({ where: { userId: { in: ids } } });
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
+}
+
+export interface SignedInUser {
+  email: string;
+  userId: string;
+  auth: string;
+}
+
+/** Registers and verifies (by email link) a teacher or school owner. */
+export async function verifiedUser(t: TestApp, role: 'teacher' | 'school' = 'teacher'): Promise<SignedInUser> {
+  const email = uniqueEmail(role);
+  const res = await t.http
+    .post('/api/v1/auth/register')
+    .send({ email, password: 'teach2026', role, consent: true })
+    .expect(201);
+  await t.http
+    .post('/api/v1/auth/verify-email')
+    .send({ token: linkToken(t.mailer.lastTo(email)!.text) })
+    .expect(200);
+  return { email, userId: res.body.user.id, auth: `Bearer ${res.body.accessToken}` };
+}
+
+export const PDF = Buffer.from('%PDF-1.7\n1 0 obj << /Type /Catalog >> endobj\n%%EOF\n');
+export const DOCX = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from('word/document.xml')]);
+export const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
+
+/**
+ * Signs an upload and "PUTs" the bytes into memory storage, like the browser would.
+ * Returns the upload id to pass to the feature endpoint.
+ */
+export async function uploadFile(
+  t: TestApp,
+  auth: string,
+  purpose: string,
+  fileName: string,
+  mimeType: string,
+  body: Buffer,
+): Promise<string> {
+  const res = await t.http
+    .post('/api/v1/uploads/sign')
+    .set('Authorization', auth)
+    .send({ purpose, fileName, mimeType, sizeBytes: body.length })
+    .expect(201);
+  const key = String(res.body.url).replace('memory://put/', '');
+  await t.storage.put(key, body, mimeType);
+  return res.body.uploadId;
 }

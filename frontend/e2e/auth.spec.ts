@@ -39,13 +39,13 @@ test('teacher signs up, verifies email from the inbox, and reaches the dashboard
   await page.getByRole('link', { name: 'Continue' }).click();
 
   await expect(page).toHaveURL(/\/teacher$/);
-  await expect(page.getByRole('heading', { name: 'Teacher dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   expect(overflow).toBe(false);
 
   // Session survives a reload (restored from the httpOnly refresh cookie).
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Teacher dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/login$/);

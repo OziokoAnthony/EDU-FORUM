@@ -1,5 +1,5 @@
-import { AreaPlaceholder } from '@/components/area-placeholder';
+import { TeacherHome } from './teacher-home';
 
 export default function Page() {
-  return <AreaPlaceholder title="Teacher dashboard" next="Your onboarding wizard (profile, qualifications, CV, location) arrives in Phase 3." />;
+  return <TeacherHome />;
 }

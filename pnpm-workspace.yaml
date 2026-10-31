@@ -10,3 +10,5 @@ allowBuilds:
   '@prisma/engines': true
   unrs-resolver: false
   '@parcel/watcher': false
+  # Optional native speed-up for BullMQ; the JS fallback is fine.
+  msgpackr-extract: false
