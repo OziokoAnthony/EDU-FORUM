@@ -1,0 +1,22 @@
+{
+  "name": "edu-forum",
+  "private": true,
+  "packageManager": "pnpm@12.16.1",
+  "scripts": {
+    "setup:env": "node scripts/setup-env.mjs",
+    "build:shared": "pnpm --filter @edu-forum/shared build",
+    "dev": "pnpm build:shared && pnpm -r --parallel --filter @edu-forum/shared --filter @edu-forum/backend --filter @edu-forum/frontend dev",
+    "dev:backend": "pnpm build:shared && pnpm --filter @edu-forum/backend dev",
+    "dev:frontend": "pnpm build:shared && pnpm --filter @edu-forum/frontend dev",
+    "build": "pnpm build:shared && pnpm --filter @edu-forum/backend build && pnpm --filter @edu-forum/frontend build",
+    "test": "pnpm build:shared && pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2"
+  }
+}
