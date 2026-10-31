@@ -257,6 +257,19 @@ covers the window).
   your own content. Every admin action is written to `audit_logs`. Endpoints added beyond the
   PRD table: `POST /admin/teachers/:id/restore`, `GET /admin/meta/:type` (includes inactive).
 
+- **SEO (Phase 10):** job URLs are `/jobs/{slugify(title + LGA)}-{shortId}` (8 chars from
+  `abcdefghijkmnpqrstuvwxyz23456789`); `/jobs/{x}` is a state page when `x` is a state slug,
+  otherwise a job (by the short id). `/jobs/{state}/{y}` is a state×subject page when `y` is
+  `{subject}-teacher`, otherwise an LGA page. `GET /seo/meta?path=` is the single source of
+  titles, descriptions, canonical, breadcrumbs and indexability; landing pages need 3+ live
+  jobs; closed jobs are noindex with no JobPosting; filtered `/jobs` and `?page=2+` are noindex.
+  Public pages fetch with `next: { revalidate: 300, tags }` (Cache Components are off). On
+  publish/edit/pause/close/takedown/expiry the API queues `seo-notify`: it POSTs the web app's
+  `/api/revalidate` (shared `REVALIDATE_SECRET`; `revalidateTag(tag, { expire: 0 })`) and calls the
+  Indexing API adapter (`INDEXING_DRIVER=log` until production credentials). `proxy.ts` answers
+  410 for jobs closed 30+ days. Home and sitemaps are `force-dynamic` so builds never need the
+  API. Endpoint added beyond the PRD table: `GET /seo/sitemap/vacancies`. No `/schools/*` pages.
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

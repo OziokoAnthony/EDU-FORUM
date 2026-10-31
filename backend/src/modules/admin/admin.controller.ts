@@ -17,6 +17,7 @@ import { CurrentUser, Roles } from '../../common/auth/decorators';
 import type { AuthUser } from '../../common/auth/auth-user';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AuthModule } from '../auth/auth.module';
+import { SeoModule } from '../seo/seo.module';
 import { AdminService } from './admin.service';
 
 const uuid = new ParseUUIDPipe();
@@ -131,5 +132,5 @@ export class AdminController {
   }
 }
 
-@Module({ imports: [AuthModule], controllers: [AdminController], providers: [AdminService] })
+@Module({ imports: [AuthModule, SeoModule], controllers: [AdminController], providers: [AdminService] })
 export class AdminModule {}

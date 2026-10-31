@@ -9,3 +9,4 @@ export * from './vacancy';
 export * from './search';
 export * from './applications';
 export * from './admin';
+export * from './seo';

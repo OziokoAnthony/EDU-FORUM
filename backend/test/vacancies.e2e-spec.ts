@@ -131,7 +131,7 @@ describe('Vacancies (e2e)', () => {
     const d = await verifiedUser(t, 'director');
     const v = await post(d);
     const renamed = await t.http.patch(`${V}/${v.id}`).set('Authorization', d.auth).send({ title: 'JSS Maths Teacher' }).expect(200);
-    expect(renamed.body.slug).toBe('jss-maths-teacher');
+    expect(renamed.body.slug).toBe('jss-maths-teacher-ikeja');
 
     await t.http.post(`${V}/${v.id}/publish`).set('Authorization', d.auth).expect(200);
     const edited = await t.http
@@ -139,7 +139,7 @@ describe('Vacancies (e2e)', () => {
       .set('Authorization', d.auth)
       .send({ title: 'Senior Maths Teacher', screeningQuestions: renamed.body.screeningQuestions })
       .expect(200);
-    expect(edited.body).toMatchObject({ title: 'Senior Maths Teacher', slug: 'jss-maths-teacher' });
+    expect(edited.body).toMatchObject({ title: 'Senior Maths Teacher', slug: 'jss-maths-teacher-ikeja' });
     expect(edited.body.screeningQuestions[0].id).toBe(v.screeningQuestions[0].id);
 
     // Only salaryMin changes, but the merged result breaks min <= max.

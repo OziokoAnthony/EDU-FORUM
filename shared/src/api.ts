@@ -27,6 +27,7 @@ export const ERROR_CODES = [
   'FORBIDDEN',
   'NOT_FOUND',
   'CONFLICT',
+  'GONE',
   'BUSINESS_RULE',
   'RATE_LIMITED',
   'INTERNAL_ERROR',

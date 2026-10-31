@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   APP_NAME,
+  jobPath,
   slugify,
   type AdminReportItem,
   type adminReportsQuerySchema,
@@ -29,6 +30,7 @@ import { AuditService } from '../../infra/audit/audit.service';
 import { EmailQueue, escapeHtml } from '../../infra/mail/email-queue';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { SessionService } from '../auth/session.service';
+import { SeoNotifier } from '../seo/seo-notifier';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const notFound = (what: string) => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', `${what} not found`);
@@ -46,6 +48,7 @@ export class AdminService {
     private readonly audit: AuditService,
     private readonly sessions: SessionService,
     private readonly emails: EmailQueue,
+    private readonly seo: SeoNotifier,
   ) {}
 
   async stats(): Promise<AdminStats> {
@@ -206,6 +209,7 @@ export class AdminService {
       data: { takedownReason: reason, status: 'closed', closedAt: v.closedAt ?? new Date(), closeReason: 'taken_down' },
     });
     await this.audit.log({ actorId: admin.id, action: 'vacancy.takedown', targetType: 'vacancy', targetId: id, metadata: { reason, title: v.title } });
+    await this.seo.notify({ path: jobPath(v), shortId: v.shortId, type: 'URL_DELETED' });
     if (v.createdBy.email) {
       await this.emails.send({
         to: v.createdBy.email,

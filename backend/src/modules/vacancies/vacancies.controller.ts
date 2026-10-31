@@ -17,6 +17,7 @@ import type { AuthUser } from '../../common/auth/auth-user';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { TeacherSearchService } from '../search/teacher-search.service';
 import { VacancySearchService } from '../search/vacancy-search.service';
+import { SeoService } from '../seo/seo.service';
 import { VacanciesService } from './vacancies.service';
 
 const uuid = new ParseUUIDPipe();
@@ -32,6 +33,7 @@ export class VacanciesController {
     private readonly vacancies: VacanciesService,
     private readonly search: VacancySearchService,
     private readonly teacherSearch: TeacherSearchService,
+    private readonly seo: SeoService,
   ) {}
 
   /** Public search; a signed-in teacher also gets a match score and their saved location as origin. */
@@ -66,6 +68,13 @@ export class VacanciesController {
   @RequireVerified()
   getMine(@CurrentUser() user: AuthUser, @Param('id', uuid) id: string): Promise<MyVacancyResponse> {
     return this.vacancies.getMine(user, id);
+  }
+
+  /** PRD: the public job page by SEO slug (`{slug}-{shortId}`); 410 Gone 30 days after closing. */
+  @Get('by-slug/:slug')
+  @Public()
+  bySlug(@CurrentUser() user: AuthUser | undefined, @Param('slug') slug: string) {
+    return this.seo.jobPage(user, slug);
   }
 
   @Get(':id/recommended-teachers')

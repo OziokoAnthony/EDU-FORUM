@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   APPLICATION_STATUS_LABELS,
   canMove,
+  jobPath,
   type ApplicantDetailResponse,
   type ApplicantResponse,
   type applicantsQuerySchema,
@@ -32,6 +33,7 @@ import { VacancySearchService } from '../search/vacancy-search.service';
 import { cvViewKey } from '../teachers/teacher.mapper';
 import { UploadsService } from '../uploads/uploads.service';
 import { toVacancyResponse, VACANCY_INCLUDE } from '../vacancies/vacancy.serializer';
+import { SeoNotifier } from '../seo/seo-notifier';
 import { applicationEmails } from './application-emails';
 
 const notFound = () => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Application not found');
@@ -56,6 +58,7 @@ export class ApplicationsService {
     private readonly config: ConfigService,
     private readonly scores: VacancySearchService,
     private readonly teachers: TeacherSearchService,
+    private readonly seo: SeoNotifier,
   ) {}
 
   // ───────────── teacher side ─────────────
@@ -238,7 +241,8 @@ export class ApplicationsService {
     const openingsFilled = hired >= a.vacancy.openings;
     let vacancyClosed = false;
     if (input.status === 'hired' && input.closeVacancy && a.vacancy.status !== 'closed') {
-      await this.prisma.vacancy.update({ where: { id: a.vacancyId }, data: { status: 'closed', closedAt: new Date(), closeReason: 'filled' } });
+      const v = await this.prisma.vacancy.update({ where: { id: a.vacancyId }, data: { status: 'closed', closedAt: new Date(), closeReason: 'filled' } });
+      await this.seo.notify({ path: jobPath(v), shortId: v.shortId, type: 'URL_DELETED' });
       vacancyClosed = true;
     }
     const [application] = await this.applicants([id]);

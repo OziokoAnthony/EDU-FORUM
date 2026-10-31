@@ -255,7 +255,7 @@ describe('Applications (e2e)', () => {
 
       const csv = await t.http.get(`/api/v1/vacancies/${v.id}/applications/export`).set('Authorization', poster.auth).expect(200);
       expect(csv.headers['content-type']).toContain('text/csv');
-      expect(csv.headers['content-disposition']).toContain('applicants-ss2-physics-teacher.csv');
+      expect(csv.headers['content-disposition']).toContain('applicants-ss2-physics-teacher-ikeja.csv');
       const lines = csv.text.replace(/^﻿/, '').trim().split('\r\n');
       expect(lines[0]).toContain('"Name","Phone","Email"');
       expect(lines[1]).toContain(`"'=HYPERLINK(""http://evil"")"`);

@@ -15,6 +15,7 @@ const CODE_BY_STATUS: Record<number, ErrorCode> = {
   [HttpStatus.FORBIDDEN]: 'FORBIDDEN',
   [HttpStatus.NOT_FOUND]: 'NOT_FOUND',
   [HttpStatus.CONFLICT]: 'CONFLICT',
+  [HttpStatus.GONE]: 'GONE',
   [HttpStatus.UNPROCESSABLE_ENTITY]: 'BUSINESS_RULE',
   [HttpStatus.TOO_MANY_REQUESTS]: 'RATE_LIMITED',
 };

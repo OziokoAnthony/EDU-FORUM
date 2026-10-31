@@ -29,7 +29,8 @@ test('teacher applies; director shortlists with a message and exports CSV; teach
   await page.getByLabel('Your answer').fill('I love hands-on physics teaching.');
   await page.getByLabel('Cover note (optional)').fill('I would love to join your team.');
   await page.getByRole('button', { name: 'Send application' }).click();
-  await expect(page.getByText(/You applied on/)).toBeVisible();
+  // Applying copies the CV in Backblaze B2 (the snapshot); that round trip varies.
+  await expect(page.getByText(/You applied on/)).toBeVisible({ timeout: 30_000 });
   expect((await latestEmail(directorEmail, 'New application')).Subject).toBe(`New application: Physics Teacher ${tag}`);
 
   // Director reviews and shortlists.

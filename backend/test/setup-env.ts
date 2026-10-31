@@ -9,4 +9,5 @@ process.env.STORAGE_DRIVER = 'memory';
 process.env.SCANNER_DRIVER = 'memory';
 process.env.CONVERTER_DRIVER = 'memory';
 process.env.QUEUE_DRIVER = 'inline';
+process.env.INDEXING_DRIVER = 'memory';
 process.env.SCAN_WEBHOOK_SECRET = 'test-webhook-secret-0123456789abcdef';

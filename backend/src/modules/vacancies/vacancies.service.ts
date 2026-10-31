@@ -2,6 +2,7 @@ import { HttpStatus, Inject, Injectable, Logger, type OnModuleInit } from '@nest
 import { randomBytes, randomUUID } from 'node:crypto';
 import {
   DEFAULT_DEADLINE_DAYS,
+  jobPath,
   slugify,
   textLength,
   DESCRIPTION_MIN_CHARS,
@@ -23,6 +24,7 @@ import { Prisma, type VacancyStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { JOB_QUEUE, type JobQueue } from '../../infra/queue/job-queue';
 import { ApplicationsService } from '../applications/applications.service';
+import { SeoNotifier } from '../seo/seo-notifier';
 import { ReferenceCheckService } from '../meta/reference-check.service';
 import { sanitizeDescription } from './sanitize-description';
 import { toMyVacancyResponse, toVacancyResponse, VACANCY_INCLUDE, type VacancyRow } from './vacancy.serializer';
@@ -61,6 +63,7 @@ export class VacanciesService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly refs: ReferenceCheckService,
     private readonly applications: ApplicationsService,
+    private readonly seo: SeoNotifier,
     @Inject(JOB_QUEUE) private readonly queue: JobQueue,
   ) {}
 
@@ -77,7 +80,7 @@ export class VacanciesService implements OnModuleInit {
     for (let attempt = 0; !created; attempt++) {
       try {
         created = await this.prisma.vacancy.create({
-          data: { ...data, createdById: user.id, slug: slugify(fields.title) || 'teaching-job', shortId: shortId() },
+          data: { ...data, createdById: user.id, slug: await this.slugFor(fields.title, fields.lgaId), shortId: shortId() },
         });
       } catch (err) {
         if (!(err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') || attempt >= 3) throw err;
@@ -96,13 +99,14 @@ export class VacanciesService implements OnModuleInit {
     const merged = validate(vacancyRecordSchema, { ...this.toFields(current), ...input });
     const data = await this.prepare(merged);
     // The URL slug never changes once the vacancy has been published (SEO rule).
-    const slug = current.publishedAt ? current.slug : slugify(merged.title) || current.slug;
+    const slug = current.publishedAt ? current.slug : await this.slugFor(merged.title, merged.lgaId);
     if (current.status === 'published' && merged.deadline && merged.deadline < today()) {
       throw invalid('deadline', 'The deadline cannot be in the past');
     }
     const after = await this.prisma.vacancy.update({ where: { id }, data: { ...data, slug } });
     // PRD FR-4: salary or title changes notify applicants.
     await this.applications.notifyVacancyChange(current, after);
+    if (after.status === 'published') await this.seo.notify({ path: jobPath(after), shortId: after.shortId, type: 'URL_UPDATED' });
     return this.getMine(user, id);
   }
 
@@ -122,7 +126,9 @@ export class VacanciesService implements OnModuleInit {
     } else {
       data = { status: 'closed', closedAt: now, closeReason: input?.reason ?? 'filled' };
     }
-    await this.prisma.vacancy.update({ where: { id }, data });
+    const after = await this.prisma.vacancy.update({ where: { id }, data });
+    // Publish: page goes live; pause/close: page leaves the index (CLAUDE.md: revalidate + ping).
+    await this.seo.notify({ path: jobPath(after), shortId: after.shortId, type: action === 'publish' ? 'URL_UPDATED' : 'URL_DELETED' });
     return this.getMine(user, id);
   }
 
@@ -207,12 +213,18 @@ export class VacanciesService implements OnModuleInit {
 
   /** Nightly: live vacancies past their deadline close as "expired". */
   async expire(now = new Date()): Promise<number> {
-    const { count } = await this.prisma.vacancy.updateMany({
-      where: { status: 'published', deletedAt: null, deadline: { lt: toDbDate(fromDbDate(now)!) } },
-      data: { status: 'closed', closedAt: now, closeReason: 'expired' },
-    });
+    const where = { status: 'published' as const, deletedAt: null, deadline: { lt: toDbDate(fromDbDate(now)!) } };
+    const expiring = await this.prisma.vacancy.findMany({ where, select: { slug: true, shortId: true } });
+    const { count } = await this.prisma.vacancy.updateMany({ where, data: { status: 'closed', closedAt: now, closeReason: 'expired' } });
+    for (const v of expiring) await this.seo.notify({ path: jobPath(v), shortId: v.shortId, type: 'URL_DELETED' });
     if (count) this.logger.log(`Closed ${count} expired vacancies`);
     return count;
+  }
+
+  /** URL slug: title + LGA, e.g. "ss2-physics-teacher-ikeja" (PRD URL structure). */
+  private async slugFor(title: string, lgaId: string): Promise<string> {
+    const lga = await this.prisma.lga.findUnique({ where: { id: lgaId }, select: { name: true } });
+    return slugify(`${title} ${lga?.name ?? ''}`) || 'teaching-job';
   }
 
   private async findOwn(user: AuthUser, id: string) {

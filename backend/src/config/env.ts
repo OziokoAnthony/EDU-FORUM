@@ -43,6 +43,11 @@ const envSchema = z.object({
   GOTENBERG_URL: z.string().default('http://localhost:3100'),
 
   GEOCODER_DRIVER: z.enum(['stub']).default('stub'),
+
+  // SEO: on-demand revalidation of the web app's cached pages (off when empty) and the Google
+  // Indexing API (a logger until production credentials exist; memory in tests).
+  REVALIDATE_SECRET: z.string().default(''),
+  INDEXING_DRIVER: z.enum(['log', 'memory']).default('log'),
 }).superRefine((v, ctx) => {
   if (v.STORAGE_DRIVER !== 's3') return;
   for (const key of ['S3_ENDPOINT', 'S3_REGION', 'S3_BUCKET', 'S3_ACCESS_KEY', 'S3_SECRET_KEY'] as const) {
