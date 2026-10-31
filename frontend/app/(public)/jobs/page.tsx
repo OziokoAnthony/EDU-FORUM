@@ -64,7 +64,7 @@ export default async function Page({ searchParams }: Props) {
         </label>
         <label className="space-y-1">
           <span className="block text-sm font-medium text-slate-800">State</span>
-          <select name="state" defaultValue={s.state ?? ''} className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
+          <select name="state" defaultValue={s.state ?? ''} className="block w-full rounded-lg border border-slate-300 bg-panel px-3 py-2.5">
             <option value="">All states</option>
             {(states?.data ?? []).map((st) => (
               <option key={st.slug} value={st.slug}>
@@ -75,7 +75,7 @@ export default async function Page({ searchParams }: Props) {
         </label>
         <label className="space-y-1">
           <span className="block text-sm font-medium text-slate-800">Subject</span>
-          <select name="subjects" defaultValue={s.subjects ?? ''} className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">
+          <select name="subjects" defaultValue={s.subjects ?? ''} className="block w-full rounded-lg border border-slate-300 bg-panel px-3 py-2.5">
             <option value="">All subjects</option>
             {(subjects?.data ?? []).map((sub) => (
               <option key={sub.slug} value={sub.slug}>

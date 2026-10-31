@@ -101,7 +101,7 @@ export function TeacherHome() {
       {message ? <Alert kind={message.kind}>{message.text}</Alert> : null}
 
       {p.isPublished ? (
-        <Button type="button" loading={busy} onClick={() => toggle('unpublish')} className="bg-slate-700 hover:bg-slate-800">
+        <Button type="button" loading={busy} onClick={() => toggle('unpublish')} className="bg-stone-600 hover:bg-stone-500">
           Hide my profile
         </Button>
       ) : completeness.canPublish ? (
@@ -111,7 +111,7 @@ export function TeacherHome() {
       ) : (
         <Link
           href="/teacher/onboarding"
-          className="flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-800"
+          className="flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-600"
         >
           Continue profile setup
         </Link>

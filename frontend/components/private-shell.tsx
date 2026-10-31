@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { APP_NAME, type UserRole } from '@edu-forum/shared';
+import type { UserRole } from '@edu-forum/shared';
 import { AuthProvider, homeFor, useAuth } from '@/lib/auth';
+import { SiteBanner } from './site-banner';
 
 /**
  * Wraps a private area (teacher, hiring, admin): restores the session, sends signed-out
@@ -35,20 +35,19 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
 
   return (
     <>
-      <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-        <Link href="/" className="text-lg font-bold text-emerald-800">
-          {APP_NAME}
-        </Link>
+      <header className="mx-auto max-w-6xl sm:px-4">
+        <SiteBanner compact>
         <button
           type="button"
           onClick={async () => {
             await logout();
             router.replace('/login');
           }}
-          className="text-sm font-semibold text-slate-700 underline"
+          className="rounded-sm border border-gold/60 bg-black/40 px-3 py-1.5 font-heading text-sm uppercase tracking-[0.12em] text-gold hover:bg-black/60"
         >
           Sign out
         </button>
+        </SiteBanner>
       </header>
       <div className="animate-fade-in">{children}</div>
     </>

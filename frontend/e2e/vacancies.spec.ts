@@ -21,7 +21,7 @@ async function verifyLink(to: string): Promise<string> {
 
 async function signUpDirector(page: Page, email: string) {
   await page.goto('/register');
-  await page.getByText('Director', { exact: true }).click();
+  await page.locator('fieldset').getByText('Director', { exact: true }).click();
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password').fill('lead2026x');
   await page.getByRole('checkbox').check();

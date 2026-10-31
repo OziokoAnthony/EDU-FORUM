@@ -47,7 +47,7 @@ export default function RichTextEditor({
   );
 
   return (
-    <div className={`rounded-lg border bg-white ${invalid ? 'border-red-500' : 'border-slate-300'} focus-within:border-emerald-600`}>
+    <div className={`rounded-lg border bg-panel ${invalid ? 'border-red-500' : 'border-slate-300'} focus-within:border-emerald-600`}>
       {editor ? (
         <div className="flex flex-wrap gap-1 border-b border-slate-200 p-1" role="toolbar" aria-label="Formatting">
           {tool('Bold', editor.isActive('bold'), () => editor.chain().focus().toggleBold().run())}

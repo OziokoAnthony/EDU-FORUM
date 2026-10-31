@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import { PhotoCollage, PhotoStrip } from './photo-collage';
 
 export const Field = forwardRef<
   HTMLInputElement,
@@ -40,7 +41,7 @@ export function Button({
   return (
     <button
       disabled={loading || props.disabled}
-      className={`inline-flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-800 disabled:opacity-60 ${className}`}
+      className={`inline-flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-600 disabled:opacity-60 ${className}`}
       {...props}
     >
       {loading ? 'Please wait…' : children}
@@ -61,21 +62,24 @@ export function Alert({ kind = 'error', children }: { kind?: 'error' | 'success'
   );
 }
 
-/** Sign-in, sign-up, verify and reset pages: a card that rises in over slowly drifting colour. */
+/**
+ * Sign-in, sign-up, verify and reset pages: the form card rises in beside a photo collage
+ * (teacher, principal, director, school, CV) on laptops, under a row of round photos on phones.
+ */
 export function AuthCard({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
   return (
-    <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-amber-50">
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 -top-24 h-72 w-72 animate-float rounded-full bg-emerald-200/50 blur-3xl" />
-        <div className="absolute -bottom-24 -right-16 h-80 w-80 animate-float rounded-full bg-amber-200/40 blur-3xl [animation-delay:-3s]" />
+    <main className="mx-auto grid w-full max-w-6xl gap-4 px-4 py-6 lg:grid-cols-[1fr_28rem] lg:py-10">
+      <div className="hidden lg:block">
+        <PhotoCollage />
       </div>
-      <main className="relative mx-auto w-full max-w-md px-4 py-10">
-        <div className="animate-fade-up rounded-2xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-emerald-900/5 backdrop-blur sm:p-8">
-          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+      <div className="space-y-4">
+        <PhotoStrip />
+        <div className="animate-fade-up rounded-md border border-slate-200 bg-panel p-6 shadow-xl shadow-black/30 sm:p-8">
+          <h1 className="text-3xl text-slate-900">{title}</h1>
           <div className="mt-6 space-y-5">{children}</div>
           {footer ? <div className="mt-6 text-sm text-slate-600">{footer}</div> : null}
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

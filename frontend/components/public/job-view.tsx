@@ -62,7 +62,7 @@ export async function JobView({ page }: { page: JobPageResponse }) {
           This position has closed. See similar jobs below.
         </p>
       ) : (
-        <Link href={applyHref} className="flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-800 sm:w-auto sm:px-8">
+        <Link href={applyHref} className="flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-600 sm:w-auto sm:px-8">
           Apply free with your CV
         </Link>
       )}

@@ -72,7 +72,7 @@ test('shows field errors from the shared schema and a generic sign-in error', as
 test('a director signs up, verifies and lands in the hiring area', async ({ page }, info) => {
   const email = `pw-director-${info.project.name}-${Date.now()}@e2e.edu-forum.test`;
   await page.goto('/register');
-  await page.getByText('Director', { exact: true }).click();
+  await page.locator('fieldset').getByText('Director', { exact: true }).click();
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password').fill('lead2026x');
   await page.getByRole('checkbox').check();
