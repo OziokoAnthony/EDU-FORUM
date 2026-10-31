@@ -45,7 +45,8 @@ test('teacher completes the onboarding wizard, uploads a CV and publishes', asyn
   await page.getByRole('link', { name: 'Continue profile setup' }).click();
 
   // 1. Personal details
-  await expect(page.getByRole('heading', { name: 'Personal details' })).toBeVisible();
+  // First visit compiles the wizard route in the dev server, which can take a while.
+  await expect(page.getByRole('heading', { name: 'Personal details' })).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
   await noHorizontalScroll(page);
   await page.getByRole('button', { name: 'Save and continue' }).click();
@@ -103,14 +104,10 @@ test('teacher completes the onboarding wizard, uploads a CV and publishes', asyn
   await expect(page.getByText('ada-okafor-cv.pdf')).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  // 8. Identification (submission arrives with identity verification)
-  await expect(page.getByRole('heading', { name: 'Identification' })).toBeVisible();
-  await page.getByRole('button', { name: 'Review and publish' }).click();
-
   await expect(page).toHaveURL(/\/teacher$/);
   await expect(page.getByText('85%')).toBeVisible();
   await page.getByRole('button', { name: 'Publish my profile' }).click();
-  await expect(page.getByText('Your profile is live. Schools can now find you.')).toBeVisible();
+  await expect(page.getByText('Your profile is live. Principals and directors can now find you.')).toBeVisible();
   await noHorizontalScroll(page);
 });
 

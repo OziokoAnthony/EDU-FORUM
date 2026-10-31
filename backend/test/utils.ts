@@ -85,11 +85,6 @@ export async function deleteTestUsers(prisma: PrismaService, phones: string[] = 
   await prisma.qualification.deleteMany({ where: teacherId });
   await prisma.certification.deleteMany({ where: teacherId });
   await prisma.workExperience.deleteMany({ where: teacherId });
-  const schools = await prisma.schoolMember.findMany({ where: { userId: { in: ids } }, select: { schoolId: true } });
-  const schoolIds = [...new Set(schools.map((s) => s.schoolId))];
-  await prisma.schoolInvite.deleteMany({ where: { OR: [{ schoolId: { in: schoolIds } }, { invitedById: { in: ids } }] } });
-  await prisma.schoolMember.deleteMany({ where: { OR: [{ schoolId: { in: schoolIds } }, { userId: { in: ids } }] } });
-  await prisma.school.deleteMany({ where: { id: { in: schoolIds } } });
   await prisma.upload.deleteMany({ where: { userId: { in: ids } } });
   await prisma.teacherProfile.deleteMany({ where: { userId: { in: ids } } });
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
@@ -101,8 +96,8 @@ export interface SignedInUser {
   auth: string;
 }
 
-/** Registers and verifies (by email link) a teacher or school owner. */
-export async function verifiedUser(t: TestApp, role: 'teacher' | 'school' = 'teacher'): Promise<SignedInUser> {
+/** Registers and verifies (by email link) a teacher, principal or director. */
+export async function verifiedUser(t: TestApp, role: 'teacher' | 'principal' | 'director' = 'teacher'): Promise<SignedInUser> {
   const email = uniqueEmail(role);
   const res = await t.http
     .post('/api/v1/auth/register')

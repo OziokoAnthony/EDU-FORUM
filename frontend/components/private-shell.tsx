@@ -7,7 +7,7 @@ import { APP_NAME, type UserRole } from '@edu-forum/shared';
 import { AuthProvider, homeFor, useAuth } from '@/lib/auth';
 
 /**
- * Wraps a private area (teacher, school, admin): restores the session, sends signed-out
+ * Wraps a private area (teacher, hiring, admin): restores the session, sends signed-out
  * users to /login, unverified users to verification, and other roles to their own area.
  * The API enforces the same rules; this only keeps the UI from showing the wrong screens.
  */

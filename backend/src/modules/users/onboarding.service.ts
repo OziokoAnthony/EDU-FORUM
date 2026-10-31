@@ -4,8 +4,8 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 
 /**
  * Onboarding progress computed from saved data, so the wizard can resume at any step.
- * "required" = needed to publish a teacher profile (CLAUDE.md publish gate) or to finish
- * school onboarding (FR-3).
+ * "required" = needed to publish a teacher profile (CLAUDE.md publish gate). Principals and
+ * directors only verify their email/phone; there is no school onboarding (user, 2026-10-31).
  */
 @Injectable()
 export class OnboardingService {
@@ -18,7 +18,6 @@ export class OnboardingService {
 
     let steps: OnboardingStep[];
     if (user.role === 'teacher') steps = [verifyStep, ...(await this.teacherSteps(userId))];
-    else if (user.role === 'school_owner') steps = [verifyStep, ...(await this.schoolSteps(userId))];
     else steps = [verifyStep];
 
     const next = steps.find((s) => s.required && !s.complete);
@@ -34,7 +33,6 @@ export class OnboardingService {
             qualifications: { where: { deletedAt: null } },
             certifications: { where: { deletedAt: null } },
             experiences: { where: { deletedAt: null } },
-            documents: { where: { deletedAt: null } },
             cvs: { where: { isActive: true, scanStatus: 'clean', deletedAt: null } },
           },
         },
@@ -52,24 +50,6 @@ export class OnboardingService {
       { key: 'experience', label: 'Work experience', required: true, complete: (c?.experiences ?? 0) > 0 },
       { key: 'preferences', label: 'Teaching preferences', required: true, complete: !!(p?.subjects.length && p.levels.length && p.jobTypes.length) },
       { key: 'cv', label: 'CV upload', required: true, complete: (c?.cvs ?? 0) > 0 },
-      { key: 'identification', label: 'Identification', required: false, complete: (c?.documents ?? 0) > 0 },
-    ];
-  }
-
-  private async schoolSteps(userId: string): Promise<OnboardingStep[]> {
-    const member = await this.prisma.schoolMember.findFirst({
-      where: { userId, status: 'active', deletedAt: null },
-      include: { school: { include: { _count: { select: { documents: { where: { deletedAt: null } }, members: true } } } } },
-    });
-    const s = member?.school;
-    const visited = new Set(s?.onboardingSteps ?? []);
-    return [
-      { key: 'details', label: 'School details', required: true, complete: !!s },
-      { key: 'location', label: 'Location', required: true, complete: !!(s?.stateId && s.lgaId && s.addressLine) },
-      { key: 'contact', label: 'Contact person', required: true, complete: !!(s?.contactName && s.contactTitle && s.contactPhone && s.contactEmail) },
-      // Unverified schools can still post (labelled "unverified"), so this is not blocking.
-      { key: 'identification', label: 'Identification', required: false, complete: (s?._count.documents ?? 0) > 0 },
-      { key: 'team', label: 'Invite team members', required: false, complete: (s?._count.members ?? 0) > 1 || visited.has('team') },
     ];
   }
 }

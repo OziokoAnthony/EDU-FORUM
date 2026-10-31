@@ -18,8 +18,6 @@ import type { StepProps } from './types';
 type Input = z.input<typeof certificationSchema>;
 type Output = z.output<typeof certificationSchema>;
 
-const REVIEW_LABEL = { pending: 'Awaiting review', verified: 'Verified', rejected: 'Rejected' } as const;
-
 /** Optional step: TRCN and other professional certificates ("required where held"). */
 export function CertificationsStep({ profile, onDone }: StepProps) {
   const { authed } = useAuth();
@@ -43,7 +41,6 @@ export function CertificationsStep({ profile, onDone }: StepProps) {
                 `${c.issuer} · No. ${c.number}`,
                 c.issuedAt ? `Issued ${c.issuedAt}${c.expiresAt ? `, expires ${c.expiresAt}` : ''}` : null,
                 fileStatusText(c.hasFile, c.fileScanStatus),
-                REVIEW_LABEL[c.verificationStatus],
               ]}
               onRemove={async () => {
                 await authed(`/teachers/me/certifications/${c.id}`, { method: 'DELETE' });

@@ -10,10 +10,11 @@ export const REQUIRE_VERIFIED = 'requireVerified';
 export const Public = () => SetMetadata(IS_PUBLIC, true);
 
 /**
- * Role check (PRD auth columns T / S / A). 'school' means school owner or recruiter.
+ * Role check (PRD auth columns T / S / A). 'leader' = principal or director, who replace the
+ * PRD's school owner/recruiter (user, 2026-10-31) and share the same access.
  * Ownership of the specific resource is still checked in the service.
  */
-export type RoleKey = 'teacher' | 'school' | 'admin';
+export type RoleKey = 'teacher' | 'leader' | 'admin';
 export const Roles = (...roles: RoleKey[]) => SetMetadata(ROLES, roles);
 
 /** Email or phone must be verified (FR-1: verification before onboarding starts). */

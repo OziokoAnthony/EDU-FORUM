@@ -12,7 +12,7 @@ describe('/me (e2e)', () => {
     await t.close();
   });
 
-  async function signUp(role: 'teacher' | 'school') {
+  async function signUp(role: 'teacher' | 'principal' | 'director') {
     const email = uniqueEmail(role);
     const res = await t.http
       .post('/api/v1/auth/register')
@@ -68,7 +68,7 @@ describe('/me (e2e)', () => {
     const before = await t.http.get('/api/v1/me/onboarding').set('Authorization', auth).expect(200);
     expect(before.body).toMatchObject({ role: 'teacher', verified: false, nextStep: 'verify', complete: false });
     expect(before.body.steps.map((s: { key: string }) => s.key)).toEqual([
-      'verify', 'personal', 'location', 'qualifications', 'certifications', 'experience', 'preferences', 'cv', 'identification',
+      'verify', 'personal', 'location', 'qualifications', 'certifications', 'experience', 'preferences', 'cv',
     ]);
 
     await t.http.post('/api/v1/auth/verify-email').send({ token: linkToken(t.mailer.lastTo(email)!.text) }).expect(200);
@@ -76,11 +76,9 @@ describe('/me (e2e)', () => {
     expect(after.body).toMatchObject({ verified: true, nextStep: 'personal' });
   });
 
-  it('GET /me/onboarding: school owner steps', async () => {
-    const { auth } = await signUp('school');
+  it('GET /me/onboarding: principals and directors only verify their email/phone', async () => {
+    const { auth } = await signUp('director');
     const res = await t.http.get('/api/v1/me/onboarding').set('Authorization', auth).expect(200);
-    expect(res.body.steps.map((s: { key: string }) => s.key)).toEqual([
-      'verify', 'details', 'location', 'contact', 'identification', 'team',
-    ]);
+    expect(res.body.steps.map((s: { key: string }) => s.key)).toEqual(['verify']);
   });
 });

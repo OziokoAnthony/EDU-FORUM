@@ -40,7 +40,6 @@ export function toCertificationResponse(c: Certification & { type: Certification
     expiresAt: fromDbDate(c.expiresAt),
     hasFile: !!c.fileKey,
     fileScanStatus: c.fileKey ? (files.get(c.fileKey) ?? 'pending') : null,
-    verificationStatus: c.verificationStatus,
   };
 }
 

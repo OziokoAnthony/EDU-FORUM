@@ -24,7 +24,7 @@ describe('Auth (e2e)', () => {
     await t.close();
   });
 
-  async function registerEmail(role: 'teacher' | 'school' = 'teacher') {
+  async function registerEmail(role: 'teacher' | 'principal' | 'director' = 'teacher') {
     const email = uniqueEmail(role);
     const res = await t.http
       .post('/api/v1/auth/register')
@@ -47,9 +47,9 @@ describe('Auth (e2e)', () => {
       expect(t.mailer.lastTo(email)?.text).toContain('/verify-email?token=');
     });
 
-    it('maps the school role to school_owner', async () => {
-      const { res } = await registerEmail('school');
-      expect(res.body.user.role).toBe('school_owner');
+    it('signs up principals and directors with their own role', async () => {
+      expect((await registerEmail('principal')).res.body.user.role).toBe('principal');
+      expect((await registerEmail('director')).res.body.user.role).toBe('director');
     });
 
     it('rejects a duplicate email with 409', async () => {

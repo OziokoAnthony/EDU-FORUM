@@ -91,7 +91,7 @@ export function LocationStep({ profile, onDone }: StepProps) {
       <Field
         label="Street address (optional)"
         autoComplete="street-address"
-        hint="Private: schools never see your street or map pin, only your LGA and distance."
+        hint="Private: principals and directors never see your street or map pin, only your LGA and distance."
         error={errors.addressLine?.message}
         {...register('addressLine')}
       />

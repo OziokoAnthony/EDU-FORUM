@@ -19,10 +19,12 @@ datasource db {
 
 // ───────────────────────────── Enums ─────────────────────────────
 
+/// Sign-up offers teacher, principal or director (user, 2026-10-31). Principals and directors
+/// have the same access: view teacher profiles/CVs, post vacancies, chat with teachers.
 enum UserRole {
   teacher
-  school_owner
-  recruiter
+  principal
+  director
   admin
 }
 
@@ -87,21 +89,6 @@ enum CvMimeType {
   docx
 }
 
-enum DocumentOwnerType {
-  teacher
-  school
-}
-
-enum IdentityDocType {
-  nin_slip
-  voters_card
-  drivers_licence
-  international_passport
-  cac_certificate
-  moe_approval_letter
-  contact_person_id
-}
-
 enum DocumentStatus {
   pending
   verified
@@ -115,38 +102,6 @@ enum SchoolType {
   combined
   tertiary
   tutorial_centre
-}
-
-enum SchoolOwnership {
-  private
-  public
-  mission
-}
-
-enum PopulationBand {
-  under_100
-  from_100_to_299
-  from_300_to_599
-  from_600_to_999
-  over_1000
-}
-
-enum ContactTitle {
-  director
-  proprietor
-  principal
-  head_teacher
-  hr
-}
-
-enum SchoolMemberRole {
-  owner
-  recruiter
-}
-
-enum SchoolMemberStatus {
-  active
-  removed
 }
 
 enum LocationVisibility {
@@ -238,7 +193,6 @@ enum ProfileViewKind {
 
 enum ReportTargetType {
   teacher_profile
-  school
   vacancy
   message
 }
@@ -259,7 +213,6 @@ enum AdPageType {
   job_search
   landing
   job_detail
-  school
   blog_post
 }
 
@@ -268,9 +221,6 @@ enum UploadPurpose {
   profile_photo
   qualification_file
   certification_file
-  identity_document
-  identity_selfie
-  school_logo
   message_attachment
   post_cover
 }
@@ -302,7 +252,6 @@ model State {
   lgas    Lga[]
 
   teacherProfiles TeacherProfile[]
-  schools         School[]
   vacancies       Vacancy[]
 
   @@unique([countryCode, name])
@@ -321,7 +270,6 @@ model Lga {
   state State @relation(fields: [stateId], references: [id])
 
   teacherProfiles TeacherProfile[]
-  schools         School[]
   vacancies       Vacancy[]
 
   @@unique([stateId, slug])
@@ -407,13 +355,11 @@ model User {
   deletedAt            DateTime?  @map("deleted_at")
 
   teacherProfile  TeacherProfile?
-  schoolMembers   SchoolMember[]   @relation("MemberUser")
-  invitedMembers  SchoolMember[]   @relation("MemberInvitedBy")
-  sentTeamInvites SchoolInvite[]
   refreshTokens   RefreshToken[]
   authTokens      AuthToken[]
 
   createdVacancies        Vacancy[]                  @relation("VacancyCreatedBy")
+  employerConversations   Conversation[]             @relation("ConversationEmployer")
   sentInvitations         Invitation[]               @relation("InvitationInvitedBy")
   applicationNotes        ApplicationNote[]
   statusChanges           ApplicationStatusHistory[]
@@ -425,7 +371,6 @@ model User {
   reports                 Report[]                   @relation("ReportReporter")
   resolvedReports         Report[]                   @relation("ReportResolvedBy")
   auditLogs               AuditLog[]
-  reviewedDocuments       IdentityDocument[]         @relation("DocumentReviewedBy")
   reviewedCertifications  Certification[]            @relation("CertificationReviewedBy")
   uploads                 Upload[]
   posts                   Post[]
@@ -510,7 +455,7 @@ model TeacherProfile {
   photoKey           String?            @map("photo_key")
   bio                String?
 
-  // Location (required to publish). address_line, lat, lng are never returned to schools.
+  // Location (required to publish). address_line, lat, lng are never returned to principals/directors.
   countryCode        String?            @map("country_code") @db.Char(2)
   stateId            String?            @map("state_id") @db.Uuid
   lgaId              String?            @map("lga_id") @db.Uuid
@@ -553,7 +498,6 @@ model TeacherProfile {
   certifications  Certification[]
   experiences     WorkExperience[]
   cvs             Cv[]
-  documents       IdentityDocument[]
   applications    Application[]
   invitations     Invitation[]
   conversations   Conversation[]
@@ -678,137 +622,16 @@ model CvSnapshot {
   @@map("cv_snapshots")
 }
 
-/// Teacher government ID, or school CAC / Ministry approval / contact person ID.
-model IdentityDocument {
-  id              String            @id @default(uuid()) @db.Uuid
-  ownerType       DocumentOwnerType @map("owner_type")
-  teacherId       String?           @map("teacher_id") @db.Uuid
-  schoolId        String?           @map("school_id") @db.Uuid
-  docType         IdentityDocType   @map("doc_type")
-  /// AES-256-GCM ciphertext; never returned in plain text except to admins (audit-logged).
-  docNumberEnc    String?           @map("doc_number_enc")
-  fileKey         String            @map("file_key")
-  selfieKey       String?           @map("selfie_key")
-  status          DocumentStatus    @default(pending)
-  reviewedById    String?           @map("reviewed_by") @db.Uuid
-  reviewedAt      DateTime?         @map("reviewed_at")
-  rejectionReason String?           @map("rejection_reason")
-  /// Previous submission this one replaces (POST /verifications/:id/resubmit).
-  resubmissionOfId String?          @map("resubmission_of") @db.Uuid
-  createdAt       DateTime          @default(now()) @map("created_at")
-  updatedAt       DateTime          @updatedAt @map("updated_at")
-  deletedAt       DateTime?         @map("deleted_at")
-
-  teacher        TeacherProfile?    @relation(fields: [teacherId], references: [id])
-  school         School?            @relation(fields: [schoolId], references: [id])
-  reviewedBy     User?              @relation("DocumentReviewedBy", fields: [reviewedById], references: [id])
-  resubmissionOf IdentityDocument?  @relation("Resubmission", fields: [resubmissionOfId], references: [id])
-  resubmissions  IdentityDocument[] @relation("Resubmission")
-
-  @@index([status, ownerType, createdAt])
-  @@index([teacherId])
-  @@index([schoolId])
-  @@map("identity_documents")
-}
-
-// ─────────────────────────── Schools ───────────────────────────
-
-model School {
-  id                 String             @id @default(uuid()) @db.Uuid
-  name               String
-  /// Never changes once published (301 if forced).
-  slug               String             @unique
-  type               SchoolType
-  ownership          SchoolOwnership
-  curriculum         String[]           @default([]) // nigerian, british, american, ib, montessori
-  populationBand     PopulationBand?    @map("population_band")
-  logoKey            String?            @map("logo_key")
-  website            String?
-  description        String?
-
-  countryCode        String?            @map("country_code") @db.Char(2)
-  stateId            String?            @map("state_id") @db.Uuid
-  lgaId              String?            @map("lga_id") @db.Uuid
-  area               String?
-  addressLine        String?            @map("address_line")
-  lat                Float?
-  lng                Float?
-  geog               Unsupported("geography(Point, 4326)")?
-
-  contactName        String?            @map("contact_name")
-  contactTitle       ContactTitle?      @map("contact_title")
-  contactPhone       String?            @map("contact_phone")
-  contactEmail       String?            @map("contact_email")
-  verificationStatus VerificationStatus @default(unverified) @map("verification_status")
-  verifiedAt         DateTime?          @map("verified_at")
-  onboardingSteps    String[]           @default([]) @map("onboarding_steps")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  deletedAt          DateTime?          @map("deleted_at")
-
-  state State? @relation(fields: [stateId], references: [id])
-  lga   Lga?   @relation(fields: [lgaId], references: [id])
-
-  members       SchoolMember[]
-  teamInvites   SchoolInvite[]
-  vacancies     Vacancy[]
-  documents     IdentityDocument[]
-  conversations Conversation[]
-  profileViews  ProfileView[]
-
-  @@index([stateId, lgaId])
-  @@index([verificationStatus])
-  @@index([geog], type: Gist)
-  @@map("schools")
-}
-
-model SchoolMember {
-  id          String             @id @default(uuid()) @db.Uuid
-  schoolId    String             @map("school_id") @db.Uuid
-  userId      String             @map("user_id") @db.Uuid
-  role        SchoolMemberRole
-  invitedById String?            @map("invited_by") @db.Uuid
-  status      SchoolMemberStatus @default(active)
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
-  deletedAt   DateTime?          @map("deleted_at")
-
-  school    School @relation(fields: [schoolId], references: [id])
-  user      User   @relation("MemberUser", fields: [userId], references: [id])
-  invitedBy User?  @relation("MemberInvitedBy", fields: [invitedById], references: [id])
-
-  @@unique([schoolId, userId])
-  @@index([userId])
-  @@map("school_members")
-}
-
-/// Team invite by email (POST /schools/me/members/invite → /schools/invites/:token/accept).
-model SchoolInvite {
-  id          String           @id @default(uuid()) @db.Uuid
-  schoolId    String           @map("school_id") @db.Uuid
-  email       String
-  role        SchoolMemberRole @default(recruiter)
-  tokenHash   String           @unique @map("token_hash")
-  invitedById String           @map("invited_by") @db.Uuid
-  expiresAt   DateTime         @map("expires_at")
-  acceptedAt  DateTime?        @map("accepted_at")
-  revokedAt   DateTime?        @map("revoked_at")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  school    School @relation(fields: [schoolId], references: [id])
-  invitedBy User   @relation(fields: [invitedById], references: [id])
-
-  @@index([schoolId, email])
-  @@map("school_invites")
-}
+// ─────────────────────────── Vacancies ───────────────────────────
 
 // ─────────────────────────── Vacancies ───────────────────────────
 
 model Vacancy {
   id                     String              @id @default(uuid()) @db.Uuid
-  schoolId               String              @map("school_id") @db.Uuid
+  /// The principal or director who posted it.
   createdById            String              @map("created_by") @db.Uuid
+  /// Typed on each vacancy; hidden in every public response when location_visibility = anonymous.
+  schoolName             String?             @map("school_name")
   /// SEO URL is /jobs/{slug}-{shortId}; never changes once published.
   slug                   String
   shortId                String              @unique @map("short_id")
@@ -846,7 +669,7 @@ model Vacancy {
   publishedAt            DateTime?           @map("published_at")
   closedAt               DateTime?           @map("closed_at")
   closeReason            VacancyCloseReason? @map("close_reason")
-  /// First vacancy from an unverified school is held for admin review (PRD abuse rule).
+  /// Held for admin review (moderation); rules are set in the vacancies phase.
   needsReview            Boolean             @default(false) @map("needs_review")
   takedownReason         String?             @map("takedown_reason")
   viewsCount             Int                 @default(0) @map("views_count")
@@ -854,7 +677,6 @@ model Vacancy {
   updatedAt              DateTime            @updatedAt @map("updated_at")
   deletedAt              DateTime?           @map("deleted_at")
 
-  school    School @relation(fields: [schoolId], references: [id])
   createdBy User   @relation("VacancyCreatedBy", fields: [createdById], references: [id])
   state     State  @relation(fields: [stateId], references: [id])
   lga       Lga    @relation(fields: [lgaId], references: [id])
@@ -863,7 +685,7 @@ model Vacancy {
   invitations  Invitation[]
 
   @@index([status, publishedAt])
-  @@index([schoolId, status])
+  @@index([createdById, status])
   @@index([stateId, lgaId, status])
   @@index([subjects], type: Gin)
   @@index([levels], type: Gin)
@@ -924,7 +746,7 @@ model ApplicationStatusHistory {
   @@map("application_status_history")
 }
 
-/// Private to the school.
+/// Private to the principal/director who wrote it.
 model ApplicationNote {
   id            String    @id @default(uuid()) @db.Uuid
   applicationId String    @map("application_id") @db.Uuid
@@ -1030,7 +852,8 @@ model SavedSearch {
 /// Opened only after shortlist or accepted invite.
 model Conversation {
   id            String    @id @default(uuid()) @db.Uuid
-  schoolId      String    @map("school_id") @db.Uuid
+  /// The principal or director (chat is open at any time, user 2026-10-31).
+  employerId    String    @map("employer_id") @db.Uuid
   teacherId     String    @map("teacher_id") @db.Uuid
   applicationId String?   @map("application_id") @db.Uuid
   blockedById   String?   @map("blocked_by") @db.Uuid
@@ -1040,13 +863,13 @@ model Conversation {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
-  school      School         @relation(fields: [schoolId], references: [id])
+  employer    User           @relation("ConversationEmployer", fields: [employerId], references: [id])
   teacher     TeacherProfile @relation(fields: [teacherId], references: [id])
   application Application?   @relation(fields: [applicationId], references: [id])
   blockedBy   User?          @relation("ConversationBlockedBy", fields: [blockedById], references: [id])
   messages    Message[]
 
-  @@unique([schoolId, teacherId])
+  @@unique([employerId, teacherId])
   @@index([teacherId, lastMessageAt])
   @@map("conversations")
 }
@@ -1090,18 +913,16 @@ model Notification {
   @@map("notifications")
 }
 
-/// Every profile view and CV view/download; feeds "X schools viewed your CV this week".
+/// Every profile view and CV view/download; feeds "X principals/directors viewed your CV this week".
 model ProfileView {
   id        String          @id @default(uuid()) @db.Uuid
   teacherId String          @map("teacher_id") @db.Uuid
-  schoolId  String          @map("school_id") @db.Uuid
   viewerId  String          @map("viewer_id") @db.Uuid
   kind      ProfileViewKind
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
   teacher TeacherProfile @relation(fields: [teacherId], references: [id])
-  school  School         @relation(fields: [schoolId], references: [id])
   viewer  User           @relation("ProfileViewViewer", fields: [viewerId], references: [id])
 
   @@index([teacherId, createdAt(sort: Desc)])

@@ -13,31 +13,32 @@ const LAGOS = { lat: 6.5244, lng: 3.3792 };
 describe('Database schema rules (e2e, needs docker postgres)', () => {
   const prisma = new PrismaService(new ConfigService(process.env));
   const slug = `schema-test-${Date.now()}`;
-  let schoolId: string;
+  let userId: string;
+  let teacherId: string;
 
   beforeAll(async () => {
-    const school = await prisma.school.create({
-      data: { name: 'Schema Test School', slug, type: 'secondary', ownership: 'private', ...PH },
-    });
-    schoolId = school.id;
+    const user = await prisma.user.create({ data: { email: `${slug}@test.local`, role: 'teacher' } });
+    userId = user.id;
+    teacherId = (await prisma.teacherProfile.create({ data: { userId, ...PH } })).id;
   });
 
   afterAll(async () => {
-    await prisma.school.deleteMany({ where: { slug } });
+    await prisma.teacherProfile.deleteMany({ where: { userId } });
+    await prisma.user.deleteMany({ where: { id: userId } });
     await prisma.$disconnect();
   });
 
   it('fills geog from lat/lng via trigger', async () => {
     const [row] = await prisma.$queryRaw<{ has_geog: boolean }[]>`
-      SELECT geog IS NOT NULL AS has_geog FROM schools WHERE id = ${schoolId}::uuid`;
+      SELECT geog IS NOT NULL AS has_geog FROM teacher_profiles WHERE id = ${teacherId}::uuid`;
     expect(row.has_geog).toBe(true);
   });
 
-  it('ST_DWithin finds the school within 10 km but not from Lagos', async () => {
+  it('ST_DWithin finds the teacher within 10 km but not from Lagos', async () => {
     const within = (p: { lat: number; lng: number }) => prisma.$queryRaw<{ km: number }[]>`
       SELECT ST_Distance(geog, ST_SetSRID(ST_MakePoint(${p.lng}, ${p.lat}), 4326)::geography) / 1000 AS km
-      FROM schools
-      WHERE id = ${schoolId}::uuid
+      FROM teacher_profiles
+      WHERE id = ${teacherId}::uuid
         AND ST_DWithin(geog, ST_SetSRID(ST_MakePoint(${p.lng}, ${p.lat}), 4326)::geography, 10000)`;
     const near = await within(NEAR);
     expect(near).toHaveLength(1);
@@ -47,21 +48,21 @@ describe('Database schema rules (e2e, needs docker postgres)', () => {
   });
 
   it('clears geog when coordinates are removed', async () => {
-    await prisma.school.update({ where: { id: schoolId }, data: { lat: null, lng: null } });
+    await prisma.teacherProfile.update({ where: { id: teacherId }, data: { lat: null, lng: null } });
     const [row] = await prisma.$queryRaw<{ has_geog: boolean }[]>`
-      SELECT geog IS NOT NULL AS has_geog FROM schools WHERE id = ${schoolId}::uuid`;
+      SELECT geog IS NOT NULL AS has_geog FROM teacher_profiles WHERE id = ${teacherId}::uuid`;
     expect(row.has_geog).toBe(false);
   });
 
   it('rejects a vacancy with salary_min > salary_max', async () => {
     const state = await prisma.state.findUniqueOrThrow({ where: { slug: 'rivers' }, include: { lgas: { take: 1 } } });
-    const user = await prisma.user.create({ data: { email: `${slug}@test.local`, role: 'school_owner' } });
+    const poster = await prisma.user.create({ data: { email: `${slug}-director@test.local`, role: 'director' } });
     try {
       await expect(
         prisma.vacancy.create({
           data: {
-            schoolId,
-            createdById: user.id,
+            createdById: poster.id,
+            schoolName: 'Schema Test School',
             slug: 'bad-salary',
             shortId: slug.slice(-8),
             title: 'Bad salary',
@@ -76,7 +77,7 @@ describe('Database schema rules (e2e, needs docker postgres)', () => {
         }),
       ).rejects.toThrow(/vacancies_salary_check/);
     } finally {
-      await prisma.user.delete({ where: { id: user.id } });
+      await prisma.user.delete({ where: { id: poster.id } });
     }
   });
 });

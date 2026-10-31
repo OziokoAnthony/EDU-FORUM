@@ -158,9 +158,8 @@ export const COMPLETENESS_ITEMS = [
   { key: 'preferences', label: 'Teaching preferences', weight: 15, required: true },
   { key: 'location', label: 'Location', weight: 10, required: true },
   { key: 'personal', label: 'Personal details', weight: 10, required: true },
-  { key: 'photo', label: 'Profile photo', weight: 5, required: false },
+  { key: 'photo', label: 'Profile photo', weight: 10, required: false },
   { key: 'bio', label: 'Short bio', weight: 5, required: false },
-  { key: 'identity', label: 'Verified ID', weight: 5, required: false },
 ] as const;
 export type CompletenessKey = (typeof COMPLETENESS_ITEMS)[number]['key'];
 
@@ -210,7 +209,6 @@ export interface CertificationResponse {
   expiresAt: string | null;
   hasFile: boolean;
   fileScanStatus: ScanStatus | null;
-  verificationStatus: 'pending' | 'verified' | 'rejected';
 }
 
 export interface ExperienceResponse {
@@ -278,7 +276,6 @@ export interface TeacherProfileResponse {
   certifications: CertificationResponse[];
   experiences: ExperienceResponse[];
   cv: CvResponse | null;
-  verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
   isPublished: boolean;
   publishedAt: string | null;
   completeness: CompletenessResponse;

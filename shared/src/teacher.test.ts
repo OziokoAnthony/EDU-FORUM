@@ -26,7 +26,7 @@ describe('completeness', () => {
     const required = computeCompleteness({ cv: true, qualification: true, experience: true, preferences: true, location: true, personal: true });
     expect(required).toMatchObject({ score: 85, missing: [], canPublish: true });
 
-    const extras = computeCompleteness({ photo: true, bio: true, identity: true });
+    const extras = computeCompleteness({ photo: true, bio: true });
     expect(extras).toMatchObject({ score: 15, canPublish: false });
   });
 });

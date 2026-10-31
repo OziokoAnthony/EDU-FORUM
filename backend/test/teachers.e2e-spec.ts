@@ -41,8 +41,8 @@ describe('Teacher onboarding (e2e)', () => {
   }
 
   it('is for verified teachers only', async () => {
-    const school = await verifiedUser(t, 'school');
-    await t.http.get(API).set('Authorization', school.auth).expect(403);
+    const director = await verifiedUser(t, 'director');
+    await t.http.get(API).set('Authorization', director.auth).expect(403);
 
     const res = await t.http
       .post('/api/v1/auth/register')
@@ -93,7 +93,7 @@ describe('Teacher onboarding (e2e)', () => {
     expect(res.body.missing).toContain('cv');
   });
 
-  it('completeness: photo, bio and verified ID add the last 15%', async () => {
+  it('completeness: photo and bio add the last 15%', async () => {
     const { auth } = await verifiedUser(t);
     await completeProfile(auth);
     await t.http.patch(`${API}/personal`).set('Authorization', auth).send({ ...personal, bio: 'I love teaching maths.' }).expect(200);
@@ -102,8 +102,7 @@ describe('Teacher onboarding (e2e)', () => {
     expect(photo.body.scanStatus).toBe('clean');
     expect(photo.body.photoUrl).toContain('profile_photo/');
     const res = await t.http.get(`${API}/completeness`).set('Authorization', auth).expect(200);
-    expect(res.body.score).toBe(95);
-    expect(res.body.items.find((i: { key: string }) => i.key === 'identity').complete).toBe(false);
+    expect(res.body.score).toBe(100);
   });
 
   it('GET /teachers/me returns the teacher their own private address and stores geog from lat/lng', async () => {
@@ -166,7 +165,7 @@ describe('Teacher onboarding (e2e)', () => {
         .send({ ...base, fileUploadId, expiresAt: '2019-01-01' })
         .expect(400);
       const ok = await t.http.post(`${API}/certifications`).set('Authorization', auth).send({ ...base, fileUploadId, expiresAt: '2026-03-01' }).expect(201);
-      expect(ok.body).toMatchObject({ number: 'TRCN/2020/1234', hasFile: true, fileScanStatus: 'clean', verificationStatus: 'pending' });
+      expect(ok.body).toMatchObject({ number: 'TRCN/2020/1234', hasFile: true, fileScanStatus: 'clean' });
     });
 
     it('experience: end date required unless current', async () => {

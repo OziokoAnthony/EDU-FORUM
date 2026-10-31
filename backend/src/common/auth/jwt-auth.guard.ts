@@ -9,8 +9,8 @@ import { IS_PUBLIC, REQUIRE_VERIFIED, ROLES, type RoleKey } from './decorators';
 
 const ROLE_KEYS: Record<AuthUser['role'], RoleKey> = {
   teacher: 'teacher',
-  school_owner: 'school',
-  recruiter: 'school',
+  principal: 'leader',
+  director: 'leader',
   admin: 'admin',
 };
 

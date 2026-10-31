@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
-/** Account roles stored on User. Sign-up picks teacher or school (→ school_owner). */
-export const USER_ROLES = ['teacher', 'school_owner', 'recruiter', 'admin'] as const;
+/** Account roles stored on User. Admins are created by the seed, never by sign-up. */
+export const USER_ROLES = ['teacher', 'principal', 'director', 'admin'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const SIGNUP_ROLES = ['teacher', 'school'] as const;
+/** Sign-up choice (user, 2026-10-31): principals and directors have the same access. */
+export const SIGNUP_ROLES = ['teacher', 'principal', 'director'] as const;
 export type SignupRole = (typeof SIGNUP_ROLES)[number];
 
 /** Consent text version shown at sign-up (NDPA). Bump when the privacy policy changes. */

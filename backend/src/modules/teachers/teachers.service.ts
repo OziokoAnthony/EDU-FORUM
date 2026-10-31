@@ -83,7 +83,6 @@ export class TeachersService implements OnModuleInit {
       certifications: p.certifications.map((c) => toCertificationResponse(c, files)),
       experiences: p.experiences.map(toExperienceResponse),
       cv: p.cvs[0] ? await this.profiles.cvResponse(p.cvs[0]) : null,
-      verificationStatus: p.verificationStatus,
       isPublished: p.isPublished,
       publishedAt: p.publishedAt?.toISOString() ?? null,
       completeness: await this.completeness.compute(p.id),

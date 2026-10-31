@@ -68,3 +68,23 @@ test('shows field errors from the shared schema and a generic sign-in error', as
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Incorrect email/phone or password' })).toBeVisible();
 });
+
+test('a director signs up, verifies and lands in the hiring area', async ({ page }, info) => {
+  const email = `pw-director-${info.project.name}-${Date.now()}@e2e.edu-forum.test`;
+  await page.goto('/register');
+  await page.getByText('Director', { exact: true }).click();
+  await page.getByLabel('Email address').fill(email);
+  await page.getByLabel('Password').fill('lead2026x');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await expect(page).toHaveURL(/\/verify-email$/);
+
+  const link = /(http:\/\/\S+\/verify-email\?token=[\w-]+)/.exec(await latestEmailText(email))![1];
+  await page.goto(link);
+  await page.getByRole('link', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/hiring$/);
+  await expect(page.getByRole('heading', { name: 'Hiring dashboard' })).toBeVisible();
+  // A director cannot open the teacher area.
+  await page.goto('/teacher');
+  await expect(page).toHaveURL(/\/hiring$/);
+});

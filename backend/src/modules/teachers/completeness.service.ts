@@ -32,7 +32,6 @@ export class CompletenessService {
       personal: !!(p.fullName && p.gender && p.dob),
       photo: !!p.photoKey,
       bio: !!p.bio,
-      identity: p.verificationStatus === 'verified',
     });
   }
 

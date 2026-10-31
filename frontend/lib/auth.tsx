@@ -104,8 +104,8 @@ export function homeFor(user: Pick<MeResponse, 'role' | 'verified' | 'email'>): 
   if (!user.verified) return user.email ? '/verify-email' : '/verify-phone';
   const homes: Record<UserRole, string> = {
     teacher: '/teacher',
-    school_owner: '/school',
-    recruiter: '/school',
+    principal: '/hiring',
+    director: '/hiring',
     admin: '/admin',
   };
   return homes[user.role];

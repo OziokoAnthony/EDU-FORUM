@@ -4,7 +4,7 @@ import { APP_NAME } from '@edu-forum/shared';
 export const metadata: Metadata = {
   title: { absolute: `${APP_NAME} — Teaching jobs and verified teachers in Nigeria` },
   description:
-    'Find teaching jobs near you across every Nigerian state, or recruit verified teachers by subject, level and location. Free for teachers and schools.',
+    'Find teaching jobs near you across every Nigerian state, or recruit teachers by subject, level and location. Free for teachers, principals and directors.',
   alternates: { canonical: '/' },
 };
 

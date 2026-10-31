@@ -1,4 +1,7 @@
-/** FR-2: the eight onboarding steps, in order. Keys match /me/onboarding step keys. */
+/**
+ * FR-2 onboarding steps, in order. Keys match /me/onboarding step keys. The PRD's step 8
+ * (identification) was dropped by the user on 2026-10-31.
+ */
 export const WIZARD_STEPS = [
   { key: 'personal', label: 'Personal details' },
   { key: 'location', label: 'Location' },
@@ -7,7 +10,6 @@ export const WIZARD_STEPS = [
   { key: 'experience', label: 'Work experience' },
   { key: 'preferences', label: 'Teaching preferences' },
   { key: 'cv', label: 'CV upload' },
-  { key: 'identification', label: 'Identification' },
 ] as const;
 
 export type WizardStepKey = (typeof WIZARD_STEPS)[number]['key'];

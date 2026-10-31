@@ -79,7 +79,7 @@ export const CERTIFICATION_TYPES: { name: string; issuer?: string }[] = [
 ];
 
 /** PRD ad placements; every slot starts disabled until AdSense is approved (Phase 12). */
-export const AD_SLOTS: { pageType: 'home' | 'job_search' | 'landing' | 'job_detail' | 'school' | 'blog_post'; slotName: string }[] = [
+export const AD_SLOTS: { pageType: 'home' | 'job_search' | 'landing' | 'job_detail' | 'blog_post'; slotName: string }[] = [
   { pageType: 'home', slotName: 'below_fold' },
   { pageType: 'job_search', slotName: 'in_feed' },
   { pageType: 'job_search', slotName: 'sidebar' },
@@ -87,6 +87,5 @@ export const AD_SLOTS: { pageType: 'home' | 'job_search' | 'landing' | 'job_deta
   { pageType: 'landing', slotName: 'sidebar' },
   { pageType: 'job_detail', slotName: 'below_description' },
   { pageType: 'job_detail', slotName: 'sidebar' },
-  { pageType: 'school', slotName: 'below_vacancies' },
   { pageType: 'blog_post', slotName: 'in_article' },
 ];

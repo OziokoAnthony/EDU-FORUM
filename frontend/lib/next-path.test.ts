@@ -3,7 +3,7 @@ import { safeNext } from './next-path';
 
 describe('safeNext', () => {
   it('keeps same-site paths', () => {
-    expect(safeNext('/join-school?token=abc')).toBe('/join-school?token=abc');
+    expect(safeNext('/teacher/cv?tab=history')).toBe('/teacher/cv?tab=history');
   });
 
   it('drops anything that could leave the site', () => {

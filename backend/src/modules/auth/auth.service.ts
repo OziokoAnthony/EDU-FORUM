@@ -43,7 +43,7 @@ export class AuthService {
         email: input.email,
         phone: input.phone,
         passwordHash: await hash(input.password),
-        role: input.role === 'school' ? 'school_owner' : 'teacher',
+        role: input.role,
         consentAcceptedAt: new Date(),
         consentVersion: CONSENT_VERSION,
       },

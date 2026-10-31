@@ -19,7 +19,6 @@ const STEP_FOR: Record<CompletenessKey, WizardStepKey> = {
   personal: 'personal',
   photo: 'personal',
   bio: 'personal',
-  identity: 'identification',
 };
 
 /** Teacher home: completeness, what is missing, publish/unpublish. Full dashboard stats come later. */
@@ -49,7 +48,7 @@ export function TeacherHome() {
       refresh(await authed<TeacherProfileResponse>(`/teachers/me/${path}`, { method: 'POST' }));
       setMessage({
         kind: 'success',
-        text: path === 'publish' ? 'Your profile is live. Schools can now find you.' : 'Your profile is hidden from schools.',
+        text: path === 'publish' ? 'Your profile is live. Principals and directors can now find you.' : 'Your profile is hidden from principals and directors.',
       });
     } catch (err) {
       setMessage({ kind: 'error', text: err instanceof ApiError ? err.message : 'Something went wrong. Try again.' });
@@ -63,7 +62,7 @@ export function TeacherHome() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">{p.fullName ? `Welcome, ${p.fullName.split(' ')[0]}` : 'Welcome'}</h1>
         <p className="mt-1 text-slate-600">
-          {p.isPublished ? 'Your profile is published and visible to schools.' : 'Your profile is not published yet.'}
+          {p.isPublished ? 'Your profile is published and visible to principals and directors.' : 'Your profile is not published yet.'}
         </p>
       </div>
 
@@ -89,8 +88,6 @@ export function TeacherHome() {
               </span>
               {i.complete ? (
                 <span className="text-sm text-slate-500">Done</span>
-              ) : i.key === 'identity' ? (
-                <span className="text-sm text-slate-500">Coming soon</span>
               ) : (
                 <Link href={stepHref(STEP_FOR[i.key])} className="text-sm font-semibold text-emerald-800 underline">
                   Add
@@ -105,7 +102,7 @@ export function TeacherHome() {
 
       {p.isPublished ? (
         <Button type="button" loading={busy} onClick={() => toggle('unpublish')} className="bg-slate-700 hover:bg-slate-800">
-          Hide my profile from schools
+          Hide my profile
         </Button>
       ) : completeness.canPublish ? (
         <Button type="button" loading={busy} onClick={() => toggle('publish')}>

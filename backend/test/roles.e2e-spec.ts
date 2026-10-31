@@ -11,7 +11,7 @@ import { MAILER, type MemoryMailer } from '../src/infra/mail/mailer';
 @Controller('test-roles')
 class RolesProbeController {
   @Roles('teacher') @Get('teacher') teacher() { return { ok: true }; }
-  @Roles('school') @Get('school') school() { return { ok: true }; }
+  @Roles('leader') @Get('leader') leader() { return { ok: true }; }
   @Roles('admin') @Get('admin') admin() { return { ok: true }; }
   @RequireVerified() @Get('verified') verified() { return { ok: true }; }
 }
@@ -36,7 +36,7 @@ describe('Role guards (e2e)', () => {
     mailer = app.get(MAILER);
     close = () => app.close();
 
-    for (const role of ['teacher', 'school'] as const) {
+    for (const role of ['teacher', 'principal', 'director'] as const) {
       const email = uniqueEmail(role);
       const res = await http.post('/api/v1/auth/register').send({ email, password: 'teach2026', role, consent: true });
       tokens[role] = res.body.accessToken;
@@ -51,11 +51,12 @@ describe('Role guards (e2e)', () => {
 
   it.each([
     ['teacher', 'teacher', 200],
-    ['teacher', 'school', 403],
+    ['teacher', 'leader', 403],
     ['teacher', 'admin', 403],
-    ['school', 'school', 200],
-    ['school', 'teacher', 403],
-    ['school', 'admin', 403],
+    ['principal', 'leader', 200],
+    ['director', 'leader', 200],
+    ['principal', 'teacher', 403],
+    ['director', 'admin', 403],
   ])('%s → /%s = %i', async (who, route, status) => {
     await http.get(`/api/v1/test-roles/${route}`).set('Authorization', `Bearer ${tokens[who]}`).expect(status);
   });

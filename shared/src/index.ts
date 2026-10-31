@@ -5,4 +5,3 @@ export * from './auth';
 export * from './uploads';
 export * from './teacher';
 export * from './meta';
-export * from './school';

@@ -15,7 +15,7 @@ import { applyApiError } from '@/lib/form-errors';
 type Input = z.input<typeof registerSchema>;
 type Output = z.output<typeof registerSchema>;
 
-export function RegisterForm({ email, role: presetRole, next }: { email?: string; role?: 'school'; next?: string | null }) {
+export function RegisterForm({ next }: { next?: string | null }) {
   const router = useRouter();
   const { setSession } = useAuth();
   const [method, setMethod] = useState<'email' | 'phone'>('email');
@@ -29,7 +29,7 @@ export function RegisterForm({ email, role: presetRole, next }: { email?: string
     formState: { errors, isSubmitting },
   } = useForm<Input, unknown, Output>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: presetRole ?? 'teacher', email },
+    defaultValues: { role: 'teacher' },
   });
   const role = watch('role');
 
@@ -38,7 +38,6 @@ export function RegisterForm({ email, role: presetRole, next }: { email?: string
     try {
       const res = await api<AuthTokensResponse>('/auth/register', { method: 'POST', body: values });
       setSession(res);
-      // An invite link verifies the email when it is accepted, so go straight back to it.
       if (next) return router.push(next);
       const home = homeFor(res.user);
       router.push(home === '/verify-phone' ? `/verify-phone?phone=${encodeURIComponent(res.user.phone ?? '')}` : home);
@@ -67,16 +66,17 @@ export function RegisterForm({ email, role: presetRole, next }: { email?: string
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-slate-800">I am a</legend>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {(
               [
                 ['teacher', 'Teacher', 'Looking for a job'],
-                ['school', 'School', 'Hiring teachers'],
+                ['principal', 'Principal', 'Hiring teachers'],
+                ['director', 'Director', 'Hiring teachers'],
               ] as const
             ).map(([value, label, hint]) => (
               <label
                 key={value}
-                className={`cursor-pointer rounded-lg border px-3 py-3 ${role === value ? 'border-emerald-700 bg-emerald-50' : 'border-slate-300'}`}
+                className={`cursor-pointer rounded-lg border px-2 py-3 ${role === value ? 'border-emerald-700 bg-emerald-50' : 'border-slate-300'}`}
               >
                 <input type="radio" value={value} {...register('role')} className="sr-only" />
                 <span className="block font-semibold">{label}</span>

@@ -7,7 +7,6 @@ import { useMyProfile } from '@/lib/teacher';
 import { CertificationsStep } from './steps/certifications';
 import { CvStep } from './steps/cv';
 import { ExperienceStep } from './steps/experience';
-import { IdentificationStep } from './steps/identification';
 import { LocationStep } from './steps/location';
 import { PersonalStep } from './steps/personal';
 import { PreferencesStep } from './steps/preferences';
@@ -23,7 +22,6 @@ const COMPONENTS: Record<WizardStepKey, (props: StepProps) => React.ReactNode> =
   experience: ExperienceStep,
   preferences: PreferencesStep,
   cv: CvStep,
-  identification: IdentificationStep,
 };
 
 /** FR-2 onboarding wizard. Every step saves on its own, so the teacher can leave and resume. */

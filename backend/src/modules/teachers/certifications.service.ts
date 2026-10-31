@@ -11,7 +11,7 @@ import { toCertificationResponse } from './teacher.mapper';
 
 /**
  * FR-2 step 4: TRCN and other certificates with issuer, number, dates and file. Optional
- * (TRCN is optional, confirmed 2026-10-31). Any edit sends the certificate back to review.
+ * (TRCN is optional, confirmed 2026-10-31).
  */
 @Injectable()
 export class CertificationsService {
@@ -74,10 +74,6 @@ export class CertificationsService {
         issuedAt: toDbDate(input.issuedAt),
         expiresAt: toDbDate(input.expiresAt),
         fileKey: upload?.objectKey,
-        verificationStatus: 'pending',
-        reviewedById: null,
-        reviewedAt: null,
-        rejectionReason: null,
       },
     });
     if (upload) {

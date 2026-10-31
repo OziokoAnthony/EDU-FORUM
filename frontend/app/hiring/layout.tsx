@@ -3,7 +3,7 @@ import { privateMetadata } from '@/lib/private-metadata';
 
 export const metadata = privateMetadata;
 
-// Private area: noindex, no ads (CLAUDE.md).
+// Principals and directors (same access). Private area: noindex, no ads (CLAUDE.md).
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <PrivateShell roles={['school_owner', 'recruiter']}>{children}</PrivateShell>;
+  return <PrivateShell roles={['principal', 'director']}>{children}</PrivateShell>;
 }
