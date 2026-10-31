@@ -8,6 +8,7 @@ import { validateEnv } from './config/env';
 import { FilesModule } from './infra/files.module';
 import { MessagingModule } from './infra/messaging.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
+import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CvModule } from './modules/cv/cv.module';
 import { HealthModule } from './modules/health/health.module';
@@ -45,6 +46,7 @@ import { UsersModule } from './modules/users/users.module';
     VacanciesModule,
     // After TeachersModule: /teachers/me must match before /teachers/:id.
     SearchModule,
+    ApplicationsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })

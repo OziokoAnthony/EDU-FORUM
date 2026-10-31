@@ -20,10 +20,12 @@ export class ApiError extends Error {
 export interface ApiOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   accessToken?: string | null;
+  /** "text" for non-JSON responses such as the applicants CSV. */
+  responseType?: 'json' | 'text';
 }
 
 /** Fetch wrapper for the EDU-FORUM API; throws ApiError with the standard error body. */
-export async function api<T>(path: string, { body, accessToken, headers, ...init }: ApiOptions = {}): Promise<T> {
+export async function api<T>(path: string, { body, accessToken, headers, responseType = 'json', ...init }: ApiOptions = {}): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
     ...init,
@@ -38,5 +40,6 @@ export async function api<T>(path: string, { body, accessToken, headers, ...init
     const err = (await res.json().catch(() => null)) as ApiErrorBody | null;
     throw new ApiError(res.status, err?.error ?? { code: 'INTERNAL_ERROR', message: res.statusText });
   }
-  return (res.status === 204 ? undefined : await res.json()) as T;
+  if (res.status === 204) return undefined as T;
+  return (responseType === 'text' ? await res.text() : await res.json()) as T;
 }

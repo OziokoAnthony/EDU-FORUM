@@ -153,7 +153,9 @@ Edit (PATCH) schemas must not carry `.default()`s: Zod 4 applies defaults inside
 so a default would overwrite the stored value of every field the edit left out. Strip them
 with `.unwrap()` (see `updateVacancySchema`, `experienceUpdateSchema`).
 The project sits in OneDrive: if `next build` fails with `EPERM … unlink …\.next\…`, OneDrive
-has turned build output into cloud placeholders; delete `frontend/.next` and build again.
+has turned build output into cloud placeholders. `frontend` `prebuild` therefore deletes
+`.next` first (`pnpm clean`). Playwright runs against the production build (`pnpm build &&
+pnpm start`), because dev-server first-visit compiles made the suite slow and flaky.
 
 ## Confirmed decisions (resolve the PRD's open questions — 2026-10-31)
 
@@ -226,6 +228,19 @@ has turned build output into cloud placeholders; delete `frontend/.next` and bui
   = in the state or willing to move there. Recommended vacancies need a subject or level in
   common; recommended teachers need that plus the same state or willingness to relocate.
   Profile views, CV views and CV downloads are logged in `profile_views`.
+
+- **Applications (Phase 8):** only teachers with a published profile can apply (confirmed
+  2026-10-31). Applying copies the CV files into `cv-snapshots/{id}/` (the snapshot survives CV
+  replacement and the 90-day purge). Every screening question must be answered (yes/no as
+  yes/no). Statuses move forward only (steps may be skipped); rejected from any non-final step;
+  hired/rejected/withdrawn are final; posters cannot set applied/withdrawn. Opening an
+  application marks it "viewed" (recorded, but not emailed). Emails go through the BullMQ
+  `send-email` job: teacher on each status change (with the optional message), poster on new
+  application and withdrawal, applicants on title/salary edits of a live vacancy. Marking
+  "hired" with `closeVacancy` closes the vacancy as filled; the response says when hires reach
+  the openings. CSV export neutralises formula characters (spreadsheet injection).
+  Endpoints added beyond the PRD table: `GET /vacancies/:id/applications/export` (CSV) and
+  `GET /applications/:id/cv` (the snapshot, 10-minute link, logged).
 
 ## API conventions
 

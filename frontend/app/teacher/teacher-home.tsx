@@ -122,6 +122,10 @@ export function TeacherHome() {
           <p className="font-semibold text-emerald-900">Find teaching jobs</p>
           <p className="text-sm text-slate-600">Jobs that match your subjects, levels and location</p>
         </Link>
+        <Link href="/teacher/applications" className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+          <p className="font-semibold text-slate-900">My applications</p>
+          <p className="text-sm text-slate-600">Status of every job you applied for</p>
+        </Link>
         <Link href="/teacher/cv" className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <p className="font-semibold text-slate-900">My CV</p>
           <p className="text-sm text-slate-600">{p.cv ? p.cv.fileName : 'Not uploaded yet'}</p>

@@ -120,6 +120,11 @@ function VacancyCard({ v }: { v: MyVacancyResponse }) {
         {v.status === 'draft' || v.status === 'paused' ? action(v.status === 'paused' ? 'Resume' : 'Publish', () => act('/publish')) : null}
         {v.status === 'published' ? action('Pause', () => act('/pause')) : null}
         {v.status === 'published' || v.status === 'paused' ? action('Close', () => act('/close', 'POST', { reason: 'filled' })) : null}
+        {v.status !== 'draft' ? (
+          <Link href={`/hiring/vacancies/${v.id}/applicants`} className="font-semibold text-emerald-800 underline">
+            Applicants ({v.applicantsCount})
+          </Link>
+        ) : null}
         {v.status === 'published' ? (
           <Link href={`/hiring/vacancies/${v.id}/recommended`} className="font-semibold text-emerald-800 underline">
             Recommended teachers

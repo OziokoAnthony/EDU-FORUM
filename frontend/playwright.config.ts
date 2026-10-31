@@ -21,10 +21,12 @@ export default defineConfig({
       env: { AUTH_RATE_LIMIT: '1000' },
     },
     {
-      command: 'pnpm dev',
+      // Production build: pages are compiled once up front, so tests do not wait on the dev
+      // server compiling routes on first visit (that made runs slow and flaky under load).
+      command: 'pnpm build && pnpm start',
       url: 'http://localhost:3000',
       reuseExistingServer: true,
-      timeout: 120_000,
+      timeout: 300_000,
     },
   ],
 });

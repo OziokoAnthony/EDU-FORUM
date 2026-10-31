@@ -198,4 +198,8 @@ export class UploadsService implements OnModuleInit {
   writeObject(key: string, body: Buffer, contentType: string): Promise<void> {
     return this.storage.put(key, body, contentType);
   }
+
+  copyObject(fromKey: string, toKey: string): Promise<void> {
+    return this.storage.copy(fromKey, toKey);
+  }
 }

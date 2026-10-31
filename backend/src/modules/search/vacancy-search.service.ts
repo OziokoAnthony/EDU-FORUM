@@ -133,6 +133,16 @@ export class VacancySearchService {
     return { data, meta: { page, limit, total } };
   }
 
+  /** The match score of one vacancy for one teacher (stored on the application). */
+  async scoreFor(teacherUserId: string, vacancyId: string): Promise<number> {
+    const teacher = await this.teacherFacts(teacherUserId);
+    if (!teacher) return 0;
+    const km = teacher.origin ? Prisma.sql`(ST_Distance(v.geog, ${point(teacher.origin.lat, teacher.origin.lng)}) / 1000)` : null;
+    const [row] = await this.prisma.$queryRaw<{ score: number }[]>`
+      SELECT ${vacancyMatchScore(teacher, km)} AS score FROM vacancies v WHERE v.id = ${vacancyId}::uuid`;
+    return row?.score ?? 0;
+  }
+
   private async teacherFacts(userId: string): Promise<TeacherFacts | null> {
     const t = await this.prisma.teacherProfile.findUnique({
       where: { userId },

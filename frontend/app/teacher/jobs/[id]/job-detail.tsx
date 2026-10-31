@@ -7,6 +7,7 @@ import { Alert } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { salaryRange, shortDate } from '@/lib/format';
 import { nameBySlug, useCertificationTypes, useLevels, useQualificationTypes, useSubjects } from '@/lib/meta';
+import { ApplyPanel } from './apply-panel';
 
 /**
  * A job, as a signed-in teacher sees it. The public, search-engine version of this page is
@@ -82,7 +83,7 @@ export function JobDetail({ id }: { id: string }) {
         </section>
       ) : null}
 
-      <p className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-700">Applying with your CV arrives in the next phase.</p>
+      <ApplyPanel v={v} />
     </main>
   );
 }

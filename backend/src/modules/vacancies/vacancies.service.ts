@@ -22,6 +22,7 @@ import { validate } from '../../common/pipes/zod-validation.pipe';
 import { Prisma, type VacancyStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { JOB_QUEUE, type JobQueue } from '../../infra/queue/job-queue';
+import { ApplicationsService } from '../applications/applications.service';
 import { ReferenceCheckService } from '../meta/reference-check.service';
 import { sanitizeDescription } from './sanitize-description';
 import { toMyVacancyResponse, toVacancyResponse, VACANCY_INCLUDE, type VacancyRow } from './vacancy.serializer';
@@ -59,6 +60,7 @@ export class VacanciesService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly refs: ReferenceCheckService,
+    private readonly applications: ApplicationsService,
     @Inject(JOB_QUEUE) private readonly queue: JobQueue,
   ) {}
 
@@ -98,8 +100,9 @@ export class VacanciesService implements OnModuleInit {
     if (current.status === 'published' && merged.deadline && merged.deadline < today()) {
       throw invalid('deadline', 'The deadline cannot be in the past');
     }
-    await this.prisma.vacancy.update({ where: { id }, data: { ...data, slug } });
-    // Title or salary changes notify applicants once applications exist (Phase 8).
+    const after = await this.prisma.vacancy.update({ where: { id }, data: { ...data, slug } });
+    // PRD FR-4: salary or title changes notify applicants.
+    await this.applications.notifyVacancyChange(current, after);
     return this.getMine(user, id);
   }
 

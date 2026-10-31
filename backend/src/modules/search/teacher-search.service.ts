@@ -191,7 +191,7 @@ export class TeacherSearchService {
   }
 
   /** The safe card fields for a set of teachers (no address, no coordinates). */
-  private async listItems(ids: string[]): Promise<Map<string, Omit<TeacherListItem, 'matchScore' | 'distanceKm'>>> {
+  async listItems(ids: string[]): Promise<Map<string, Omit<TeacherListItem, 'matchScore' | 'distanceKm'>>> {
     const rows = await this.prisma.teacherProfile.findMany({
       where: { id: { in: ids } },
       select: {
