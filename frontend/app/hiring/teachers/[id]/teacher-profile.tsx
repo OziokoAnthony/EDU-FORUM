@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 import { EXPERIENCE_KIND_LABELS, GENDER_LABELS, JOB_TYPE_LABELS, type CvLinkResponse, type TeacherViewResponse } from '@edu-forum/shared';
+import { InvitePanel } from '@/components/invite-panel';
 import { ReportButton } from '@/components/report-button';
 import { Alert } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -92,6 +93,8 @@ export function TeacherProfile({ id }: { id: string }) {
         ) : null}
         <p className="text-sm text-slate-600">Chat with teachers arrives with messaging.</p>
       </section>
+
+      <InvitePanel teacherId={t.id} teacherName={t.fullName ?? 'this teacher'} />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-slate-900">CV</h2>

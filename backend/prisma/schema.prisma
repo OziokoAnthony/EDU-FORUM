@@ -803,6 +803,9 @@ model Interview {
   proposedAt      DateTime?       @map("proposed_at")
   proposalNote    String?         @map("proposal_note")
   notes           String?
+  cancelReason    String?         @map("cancel_reason")
+  /// Set when the 24-hour reminder went out; cleared on reschedule.
+  reminderSentAt  DateTime?       @map("reminder_sent_at")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
   deletedAt       DateTime?       @map("deleted_at")

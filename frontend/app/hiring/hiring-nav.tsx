@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 /** Section links for principals and directors. */
-export function HiringNav({ current }: { current: 'vacancies' | 'teachers' }) {
+export function HiringNav({ current }: { current: 'vacancies' | 'teachers' | 'invitations' | 'interviews' }) {
   const link = (key: typeof current, href: string, label: string) => (
     <Link
       href={href}
@@ -12,9 +12,11 @@ export function HiringNav({ current }: { current: 'vacancies' | 'teachers' }) {
     </Link>
   );
   return (
-    <nav aria-label="Hiring" className="flex gap-2">
+    <nav aria-label="Hiring" className="flex gap-2 overflow-x-auto pb-1 [&>a]:shrink-0">
       {link('vacancies', '/hiring', 'My vacancies')}
       {link('teachers', '/hiring/teachers', 'Find teachers')}
+      {link('invitations', '/hiring/invitations', 'Invitations')}
+      {link('interviews', '/hiring/interviews', 'Interviews')}
     </nav>
   );
 }

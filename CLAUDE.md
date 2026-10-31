@@ -279,6 +279,19 @@ covers the window).
   on, PUT merges. Moderation notices (takedown, profile hidden) set `alwaysEmail`. Suspension
   stays email-only and drops the user's sockets. `/ws` clients send the access token in the
   Socket.IO handshake `auth.token`; the server only pushes, actions stay on REST.
+- **Invitations (Phase 11, confirmed 2026-10-31):** a principal/director invites a published
+  teacher to one of their live vacancies (one per teacher per vacancy unless cancelled; max 50 a
+  day per sender; not if already applied). Accepting = applying: the teacher answers the screening
+  questions, the CV is snapshotted, `source = invited`, and the poster gets "invitation accepted"
+  instead of "new application". Applying directly also accepts an open invitation. Pending
+  invitations expire after 14 days, at the vacancy deadline, or when the vacancy stops being live
+  (checked lazily on read). `GET /invitations/sent` replaces the PRD's `/schools/me/invitations`.
+- **Interviews (Phase 11):** one active interview per application; scheduling moves the applicant
+  to "interview" (no separate status-change notice). Video interviews need an http(s) link. The
+  teacher confirms or proposes a time; the poster accepts a proposal by rescheduling (PATCH), which
+  needs confirming again. Done only once the time has passed. Reminder to both sides 24 h before
+  (`interview-reminders` job every 15 min, `reminder_sent_at`, cleared on reschedule). Times show
+  in Africa/Lagos. Endpoint added beyond the PRD table: `GET /applications/:id/interviews`.
 
 - **Look (user, 2026-10-31):** dark portal style inspired by zone94.com, done by remapping the
   Tailwind palette in `globals.css` (slate = dark neutrals, emerald-800/900 = gold text), Oswald

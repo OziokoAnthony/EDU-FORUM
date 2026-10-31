@@ -6,12 +6,14 @@ import { useState } from 'react';
 import {
   APPLICATION_STATUS_LABELS,
   canMove,
+  FINAL_STATUSES,
   POSTER_STATUSES,
   type ApplicantDetailResponse,
   type CvLinkResponse,
   type MoveStatusResponse,
 } from '@edu-forum/shared';
 import { Checkbox, Select, TextArea } from '@/components/form';
+import { ApplicantInterviews } from '@/components/schedule-interview';
 import { StatusBadge } from '@/components/status-badge';
 import { Alert, Button } from '@/components/ui';
 import { ApiError } from '@/lib/api';
@@ -189,6 +191,8 @@ export function ApplicantDetail({ id }: { id: string }) {
           </Button>
         </section>
       ) : null}
+
+      <ApplicantInterviews applicationId={id} closed={FINAL_STATUSES.includes(a.status)} onScheduled={() => void refresh()} />
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-slate-900">Private notes</h2>

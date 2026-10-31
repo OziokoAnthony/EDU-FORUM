@@ -1,6 +1,7 @@
 import { APP_NAME, APPLICATION_STATUS_LABELS, type ApplicationStatus } from '@edu-forum/shared';
 import { escapeHtml } from '../../infra/mail/email-queue';
 import type { MailMessage } from '../../infra/mail/mailer';
+import { simpleEmail } from '../../infra/mail/simple-email';
 
 /** Notification emails for the application pipeline (FR-7, FR-9). */
 export const applicationEmails = {
@@ -47,5 +48,12 @@ export const applicationEmails = {
       text: `A vacancy you applied for has changed:\n${p.changes.map((c) => `- ${c}`).join('\n')}\n\nSee your applications: ${link}`,
       html: `<p>A vacancy you applied for has changed:</p><ul>${p.changes.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}</ul><p><a href="${link}">See your applications</a></p>`,
     };
+  },
+
+  invitationAccepted(to: string, appUrl: string, p: { vacancyTitle: string; applicationId: string; teacherName: string }): MailMessage {
+    return simpleEmail(to, `Invitation accepted: ${p.vacancyTitle}`, [`${p.teacherName} accepted your invitation and applied for ${p.vacancyTitle}.`], {
+      url: `${appUrl}/hiring/applications/${p.applicationId}`,
+      text: 'See the application',
+    });
   },
 };

@@ -63,7 +63,12 @@ export class ApplicationsService {
 
   // ───────────── teacher side ─────────────
 
-  async apply(user: AuthUser, vacancyId: string, input: z.output<typeof applySchema>): Promise<MyApplicationResponse> {
+  /**
+   * `invitationId`: accepting an invitation applies the same way (screening questions and CV
+   * snapshot included), marks the invitation accepted in the same transaction, and tells the
+   * poster "accepted your invitation" instead of "new application".
+   */
+  async apply(user: AuthUser, vacancyId: string, input: z.output<typeof applySchema>, opts: { invitationId?: string } = {}): Promise<MyApplicationResponse> {
     const teacher = await this.prisma.teacherProfile.findUnique({
       where: { userId: user.id },
       include: { cvs: { where: { isActive: true, scanStatus: 'clean', deletedAt: null }, take: 1 } },
@@ -105,9 +110,24 @@ export class ApplicationsService {
             coverNote: input.coverNote ?? null,
             screeningAnswers: answers as unknown as Prisma.InputJsonValue,
             matchScore,
+            source: opts.invitationId ? 'invited' : 'applied',
           },
         });
         await tx.applicationStatusHistory.create({ data: { applicationId: created.id, toStatus: 'applied', changedById: user.id } });
+        if (opts.invitationId) {
+          // Guarded on "pending" so a cancel racing the accept cannot both win.
+          const { count } = await tx.invitation.updateMany({
+            where: { id: opts.invitationId, status: 'pending' },
+            data: { status: 'accepted', applicationId: created.id, respondedAt: new Date() },
+          });
+          if (count === 0) throw rule('This invitation is no longer open');
+        } else {
+          // Applying directly answers any open invitation to the same vacancy.
+          await tx.invitation.updateMany({
+            where: { vacancyId, teacherId: teacher.id, status: 'pending' },
+            data: { status: 'accepted', applicationId: created.id, respondedAt: new Date() },
+          });
+        }
         return created;
       });
     } catch (err) {
@@ -122,6 +142,19 @@ export class ApplicationsService {
 
     const poster = await this.prisma.user.findUniqueOrThrow({ where: { id: vacancy.createdById } });
     const teacherName = teacher.fullName ?? 'A teacher';
+    if (opts.invitationId) {
+      await this.notifications.notify({
+        userId: poster.id,
+        type: 'invitation_reply',
+        title: `Invitation accepted: ${vacancy.title}`,
+        body: `${teacherName} accepted your invitation and applied for ${vacancy.title}.`,
+        link: `/hiring/applications/${application.id}`,
+        email: poster.email
+          ? applicationEmails.invitationAccepted(poster.email, this.appUrl(), { vacancyTitle: vacancy.title, applicationId: application.id, teacherName })
+          : undefined,
+      });
+      return this.getForTeacher(user, application.id);
+    }
     await this.notifications.notify({
       userId: poster.id,
       type: 'new_application',
@@ -445,6 +478,12 @@ export class ApplicationsService {
       question: questions.get(a.questionId) ?? 'Question removed',
       answer: a.answer,
     }));
+  }
+
+  /** Scheduling an interview moves the applicant to "interview" when that is a step forward. */
+  async moveToInterview(applicationId: string, byId: string): Promise<void> {
+    const a = await this.prisma.application.findUniqueOrThrow({ where: { id: applicationId } });
+    if (canMove(a.status, 'interview')) await this.record(a, 'interview', byId, undefined, false);
   }
 
   private async ownVacancy(user: AuthUser, vacancyId: string) {

@@ -89,6 +89,7 @@ export async function deleteTestUsers(prisma: PrismaService, phones: string[] = 
   const testApplication = { application: { OR: [testVacancy, teacherId] } };
   await prisma.applicationStatusHistory.deleteMany({ where: testApplication });
   await prisma.applicationNote.deleteMany({ where: testApplication });
+  await prisma.interview.deleteMany({ where: testApplication });
   await prisma.application.deleteMany({ where: { OR: [testVacancy, teacherId] } });
   await prisma.cvSnapshot.deleteMany({ where: { id: { in: applications.map((a) => a.cvSnapshotId) } } });
   await prisma.vacancy.deleteMany({ where: { createdById: { in: ids } } });
