@@ -118,6 +118,10 @@ export function TeacherHome() {
       )}
 
       <section className="grid gap-3 sm:grid-cols-2">
+        <Link href="/teacher/jobs" className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 hover:bg-emerald-100 sm:col-span-2">
+          <p className="font-semibold text-emerald-900">Find teaching jobs</p>
+          <p className="text-sm text-slate-600">Jobs that match your subjects, levels and location</p>
+        </Link>
         <Link href="/teacher/cv" className="rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <p className="font-semibold text-slate-900">My CV</p>
           <p className="text-sm text-slate-600">{p.cv ? p.cv.fileName : 'Not uploaded yet'}</p>

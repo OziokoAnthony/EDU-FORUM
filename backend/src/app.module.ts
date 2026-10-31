@@ -14,6 +14,7 @@ import { HealthModule } from './modules/health/health.module';
 import { MetaModule } from './modules/meta/meta.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { SearchModule } from './modules/search/search.module';
 import { VacanciesModule } from './modules/vacancies/vacancies.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -42,6 +43,8 @@ import { UsersModule } from './modules/users/users.module';
     TeachersModule,
     CvModule,
     VacanciesModule,
+    // After TeachersModule: /teachers/me must match before /teachers/:id.
+    SearchModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })

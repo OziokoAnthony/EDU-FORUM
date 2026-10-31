@@ -215,6 +215,18 @@ has turned build output into cloud placeholders; delete `frontend/.next` and bui
   their poster. Public routes still read a valid bearer token, so the poster and
   shortlisted/invited teachers get the school on anonymous vacancies.
 
+- **Search (Phase 7):** PRD `verifiedOnly` is dropped. `radiusKm` accepts only 5/10/25/50.
+  Anonymous vacancies never show `distanceKm` (exact distances to a hidden school could
+  pinpoint it); teacher results show distance rounded to whole km. Match score rules
+  (weights above): subjects/levels = share of the wanted ones covered; qualification = holds
+  the required type or a higher-ranked one; experience = years / required, capped at 1;
+  certifications = share held; distance = 1 − km/50 (0 with no origin or pin). Teachers' origin
+  defaults to their saved pin; principals/directors have no saved location, so their origin is
+  `lat/lng` or the vacancy (recommended teachers). Teacher search `state` + `willingToRelocate`
+  = in the state or willing to move there. Recommended vacancies need a subject or level in
+  common; recommended teachers need that plus the same state or willingness to relocate.
+  Profile views, CV views and CV downloads are logged in `profile_views`.
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

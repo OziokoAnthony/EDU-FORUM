@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-  SALARY_PERIOD_LABELS,
   VACANCY_STATUS_LABELS,
   VACANCY_STATUSES,
   type MyVacancyResponse,
@@ -12,9 +11,10 @@ import {
 import { Alert } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { salaryRange } from '@/lib/format';
 import { useMyVacancies, useRefreshVacancies } from '@/lib/vacancies';
+import { HiringNav } from './hiring-nav';
 
-const naira = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 });
 const STATUS_STYLE: Record<VacancyStatus, string> = {
   draft: 'bg-slate-100 text-slate-700',
   published: 'bg-emerald-100 text-emerald-800',
@@ -29,6 +29,7 @@ export function HiringHome() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+      <HiringNav current="vacancies" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-slate-900">Your vacancies</h1>
         <Link href="/hiring/vacancies/new" className="rounded-lg bg-emerald-700 px-4 py-2.5 font-semibold text-white hover:bg-emerald-800">
@@ -105,7 +106,7 @@ function VacancyCard({ v }: { v: MyVacancyResponse }) {
             {v.isAnonymous ? ' (anonymous)' : ''} · {v.location.lga.name}, {v.location.state.name}
           </p>
           <p className="text-sm text-slate-600">
-            {naira.format(v.salaryMin)}–{naira.format(v.salaryMax)} {SALARY_PERIOD_LABELS[v.salaryPeriod]}
+            {salaryRange(v.salaryMin, v.salaryMax, v.salaryPeriod)}
           </p>
           <p className="text-sm text-slate-500">
             {v.applicantsCount} applicant{v.applicantsCount === 1 ? '' : 's'}
@@ -119,6 +120,11 @@ function VacancyCard({ v }: { v: MyVacancyResponse }) {
         {v.status === 'draft' || v.status === 'paused' ? action(v.status === 'paused' ? 'Resume' : 'Publish', () => act('/publish')) : null}
         {v.status === 'published' ? action('Pause', () => act('/pause')) : null}
         {v.status === 'published' || v.status === 'paused' ? action('Close', () => act('/close', 'POST', { reason: 'filled' })) : null}
+        {v.status === 'published' ? (
+          <Link href={`/hiring/vacancies/${v.id}/recommended`} className="font-semibold text-emerald-800 underline">
+            Recommended teachers
+          </Link>
+        ) : null}
         {action('Duplicate', () => act('/duplicate'))}
         {v.status === 'draft' ? action('Delete', () => act('', 'DELETE'), true) : null}
       </div>
