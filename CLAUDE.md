@@ -270,6 +270,21 @@ covers the window).
   410 for jobs closed 30+ days. Home and sitemaps are `force-dynamic` so builds never need the
   API. Endpoint added beyond the PRD table: `GET /seo/sitemap/vacancies`. No `/schools/*` pages.
 
+- **Phase 11 choices (user, 2026-10-31):** only principals/directors start chats (teachers reply);
+  Socket.IO for `/ws`; saved-search alerts instant/daily/weekly (default daily); deleted accounts
+  are anonymised (personal data and files erased; messages/applications show "deleted user").
+- **Notifications (Phase 11):** every notice goes through `NotificationsService.notify` (row +
+  `/ws` push of the item and unread count + queued email). In-app is always on; email is per
+  category (`NOTIFICATION_CATEGORIES`), stored in `users.notification_settings.email`, missing =
+  on, PUT merges. Moderation notices (takedown, profile hidden) set `alwaysEmail`. Suspension
+  stays email-only and drops the user's sockets. `/ws` clients send the access token in the
+  Socket.IO handshake `auth.token`; the server only pushes, actions stay on REST.
+
+- **Look (user, 2026-10-31):** dark portal style inspired by zone94.com, done by remapping the
+  Tailwind palette in `globals.css` (slate = dark neutrals, emerald-800/900 = gold text), Oswald
+  headings via `next/font`, photo banner (`SiteBanner`), home slideshow (`HeroSlider`), auth photo
+  collage. Stock photos are Pexels, sources in `frontend/public/images/stock/CREDITS.md`.
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

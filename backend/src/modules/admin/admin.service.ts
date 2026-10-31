@@ -29,6 +29,8 @@ import { Prisma, type User } from '../../generated/prisma/client';
 import { AuditService } from '../../infra/audit/audit.service';
 import { EmailQueue, escapeHtml } from '../../infra/mail/email-queue';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { RealtimeGateway } from '../../infra/realtime/realtime.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SessionService } from '../auth/session.service';
 import { SeoNotifier } from '../seo/seo-notifier';
 
@@ -49,6 +51,8 @@ export class AdminService {
     private readonly sessions: SessionService,
     private readonly emails: EmailQueue,
     private readonly seo: SeoNotifier,
+    private readonly notifications: NotificationsService,
+    private readonly realtime: RealtimeGateway,
   ) {}
 
   async stats(): Promise<AdminStats> {
@@ -135,6 +139,7 @@ export class AdminService {
     if (u.role === 'admin') throw rule('Admins cannot be suspended here');
     await this.prisma.user.update({ where: { id }, data: { status: 'suspended', suspendedReason: reason } });
     await this.sessions.revokeAllForUser(id);
+    this.realtime.disconnectUser(id);
     await this.audit.log({ actorId: admin.id, action: 'user.suspend', targetType: 'user', targetId: id, metadata: { reason } });
     if (u.email) {
       await this.emails.send({
@@ -210,14 +215,22 @@ export class AdminService {
     });
     await this.audit.log({ actorId: admin.id, action: 'vacancy.takedown', targetType: 'vacancy', targetId: id, metadata: { reason, title: v.title } });
     await this.seo.notify({ path: jobPath(v), shortId: v.shortId, type: 'URL_DELETED' });
-    if (v.createdBy.email) {
-      await this.emails.send({
-        to: v.createdBy.email,
-        subject: `Your vacancy was removed: ${v.title}`,
-        text: `Our team removed your vacancy "${v.title}" from ${APP_NAME}.\n\nReason: ${reason}`,
-        html: `<p>Our team removed your vacancy <strong>${escapeHtml(v.title)}</strong> from ${APP_NAME}.</p><p>Reason: ${escapeHtml(reason)}</p>`,
-      });
-    }
+    await this.notifications.notify({
+      userId: v.createdById,
+      type: 'moderation',
+      title: `Your vacancy was removed: ${v.title}`,
+      body: `Our team removed this vacancy. Reason: ${reason}`,
+      link: `/hiring/vacancies/${id}`,
+      alwaysEmail: true,
+      email: v.createdBy.email
+        ? {
+            to: v.createdBy.email,
+            subject: `Your vacancy was removed: ${v.title}`,
+            text: `Our team removed your vacancy "${v.title}" from ${APP_NAME}.\n\nReason: ${reason}`,
+            html: `<p>Our team removed your vacancy <strong>${escapeHtml(v.title)}</strong> from ${APP_NAME}.</p><p>Reason: ${escapeHtml(reason)}</p>`,
+          }
+        : undefined,
+    });
     return { id, status: 'closed', takedownReason: reason };
   }
 
@@ -263,14 +276,22 @@ export class AdminService {
     if (!t) throw notFound('Teacher profile');
     await this.prisma.teacherProfile.update({ where: { id }, data: { isPublished: false, moderationNote: reason } });
     await this.audit.log({ actorId: admin.id, action: 'teacher.unpublish', targetType: 'teacher_profile', targetId: id, metadata: { reason } });
-    if (t.user.email) {
-      await this.emails.send({
-        to: t.user.email,
-        subject: `Your ${APP_NAME} profile was hidden`,
-        text: `Our team hid your teacher profile from principals and directors.\n\nReason: ${reason}\n\nReply to this email if you would like us to review it.`,
-        html: `<p>Our team hid your teacher profile from principals and directors.</p><p>Reason: ${escapeHtml(reason)}</p><p>Reply to this email if you would like us to review it.</p>`,
-      });
-    }
+    await this.notifications.notify({
+      userId: t.userId,
+      type: 'moderation',
+      title: 'Your profile was hidden',
+      body: `Our team hid your teacher profile from principals and directors. Reason: ${reason}`,
+      link: '/teacher',
+      alwaysEmail: true,
+      email: t.user.email
+        ? {
+            to: t.user.email,
+            subject: `Your ${APP_NAME} profile was hidden`,
+            text: `Our team hid your teacher profile from principals and directors.\n\nReason: ${reason}\n\nReply to this email if you would like us to review it.`,
+            html: `<p>Our team hid your teacher profile from principals and directors.</p><p>Reason: ${escapeHtml(reason)}</p><p>Reply to this email if you would like us to review it.</p>`,
+          }
+        : undefined,
+    });
     return { id, isPublished: false, moderationNote: reason };
   }
 

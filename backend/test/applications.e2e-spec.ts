@@ -119,6 +119,8 @@ describe('Applications (e2e)', () => {
       expect(row.cvSnapshot.objectKey).toMatch(/^cv-snapshots\//);
       expect(t.storage.objects.has(row.cvSnapshot.objectKey)).toBe(true);
       expect(t.mailer.lastTo(poster.email)?.subject).toBe('New application: SS2 Physics Teacher');
+      const inbox = await t.http.get('/api/v1/notifications').set('Authorization', poster.auth).expect(200);
+      expect(inbox.body.data[0]).toMatchObject({ type: 'new_application', title: 'New application: SS2 Physics Teacher', read: false, link: `/hiring/vacancies/${v.id}/applicants` });
 
       // Replacing the CV later does not change what was sent.
       await t.prisma.cv.updateMany({ where: { teacherId: me.profileId }, data: { isActive: false, replacedAt: new Date() } });

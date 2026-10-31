@@ -15,6 +15,8 @@ interface AuthContextValue {
   authed<T>(path: string, options?: ApiOptions): Promise<T>;
   reloadUser(): Promise<MeResponse | null>;
   logout(): Promise<void>;
+  /** The current access token (for the `/ws` handshake); `fresh` forces a refresh first. */
+  accessToken(fresh?: boolean): Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -86,9 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus('signed-out');
   }, [authed]);
 
+  const accessToken = useCallback(async (fresh = false) => (fresh || !token.current ? refresh() : token.current), [refresh]);
+
   const value = useMemo(
-    () => ({ status, user, setSession, authed, reloadUser, logout }),
-    [status, user, setSession, authed, reloadUser, logout],
+    () => ({ status, user, setSession, authed, reloadUser, logout, accessToken }),
+    [status, user, setSession, authed, reloadUser, logout, accessToken],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -9,12 +9,14 @@ import { AuditModule } from './infra/audit/audit.service';
 import { FilesModule } from './infra/files.module';
 import { MessagingModule } from './infra/messaging.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
+import { RealtimeModule } from './infra/realtime/realtime.module';
 import { AdminModule } from './modules/admin/admin.controller';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CvModule } from './modules/cv/cv.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetaModule } from './modules/meta/meta.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
@@ -40,6 +42,8 @@ import { UsersModule } from './modules/users/users.module';
     MessagingModule,
     FilesModule,
     AuditModule,
+    RealtimeModule,
+    NotificationsModule,
     HealthModule,
     AuthModule,
     UsersModule,

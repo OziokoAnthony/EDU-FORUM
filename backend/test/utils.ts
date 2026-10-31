@@ -99,6 +99,7 @@ export async function deleteTestUsers(prisma: PrismaService, phones: string[] = 
   await prisma.workExperience.deleteMany({ where: teacherId });
   await prisma.upload.deleteMany({ where: { userId: { in: ids } } });
   await prisma.teacherProfile.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.notification.deleteMany({ where: { userId: { in: ids } } });
   await prisma.user.deleteMany({ where: { id: { in: ids } } });
 }
 

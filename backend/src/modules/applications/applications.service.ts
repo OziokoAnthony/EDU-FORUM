@@ -26,7 +26,6 @@ import type { z } from 'zod';
 import type { AuthUser } from '../../common/auth/auth-user';
 import { ApiException } from '../../common/filters/api-exception.filter';
 import { Prisma, type Application, type ApplicationStatusHistory, type User, type Vacancy } from '../../generated/prisma/client';
-import { EmailQueue } from '../../infra/mail/email-queue';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { TeacherSearchService } from '../search/teacher-search.service';
 import { VacancySearchService } from '../search/vacancy-search.service';
@@ -34,6 +33,7 @@ import { cvViewKey } from '../teachers/teacher.mapper';
 import { UploadsService } from '../uploads/uploads.service';
 import { toVacancyResponse, VACANCY_INCLUDE } from '../vacancies/vacancy.serializer';
 import { SeoNotifier } from '../seo/seo-notifier';
+import { NotificationsService } from '../notifications/notifications.service';
 import { applicationEmails } from './application-emails';
 
 const notFound = () => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Application not found');
@@ -54,7 +54,7 @@ export class ApplicationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploads: UploadsService,
-    private readonly emails: EmailQueue,
+    private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
     private readonly scores: VacancySearchService,
     private readonly teachers: TeacherSearchService,
@@ -121,11 +121,15 @@ export class ApplicationsService {
     }
 
     const poster = await this.prisma.user.findUniqueOrThrow({ where: { id: vacancy.createdById } });
-    if (poster.email) {
-      await this.emails.send(
-        applicationEmails.newApplication(poster.email, this.appUrl(), { vacancyTitle: vacancy.title, vacancyId, teacherName: teacher.fullName ?? 'A teacher' }),
-      );
-    }
+    const teacherName = teacher.fullName ?? 'A teacher';
+    await this.notifications.notify({
+      userId: poster.id,
+      type: 'new_application',
+      title: `New application: ${vacancy.title}`,
+      body: `${teacherName} applied for ${vacancy.title}.`,
+      link: `/hiring/vacancies/${vacancyId}/applicants`,
+      email: poster.email ? applicationEmails.newApplication(poster.email, this.appUrl(), { vacancyTitle: vacancy.title, vacancyId, teacherName }) : undefined,
+    });
     return this.getForTeacher(user, application.id);
   }
 
@@ -190,11 +194,17 @@ export class ApplicationsService {
     if (!canMove(a.status, 'withdrawn')) throw rule(`An application that is ${APPLICATION_STATUS_LABELS[a.status].toLowerCase()} cannot be withdrawn`);
     await this.record(a, 'withdrawn', user.id);
     const poster = await this.prisma.user.findUniqueOrThrow({ where: { id: a.vacancy.createdById } });
-    if (poster.email) {
-      await this.emails.send(
-        applicationEmails.withdrawn(poster.email, this.appUrl(), { vacancyTitle: a.vacancy.title, vacancyId: a.vacancyId, teacherName: a.teacher.fullName ?? 'A teacher' }),
-      );
-    }
+    const teacherName = a.teacher.fullName ?? 'A teacher';
+    await this.notifications.notify({
+      userId: poster.id,
+      type: 'application_withdrawn',
+      title: `Application withdrawn: ${a.vacancy.title}`,
+      body: `${teacherName} withdrew their application for ${a.vacancy.title}.`,
+      link: `/hiring/vacancies/${a.vacancyId}/applicants`,
+      email: poster.email
+        ? applicationEmails.withdrawn(poster.email, this.appUrl(), { vacancyTitle: a.vacancy.title, vacancyId: a.vacancyId, teacherName })
+        : undefined,
+    });
     return this.getForTeacher(user, id);
   }
 
@@ -357,7 +367,7 @@ export class ApplicationsService {
     return { filename: `applicants-${vacancy.slug}.csv`, csv: `﻿${csv}\r\n` };
   }
 
-  /** Emails applicants still in the running when a live vacancy's title or salary changes. */
+  /** Notifies applicants still in the running when a live vacancy's title or salary changes. */
   async notifyVacancyChange(before: Vacancy, after: Vacancy): Promise<void> {
     if (after.status !== 'published') return;
     const changes: string[] = [];
@@ -369,17 +379,24 @@ export class ApplicationsService {
     if (changes.length === 0) return;
     const applicants = await this.prisma.application.findMany({
       where: { vacancyId: after.id, deletedAt: null, status: { notIn: ['rejected', 'withdrawn'] } },
-      select: { teacher: { select: { user: { select: { email: true } } } } },
+      select: { teacher: { select: { user: { select: { id: true, email: true } } } } },
     });
     for (const a of applicants) {
-      const email = a.teacher.user.email;
-      if (email) await this.emails.send(applicationEmails.vacancyChanged(email, this.appUrl(), { vacancyTitle: after.title, changes }));
+      const { id, email } = a.teacher.user;
+      await this.notifications.notify({
+        userId: id,
+        type: 'vacancy_changed',
+        title: `A job you applied for was updated: ${after.title}`,
+        body: changes.join('. '),
+        link: '/teacher/applications',
+        email: email ? applicationEmails.vacancyChanged(email, this.appUrl(), { vacancyTitle: after.title, changes }) : undefined,
+      });
     }
   }
 
   // ───────────── helpers ─────────────
 
-  /** Writes the change and its history row, then emails the teacher (unless `notify` is false). */
+  /** Writes the change and its history row, then notifies the teacher (unless `notify` is false). */
   private async record(a: Application & { vacancy?: Vacancy }, to: ApplicationStatus, byId: string, message?: string, notify = true): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.application.update({
@@ -391,12 +408,20 @@ export class ApplicationsService {
     if (!notify || to === 'withdrawn') return;
     const full = await this.prisma.application.findUniqueOrThrow({
       where: { id: a.id },
-      include: { vacancy: { include: VACANCY_INCLUDE }, teacher: { select: { user: { select: { email: true } } } } },
+      include: { vacancy: { include: VACANCY_INCLUDE }, teacher: { select: { user: { select: { id: true, email: true } } } } },
     });
-    const email = full.teacher.user.email;
-    if (!email) return;
+    const { id: userId, email } = full.teacher.user;
+    // The school is named only once the status reveals it (anonymous vacancies).
     const v = toVacancyResponse(full.vacancy, REVEALING.includes(to));
-    await this.emails.send(applicationEmails.statusChanged(email, this.appUrl(), { vacancyTitle: v.title, schoolLabel: v.schoolLabel, status: to, message }));
+    const label = APPLICATION_STATUS_LABELS[to];
+    await this.notifications.notify({
+      userId,
+      type: 'status_change',
+      title: `Your application: ${label}`,
+      body: `${v.title} at ${v.schoolLabel} is now ${label.toLowerCase()}.${message ? ` Message: ${message}` : ''}`,
+      link: '/teacher/applications',
+      email: email ? applicationEmails.statusChanged(email, this.appUrl(), { vacancyTitle: v.title, schoolLabel: v.schoolLabel, status: to, message }) : undefined,
+    });
   }
 
   private checkAnswers(vacancy: Vacancy, answers: { questionId: string; answer: string }[]): { questionId: string; answer: string }[] {

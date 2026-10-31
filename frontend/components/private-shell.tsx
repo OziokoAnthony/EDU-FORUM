@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import type { UserRole } from '@edu-forum/shared';
 import { AuthProvider, homeFor, useAuth } from '@/lib/auth';
+import { NotificationBell } from './notification-bell';
 import { SiteBanner } from './site-banner';
 
 /**
@@ -37,6 +38,8 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
     <>
       <header className="mx-auto max-w-6xl sm:px-4">
         <SiteBanner compact>
+        <div className="flex items-center gap-2">
+        {user.role !== 'admin' ? <NotificationBell href={user.role === 'teacher' ? '/teacher/notifications' : '/hiring/notifications'} /> : null}
         <button
           type="button"
           onClick={async () => {
@@ -47,6 +50,7 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
         >
           Sign out
         </button>
+        </div>
         </SiteBanner>
       </header>
       <div className="animate-fade-in">{children}</div>
