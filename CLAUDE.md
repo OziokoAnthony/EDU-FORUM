@@ -149,6 +149,11 @@ The B2 bucket's CORS rule allows browser uploads from `http://localhost:3000` on
 production origin before launch. Upload flow: `POST /uploads/sign` → browser PUT to B2 →
 feature endpoint claims the upload (size + file-signature check) → background ClamAV scan →
 the feature's scan listener (`UploadsService.onScanned`).
+Edit (PATCH) schemas must not carry `.default()`s: Zod 4 applies defaults inside `.partial()`,
+so a default would overwrite the stored value of every field the edit left out. Strip them
+with `.unwrap()` (see `updateVacancySchema`, `experienceUpdateSchema`).
+The project sits in OneDrive: if `next build` fails with `EPERM … unlink …\.next\…`, OneDrive
+has turned build output into cloud placeholders; delete `frontend/.next` and build again.
 
 ## Confirmed decisions (resolve the PRD's open questions — 2026-10-31)
 
@@ -200,6 +205,15 @@ the feature's scan listener (`UploadsService.onScanned`).
   phone and email and can view/download CVs (still never the street address or exact pin),
   and they can open a chat with any teacher from the profile at any time; no shortlist gate.
   Every CV view/download is still logged.
+- **Vacancies (Phase 6):** a vacancy goes live as soon as it is published (no admin pre-review;
+  admins can take it down later). `school_type` is optional and is what anonymous vacancies show
+  instead of the name. Own-vacancy endpoints are `GET /vacancies/mine` and
+  `GET /vacancies/mine/:id` (the PRD's `GET /schools/me/vacancies`). Descriptions are Tiptap
+  HTML, cleaned by `sanitize-html` on the server. The deadline defaults to 30 days after first
+  publish; a nightly job closes live vacancies past their deadline (`expired`). Public
+  `GET /vacancies/:id` returns live and closed vacancies only; drafts/paused exist only for
+  their poster. Public routes still read a valid bearer token, so the poster and
+  shortlisted/invited teachers get the school on anonymous vacancies.
 
 ## API conventions
 

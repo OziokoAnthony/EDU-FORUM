@@ -14,6 +14,7 @@ import { HealthModule } from './modules/health/health.module';
 import { MetaModule } from './modules/meta/meta.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { VacanciesModule } from './modules/vacancies/vacancies.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -40,6 +41,7 @@ import { UsersModule } from './modules/users/users.module';
     UploadsModule,
     TeachersModule,
     CvModule,
+    VacanciesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })

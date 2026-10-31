@@ -83,7 +83,7 @@ test('a director signs up, verifies and lands in the hiring area', async ({ page
   await page.goto(link);
   await page.getByRole('link', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/hiring$/);
-  await expect(page.getByRole('heading', { name: 'Hiring dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your vacancies' })).toBeVisible();
   // A director cannot open the teacher area.
   await page.goto('/teacher');
   await expect(page).toHaveURL(/\/hiring$/);

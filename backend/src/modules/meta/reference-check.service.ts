@@ -25,6 +25,18 @@ export class ReferenceCheckService {
     this.assertAll(slugs, found, path, 'Unknown state');
   }
 
+  async qualificationTypes(slugs: string[], path: string): Promise<void> {
+    if (slugs.length === 0) return;
+    const found = await this.prisma.qualificationType.findMany({ where: { slug: { in: slugs }, isActive: true }, select: { slug: true } });
+    this.assertAll(slugs, found, path, 'Unknown qualification');
+  }
+
+  async certificationTypes(slugs: string[], path: string): Promise<void> {
+    if (slugs.length === 0) return;
+    const found = await this.prisma.certificationType.findMany({ where: { slug: { in: slugs }, isActive: true }, select: { slug: true } });
+    this.assertAll(slugs, found, path, 'Unknown certification');
+  }
+
   /** The LGA must belong to the state, and both must be active. */
   async stateAndLga(stateId: string, lgaId: string): Promise<void> {
     const lga = await this.prisma.lga.findFirst({

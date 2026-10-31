@@ -127,7 +127,10 @@ const endAfterStart = (v: ExperienceDates) => !v.startDate || !v.endDate || v.en
 export const experienceSchema = experienceFields
   .refine(datesConsistent, { message: 'Enter an end date, or tick "I work here now"', path: ['endDate'] })
   .refine(endAfterStart, { message: 'End date must be after the start date', path: ['endDate'] });
+/** Defaults stripped so a field left out of the edit keeps its stored value. */
+const e = experienceFields.shape;
 export const experienceUpdateSchema = experienceFields
+  .extend({ kind: e.kind.unwrap(), subjects: e.subjects.unwrap(), levels: e.levels.unwrap(), isCurrent: e.isCurrent.unwrap() })
   .partial()
   .refine(endAfterStart, { message: 'End date must be after the start date', path: ['endDate'] });
 export type ExperienceInput = z.input<typeof experienceSchema>;

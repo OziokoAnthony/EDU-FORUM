@@ -28,12 +28,35 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const targets = [ctx.getHandler(), ctx.getClass()];
-    if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, targets)) return true;
-
     const req = ctx.switchToHttp().getRequest<Request & { user?: AuthUser }>();
     const header = req.headers.authorization;
     const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
+
+    // Public routes never fail on auth, but still see a valid caller (e.g. the owner of an
+    // anonymous vacancy, or a shortlisted teacher, gets the school name).
+    if (this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, targets)) {
+      if (token) await this.authenticate(token, req).catch(() => undefined);
+      return true;
+    }
     if (!token) throw unauthorized('Sign in to continue');
+    await this.authenticate(token, req);
+    const user = req.user!;
+
+    const roles = this.reflector.getAllAndOverride<RoleKey[] | undefined>(ROLES, targets);
+    if (roles?.length && !roles.includes(ROLE_KEYS[user.role])) {
+      throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'You do not have access to this');
+    }
+
+    if (this.reflector.getAllAndOverride<boolean>(REQUIRE_VERIFIED, targets) && !user.verified) {
+      throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'Verify your email or phone first', {
+        reason: 'UNVERIFIED',
+      });
+    }
+    return true;
+  }
+
+  /** Verifies the token and reloads the user, so suspension and deletion apply at once. */
+  private async authenticate(token: string, req: Request & { user?: AuthUser }): Promise<void> {
 
     let payload: AccessTokenPayload;
     try {
@@ -52,18 +75,6 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     req.user = { id: user.id, role: user.role, verified: !!(user.emailVerifiedAt || user.phoneVerifiedAt) };
-
-    const roles = this.reflector.getAllAndOverride<RoleKey[] | undefined>(ROLES, targets);
-    if (roles?.length && !roles.includes(ROLE_KEYS[user.role])) {
-      throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'You do not have access to this');
-    }
-
-    if (this.reflector.getAllAndOverride<boolean>(REQUIRE_VERIFIED, targets) && !req.user.verified) {
-      throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'Verify your email or phone first', {
-        reason: 'UNVERIFIED',
-      });
-    }
-    return true;
   }
 }
 

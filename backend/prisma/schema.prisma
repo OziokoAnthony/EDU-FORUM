@@ -632,6 +632,8 @@ model Vacancy {
   createdById            String              @map("created_by") @db.Uuid
   /// Typed on each vacancy; hidden in every public response when location_visibility = anonymous.
   schoolName             String?             @map("school_name")
+  /// Optional (user, 2026-10-31); shown on anonymous vacancies instead of the school name.
+  schoolType             SchoolType?         @map("school_type")
   /// SEO URL is /jobs/{slug}-{shortId}; never changes once published.
   slug                   String
   shortId                String              @unique @map("short_id")

@@ -223,6 +223,17 @@ describe('Teacher onboarding (e2e)', () => {
     expect(nysc.body.kind).toBe('nysc');
   });
 
+  it('editing one field of an experience entry keeps the others', async () => {
+    const { auth } = await verifiedUser(t);
+    const created = await t.http
+      .post(`${API}/experiences`)
+      .set('Authorization', auth)
+      .send({ ...experience, kind: 'job', subjects: ['physics'], levels: ['sss'] })
+      .expect(201);
+    const edited = await t.http.patch(`${API}/experiences/${created.body.id}`).set('Authorization', auth).send({ role: 'Head of Physics' }).expect(200);
+    expect(edited.body).toMatchObject({ role: 'Head of Physics', kind: 'job', subjects: ['physics'], levels: ['sss'], endDate: '2022-07-29' });
+  });
+
   it('a published profile cannot drop its last experience entry', async () => {
     const { auth } = await verifiedUser(t);
     await completeProfile(auth);
