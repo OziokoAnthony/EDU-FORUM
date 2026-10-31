@@ -15,7 +15,7 @@ import { applyApiError } from '@/lib/form-errors';
 type Input = z.input<typeof registerSchema>;
 type Output = z.output<typeof registerSchema>;
 
-export function RegisterForm() {
+export function RegisterForm({ email, role: presetRole, next }: { email?: string; role?: 'school'; next?: string | null }) {
   const router = useRouter();
   const { setSession } = useAuth();
   const [method, setMethod] = useState<'email' | 'phone'>('email');
@@ -29,7 +29,7 @@ export function RegisterForm() {
     formState: { errors, isSubmitting },
   } = useForm<Input, unknown, Output>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: 'teacher' },
+    defaultValues: { role: presetRole ?? 'teacher', email },
   });
   const role = watch('role');
 
@@ -38,8 +38,10 @@ export function RegisterForm() {
     try {
       const res = await api<AuthTokensResponse>('/auth/register', { method: 'POST', body: values });
       setSession(res);
-      const next = homeFor(res.user);
-      router.push(next === '/verify-phone' ? `/verify-phone?phone=${encodeURIComponent(res.user.phone ?? '')}` : next);
+      // An invite link verifies the email when it is accepted, so go straight back to it.
+      if (next) return router.push(next);
+      const home = homeFor(res.user);
+      router.push(home === '/verify-phone' ? `/verify-phone?phone=${encodeURIComponent(res.user.phone ?? '')}` : home);
     } catch (err) {
       setFormError(applyApiError(err, setError));
     }
@@ -56,7 +58,7 @@ export function RegisterForm() {
       footer={
         <>
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-emerald-800 underline">
+          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'} className="font-semibold text-emerald-800 underline">
             Sign in
           </Link>
         </>

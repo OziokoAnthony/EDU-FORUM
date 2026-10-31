@@ -12,6 +12,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CvModule } from './modules/cv/cv.module';
 import { HealthModule } from './modules/health/health.module';
 import { MetaModule } from './modules/meta/meta.module';
+import { SchoolsModule } from './modules/schools/schools.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
@@ -40,6 +41,7 @@ import { UsersModule } from './modules/users/users.module';
     UploadsModule,
     TeachersModule,
     CvModule,
+    SchoolsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })

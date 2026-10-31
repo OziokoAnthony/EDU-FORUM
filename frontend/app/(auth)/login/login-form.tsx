@@ -15,7 +15,7 @@ import { applyApiError } from '@/lib/form-errors';
 type Input = z.input<typeof loginSchema>;
 type Output = z.output<typeof loginSchema>;
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string | null }) {
   const router = useRouter();
   const { status, user, setSession } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
@@ -26,10 +26,10 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<Input, unknown, Output>({ resolver: zodResolver(loginSchema) });
 
-  // Already signed in (session restored from the refresh cookie): go straight home.
+  // Signed in (or session restored from the refresh cookie): go back to `next`, or home.
   useEffect(() => {
-    if (status === 'signed-in' && user) router.replace(homeFor(user));
-  }, [status, user, router]);
+    if (status === 'signed-in' && user) router.replace(next ?? homeFor(user));
+  }, [status, user, router, next]);
 
   async function onSubmit(values: Output) {
     setFormError(null);
@@ -50,7 +50,7 @@ export function LoginForm() {
       footer={
         <>
           New to EDU-FORUM?{' '}
-          <Link href="/register" className="font-semibold text-emerald-800 underline">
+          <Link href={next ? `/register?next=${encodeURIComponent(next)}` : '/register'} className="font-semibold text-emerald-800 underline">
             Create a free account
           </Link>
         </>

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import { safeNext } from '@/lib/next-path';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Sign in' };
 
-export default function LoginPage() {
-  return <LoginForm />;
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
+  return <LoginForm next={safeNext(next)} />;
 }

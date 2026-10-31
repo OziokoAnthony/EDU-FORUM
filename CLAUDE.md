@@ -170,12 +170,23 @@ the feature's scan listener (`UploadsService.onScanned`).
 - BullMQ job queue arrived in Phase 3 (scan + convert jobs); Gotenberg converts DOC/DOCX.
 - Recommendations = the PRD's matching (recommended vacancies / recommended teachers, Phase 7).
 - Teacher↔school messaging keeps the PRD gate: only after shortlisting or an accepted invite.
+- School teams (Phase 4): one school per person; several owners allowed, never zero (the last
+  owner cannot be demoted or removed). Invites are email links valid 7 days; re-inviting sends a
+  fresh link; accepting needs the invited email (it also verifies that email) and is refused for
+  teacher accounts. The contact person is pre-filled from the owner's account. Curriculum is a
+  multi-select. School slugs come from the name (`-2`, `-3` if taken) and never change.
+- Endpoints added beyond the PRD table: `GET /schools/invites/:token` (Public: join-page preview)
+  and `DELETE /schools/me/invites/:id` (SO: cancel a pending invite).
 - **Community (added by the user, 2026-10-31; not in the PRD):** forum-style posts with comments,
   updating live over `/ws`, in two spaces: **Teachers' Lounge** (teachers only) and
   **Community Board** (teachers + verified school staff). Members only: `noindex`, robots
   disallow, no ads. Moderation: report, admin remove, block, and a warning not to share phone
   numbers (so contact gating cannot be bypassed). Built right after Phase 11 messaging; its
   endpoints are listed here when built, since the PRD is a PDF.
+  Community features (user, 2026-10-31): reactions/likes on posts and comments; photos on
+  posts (same signed-upload + ClamAV pipeline); sharing a job vacancy into the feed (anonymous
+  vacancies still hide the school); topic tags (e.g. Lesson ideas, Job tips, Salary talk);
+  notifications when someone comments on your post (via the Phase 11 notification system).
 - PRD PDF garbles some paths; use the hyphenated forms (`/auth/resend-verification`,
   `/auth/change-password`, `/vacancies/:id/applications/bulk-status`, `/saved-searches/:id`,
   `/webhooks/storage/scan-result`, `/vacancies/by-slug/:slug`,

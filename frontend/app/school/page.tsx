@@ -1,5 +1,5 @@
-import { AreaPlaceholder } from '@/components/area-placeholder';
+import { SchoolHome } from './school-home';
 
 export default function Page() {
-  return <AreaPlaceholder title="School dashboard" next="School onboarding and team invites arrive in Phase 4." />;
+  return <SchoolHome />;
 }

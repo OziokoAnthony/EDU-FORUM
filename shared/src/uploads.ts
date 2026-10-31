@@ -12,8 +12,8 @@ export const CV_MIME_TYPES = {
 const IMAGE_MIME_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' } as const;
 const DOCUMENT_MIME_TYPES = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' } as const;
 
-/** Upload purposes the API signs today; identity documents and logos join in later phases. */
-export const SIGNABLE_PURPOSES = ['cv', 'profile_photo', 'qualification_file', 'certification_file'] as const;
+/** Upload purposes the API signs today; identity documents join in the verification phase. */
+export const SIGNABLE_PURPOSES = ['cv', 'profile_photo', 'qualification_file', 'certification_file', 'school_logo'] as const;
 export type SignablePurpose = (typeof SIGNABLE_PURPOSES)[number];
 
 /** Allowed MIME types per purpose, each with the extensions the file name may use. */
@@ -22,6 +22,7 @@ export const UPLOAD_RULES: Record<SignablePurpose, { mimeTypes: Record<string, s
   profile_photo: { mimeTypes: IMAGE_MIME_TYPES, label: 'JPG, PNG or WebP' },
   qualification_file: { mimeTypes: DOCUMENT_MIME_TYPES, label: 'PDF, JPG or PNG' },
   certification_file: { mimeTypes: DOCUMENT_MIME_TYPES, label: 'PDF, JPG or PNG' },
+  school_logo: { mimeTypes: IMAGE_MIME_TYPES, label: 'JPG, PNG or WebP' },
 };
 
 /** Extensions accepted for a canonical extension (".jpeg" is a ".jpg"). */

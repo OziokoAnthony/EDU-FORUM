@@ -6,7 +6,7 @@ import { ApiException } from '../../common/filters/api-exception.filter';
 import type { WorkExperience } from '../../generated/prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CompletenessService } from './completeness.service';
-import { ReferenceCheckService } from './reference-check.service';
+import { ReferenceCheckService } from '../meta/reference-check.service';
 import { TeacherProfilesService } from './teacher-profiles.service';
 import { toExperienceResponse } from './teacher.mapper';
 

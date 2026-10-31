@@ -5,7 +5,7 @@ import { ApiException } from '../../common/filters/api-exception.filter';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { CompletenessService } from './completeness.service';
-import { ReferenceCheckService } from './reference-check.service';
+import { ReferenceCheckService } from '../meta/reference-check.service';
 import { TeacherProfilesService } from './teacher-profiles.service';
 import { toQualificationResponse } from './teacher.mapper';
 

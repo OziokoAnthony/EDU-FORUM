@@ -13,7 +13,7 @@ import type { TeacherProfile, Upload } from '../../generated/prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { UploadsService, type ScanOutcome } from '../uploads/uploads.service';
 import { CompletenessService } from './completeness.service';
-import { ReferenceCheckService } from './reference-check.service';
+import { ReferenceCheckService } from '../meta/reference-check.service';
 import { TeacherProfilesService } from './teacher-profiles.service';
 import { toCertificationResponse, toExperienceResponse, toQualificationResponse } from './teacher.mapper';
 
