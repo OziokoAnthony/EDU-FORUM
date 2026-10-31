@@ -9,3 +9,4 @@ allowBuilds:
   prisma: true
   '@prisma/engines': true
   unrs-resolver: false
+  '@parcel/watcher': false

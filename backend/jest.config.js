@@ -9,4 +9,7 @@ module.exports = {
   testRegex: '.*\.(spec|e2e-spec)\.ts$',
   transform: { '^.+\.ts$': ['ts-jest', { diagnostics: { ignoreCodes: [151001] } }] },
   moduleFileExtensions: ['ts', 'js', 'json'],
+  setupFiles: ['<rootDir>/test/setup-env.ts'],
+  // Suites share one database; run them one at a time.
+  maxWorkers: 1,
 };

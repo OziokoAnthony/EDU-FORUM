@@ -1,5 +1,6 @@
 import { Controller, Get, HttpStatus } from '@nestjs/common';
 import { APP_NAME } from '@edu-forum/shared';
+import { Public } from '../../common/auth/decorators';
 import { ApiException } from '../../common/filters/api-exception.filter';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
@@ -8,6 +9,7 @@ export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Liveness + readiness: 200 when the API and database respond, 503 otherwise. */
+  @Public()
   @Get()
   async check() {
     try {

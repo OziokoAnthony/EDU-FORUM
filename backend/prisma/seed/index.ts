@@ -3,6 +3,7 @@
  * Run with `pnpm --filter @edu-forum/backend db:seed`.
  */
 import 'dotenv/config';
+import { hash } from '@node-rs/argon2';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { slugify } from '@edu-forum/shared';
 import { PrismaClient } from '../../src/generated/prisma/client';
@@ -63,9 +64,32 @@ async function seedReferenceLists() {
   });
 }
 
+/** First admin from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD; never overwrites an existing password. */
+async function seedAdmin() {
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log('Skipping admin: set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create one.');
+    return;
+  }
+  await prisma.user.upsert({
+    where: { email },
+    update: {},
+    create: {
+      email,
+      passwordHash: await hash(password),
+      role: 'admin',
+      emailVerifiedAt: new Date(),
+      consentAcceptedAt: new Date(),
+    },
+  });
+  console.log(`Admin account: ${email}`);
+}
+
 async function main() {
   await seedLocations();
   await seedReferenceLists();
+  await seedAdmin();
   const [states, lgas, subjects, levels, qualificationTypes, certificationTypes] =
     await Promise.all([
       prisma.state.count(),
