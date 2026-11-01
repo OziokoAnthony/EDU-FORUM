@@ -17,7 +17,9 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().default(''),
   GOOGLE_AUTH_DRIVER: z.enum(['google', 'memory']).default('google'),
 
-  MAIL_DRIVER: z.enum(['smtp', 'memory']).default('smtp'),
+  MAIL_DRIVER: z.enum(['smtp', 'resend', 'memory']).default('smtp'),
+  /** Resend (production email); used when MAIL_DRIVER=resend. */
+  RESEND_API_KEY: z.string().default(''),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().default(1025),
   MAIL_FROM: z.string().default('EDU-FORUM <no-reply@edu-forum.local>'),
@@ -25,7 +27,14 @@ const envSchema = z.object({
   SUPPORT_EMAIL: z.string().default(''),
   /** Contact messages per email address and per network per hour (raised for browser tests). */
   CONTACT_RATE_LIMIT: z.coerce.number().int().positive().default(3),
-  SMS_DRIVER: z.enum(['console', 'memory']).default('console'),
+  SMS_DRIVER: z.enum(['console', 'termii', 'memory']).default('console'),
+  /** Termii (production SMS / WhatsApp); used when SMS_DRIVER=termii. */
+  TERMII_API_KEY: z.string().default(''),
+  TERMII_SENDER_ID: z.string().default('EDUFORUM'),
+  TERMII_BASE_URL: z.string().default('https://api.ng.termii.com'),
+  TERMII_SMS_ROUTE: z.enum(['dnd', 'generic']).default('dnd'),
+  /** true once Termii has approved a WhatsApp sender for this account. */
+  TERMII_WHATSAPP: z.enum(['true', 'false']).default('false'),
   // Push alerts to phones and browsers (web push). Off until VAPID keys exist; memory in tests.
   PUSH_DRIVER: z.enum(['webpush', 'memory', 'off']).default('off'),
   VAPID_PUBLIC_KEY: z.string().default(''),
@@ -54,13 +63,17 @@ const envSchema = z.object({
   CONVERTER_DRIVER: z.enum(['gotenberg', 'memory']).default('gotenberg'),
   GOTENBERG_URL: z.string().default('http://localhost:3100'),
 
-  GEOCODER_DRIVER: z.enum(['stub']).default('stub'),
+  GEOCODER_DRIVER: z.enum(['stub', 'google']).default('stub'),
+  GOOGLE_MAPS_API_KEY: z.string().default(''),
 
   // SEO: on-demand revalidation of the web app's cached pages (off when empty) and the Google
   // Indexing API (a logger until production credentials exist; memory in tests).
   REVALIDATE_SECRET: z.string().default(''),
   INDEXING_DRIVER: z.enum(['log', 'memory']).default('log'),
 }).superRefine((v, ctx) => {
+  if (v.MAIL_DRIVER === 'resend' && !v.RESEND_API_KEY) ctx.addIssue({ code: 'custom', path: ['RESEND_API_KEY'], message: 'Required when MAIL_DRIVER=resend' });
+  if (v.SMS_DRIVER === 'termii' && !v.TERMII_API_KEY) ctx.addIssue({ code: 'custom', path: ['TERMII_API_KEY'], message: 'Required when SMS_DRIVER=termii' });
+  if (v.GEOCODER_DRIVER === 'google' && !v.GOOGLE_MAPS_API_KEY) ctx.addIssue({ code: 'custom', path: ['GOOGLE_MAPS_API_KEY'], message: 'Required when GEOCODER_DRIVER=google' });
   if (v.STORAGE_DRIVER !== 's3') return;
   for (const key of ['S3_ENDPOINT', 'S3_REGION', 'S3_BUCKET', 'S3_ACCESS_KEY', 'S3_SECRET_KEY'] as const) {
     if (!v[key]) ctx.addIssue({ code: 'custom', path: [key], message: 'Required when STORAGE_DRIVER=s3' });

@@ -15,6 +15,7 @@ import {
 import { Alert, Button } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { PushSettings } from '@/components/pwa/push-settings';
+import { SmsSettings } from '@/components/sms-settings';
 import { NOTIFICATIONS_KEY, UNREAD_KEY } from '@/lib/notifications';
 
 const timeAgo = (iso: string) => {
@@ -100,6 +101,7 @@ export function NotificationsView({ backHref }: { backHref: string }) {
       )}
 
       <PushSettings />
+      <SmsSettings />
       <EmailPreferences />
     </main>
   );

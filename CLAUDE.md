@@ -437,6 +437,16 @@ covers the window).
   `details.signupRequired` until the person picks teacher/principal/director and accepts the terms.
   Admin accounts cannot use Google. `GOOGLE_AUTH_DRIVER=memory` accepts `test.<claims>` tokens in tests.
 
+- **SMS/WhatsApp alerts and production providers (user, 2026-11-01):** opt-in text alerts for
+  `SMS_CATEGORIES` (shortlisted/offered/hired, interviews, invitations), off by default, only to a
+  confirmed phone (users add and confirm one on their Notifications page), one 160-character SMS with the
+  link, queued `send-sms` job; WhatsApp when `TERMII_WHATSAPP=true` (Termii-approved sender). Callers
+  mark SMS-worthy notices with `smsCategory`. Preferences live beside email in
+  `users.notification_settings` (`sms`, `smsChannel`). Providers behind the existing switches:
+  `MAIL_DRIVER=resend` (+`RESEND_API_KEY`), `SMS_DRIVER=termii` (+`TERMII_API_KEY`, `TERMII_SENDER_ID`,
+  `TERMII_SMS_ROUTE` dnd/generic), `GEOCODER_DRIVER=google` (+`GOOGLE_MAPS_API_KEY`, Nigeria only,
+  `GET /meta/geocode`). The API refuses to start if a chosen provider has no key.
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

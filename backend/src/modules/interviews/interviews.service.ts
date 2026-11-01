@@ -245,6 +245,7 @@ export class InterviewsService implements OnModuleInit {
     await this.notifications.notify({
       userId,
       type: 'interview',
+      smsCategory: 'interviews',
       title: `${title}: ${v.title}`,
       body: text,
       link,

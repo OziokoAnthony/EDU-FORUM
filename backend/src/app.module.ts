@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './common/auth/jwt-auth.guard';
 import { validateEnv } from './config/env';
 import { AuditModule } from './infra/audit/audit.service';
 import { FilesModule } from './infra/files.module';
+import { GeocoderModule } from './infra/geocoder';
 import { MessagingModule } from './infra/messaging.module';
 import { PrismaModule } from './infra/prisma/prisma.module';
 import { RealtimeModule } from './infra/realtime/realtime.module';
@@ -52,6 +53,7 @@ import { UsersModule } from './modules/users/users.module';
     }),
     PrismaModule,
     MessagingModule,
+    GeocoderModule,
     FilesModule,
     AuditModule,
     RealtimeModule,

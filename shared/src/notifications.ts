@@ -50,11 +50,38 @@ export interface NotificationItem {
 }
 
 /** GET/PUT /notifications/preferences */
+/**
+ * SMS / WhatsApp alerts (user, 2026-11-01): important alerts only, opt-in (texts cost money), to a
+ * confirmed phone number. WhatsApp uses the same choices once Termii approves the sender.
+ */
+export const SMS_CATEGORIES = ['application_updates', 'interviews', 'invitations'] as const;
+export type SmsCategory = (typeof SMS_CATEGORIES)[number];
+export const SMS_CATEGORY_LABELS: Record<SmsCategory, string> = {
+  application_updates: 'Shortlisted, offered a job or hired',
+  interviews: 'Interviews booked, changed or coming up tomorrow',
+  invitations: 'Invitations to apply',
+};
+export const SMS_CHANNELS = ['sms', 'whatsapp'] as const;
+export type SmsChannel = (typeof SMS_CHANNELS)[number];
+
 export const notificationPreferencesSchema = z.object({
   // partialRecord: send only the categories you change (z.record with an enum key needs all of them).
-  email: z.partialRecord(z.enum(NOTIFICATION_CATEGORIES), z.boolean()),
+  email: z.partialRecord(z.enum(NOTIFICATION_CATEGORIES), z.boolean()).optional(),
+  sms: z.partialRecord(z.enum(SMS_CATEGORIES), z.boolean()).optional(),
+  smsChannel: z.enum(SMS_CHANNELS).optional(),
 });
-export type NotificationPreferences = { email: Record<NotificationCategory, boolean> };
+export type NotificationPreferences = {
+  email: Record<NotificationCategory, boolean>;
+  /** Off unless switched on. */
+  sms: Record<SmsCategory, boolean>;
+  smsChannel: SmsChannel;
+  /** Texts go only to a confirmed phone number. */
+  phone: string | null;
+  phoneVerified: boolean;
+  /** False when this server cannot send texts yet. */
+  smsAvailable: boolean;
+  whatsappAvailable: boolean;
+};
 
 export const notificationsQuerySchema = z.object({
   unread: z

@@ -81,6 +81,7 @@ export class InvitationsService {
     await this.notifications.notify({
       userId: teacher.userId,
       type: 'invitation',
+      smsCategory: 'invitations',
       title: `Invitation to apply: ${v.title}`,
       body: lines.join(' '),
       link: '/teacher/invitations',

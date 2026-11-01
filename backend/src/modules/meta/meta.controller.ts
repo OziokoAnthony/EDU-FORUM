@@ -16,6 +16,7 @@ import type { z } from 'zod';
 import { Public } from '../../common/auth/decorators';
 import { ApiException } from '../../common/filters/api-exception.filter';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { Geocoder } from '../../infra/geocoder';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -25,7 +26,10 @@ const CACHE = 'public, max-age=3600';
 /** PRD "Reference data" endpoints. Only active items are listed. */
 @Controller('meta')
 export class MetaController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly geocoder: Geocoder,
+  ) {}
 
   @Get('subjects')
   @Public()
@@ -118,13 +122,11 @@ export class MetaController {
   }
 
   /**
-   * PRD: address → lat/lng through our proxy (auth: any signed-in user). Local stub returns no
-   * results; the Google Geocoding adapter is wired when the production key exists.
+   * PRD: address → lat/lng through our proxy (auth: any signed-in user). GEOCODER_DRIVER=stub
+   * (local) returns no results; "google" asks the Google Geocoding API, limited to Nigeria.
    */
   @Get('geocode')
-  async geocode(
-    @Query(new ZodValidationPipe(geocodeQuerySchema)) _query: z.output<typeof geocodeQuerySchema>,
-  ): Promise<ListResponse<GeocodeResult>> {
-    return { data: [] };
+  async geocode(@Query(new ZodValidationPipe(geocodeQuerySchema)) query: z.output<typeof geocodeQuerySchema>): Promise<ListResponse<GeocodeResult>> {
+    return { data: await this.geocoder.search(query.q) };
   }
 }

@@ -453,6 +453,8 @@ export class ApplicationsService {
     await this.notifications.notify({
       userId,
       type: 'status_change',
+      // Texts only for the big moments (user, 2026-11-01).
+      smsCategory: to === 'shortlisted' || to === 'offered' || to === 'hired' ? 'application_updates' : undefined,
       title: `Your application: ${label}`,
       body: `${v.title} at ${v.schoolLabel} is now ${label.toLowerCase()}.${message ? ` Message: ${message}` : ''}`,
       link: '/teacher/applications',

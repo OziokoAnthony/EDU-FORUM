@@ -34,4 +34,7 @@ test('signed-in users find "Alerts on this device" on their notifications page',
   await page.goto('/teacher/notifications');
   await expect(page.getByRole('heading', { name: 'Alerts on this device' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Turn on alerts' })).toBeVisible();
+  // Text alerts start with adding and confirming a phone number.
+  await expect(page.getByRole('heading', { name: 'Text me (SMS or WhatsApp)' })).toBeVisible();
+  await expect(page.getByText('Add your phone number to get text alerts.')).toBeVisible();
 });
