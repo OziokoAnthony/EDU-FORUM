@@ -3,6 +3,7 @@ import { hash, verify } from '@node-rs/argon2';
 import {
   CONSENT_VERSION,
   type changePasswordSchema,
+  type googleSignInSchema,
   type identifierSchema,
   type loginSchema,
   type registerSchema,
@@ -15,6 +16,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { JOB_QUEUE, type JobQueue } from '../../infra/queue/job-queue';
 import type { User } from '../../generated/prisma/client';
 import { OneTimeCodesService } from './one-time-codes.service';
+import { GoogleVerifier } from './google-verifier';
 import { SessionService } from './session.service';
 
 /** Handled by AccountDeletionService (users module): re-announces the user's live vacancies. */
@@ -32,6 +34,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly sessions: SessionService,
     private readonly codes: OneTimeCodesService,
+    private readonly google: GoogleVerifier,
     @Inject(JOB_QUEUE) private readonly queue: JobQueue,
   ) {}
 
@@ -75,6 +78,42 @@ export class AuthService {
     });
     if (deletionCancelled) await this.queue.add(ACCOUNT_RESTORED_JOB, { userId: user.id });
     return { ...(await this.startSession(updated, client)), deletionCancelled };
+  }
+
+  /**
+   * Continue with Google (user, 2026-11-01): signs into the account linked to this Google
+   * account, or the account with the same email (linking it), or creates one once the person has
+   * chosen teacher/principal/director and accepted the terms. Google has verified the email, so no
+   * confirmation link is needed. Admin accounts keep signing in with their password.
+   */
+  async googleSignIn(input: z.output<typeof googleSignInSchema>, client: ClientInfo) {
+    const g = await this.google.verify(input.credential);
+    let user = await this.prisma.user.findFirst({ where: { googleId: g.sub, deletedAt: null } });
+    let created = false;
+    if (!user) {
+      const byEmail = await this.prisma.user.findFirst({ where: { email: g.email, deletedAt: null } });
+      if (byEmail) {
+        if (byEmail.role === 'admin') throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'Admin accounts sign in with their password');
+        user = await this.prisma.user.update({ where: { id: byEmail.id }, data: { googleId: g.sub, emailVerifiedAt: byEmail.emailVerifiedAt ?? new Date() } });
+      }
+    }
+    if (!user) {
+      if (!input.role || !input.consent) {
+        throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE', 'Choose your account type to finish signing up', { signupRequired: true, email: g.email, name: g.name });
+      }
+      user = await this.prisma.user.create({
+        data: { email: g.email, googleId: g.sub, role: input.role, emailVerifiedAt: new Date(), consentAcceptedAt: new Date(), consentVersion: CONSENT_VERSION },
+      });
+      created = true;
+    }
+    if (user.status === 'suspended') throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'Your account is suspended');
+    const deletionCancelled = !!user.deletionRequestedAt;
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date(), ...(deletionCancelled ? { deletionRequestedAt: null } : {}) },
+    });
+    if (deletionCancelled) await this.queue.add(ACCOUNT_RESTORED_JOB, { userId: user.id });
+    return { ...(await this.startSession(updated, client)), deletionCancelled, created };
   }
 
   refresh(refreshToken: string | undefined, client: ClientInfo) {

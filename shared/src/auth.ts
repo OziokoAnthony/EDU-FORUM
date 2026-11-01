@@ -48,6 +48,18 @@ export const registerSchema = z
   .refine((v) => v.email || v.phone, { message: 'Enter an email or phone number', path: ['email'] });
 export type RegisterInput = z.input<typeof registerSchema>;
 
+/**
+ * POST /auth/google (user, 2026-11-01): the ID token from Google's sign-in button. A new Google
+ * user is asked once for their account type and consent; the API answers 422 with
+ * `details.signupRequired` until both are sent.
+ */
+export const googleSignInSchema = z.object({
+  credential: z.string().min(20).max(4096),
+  role: z.enum(SIGNUP_ROLES).optional(),
+  consent: z.literal(true, 'You must accept the terms and privacy policy').optional(),
+});
+export type GoogleSignInInput = z.input<typeof googleSignInSchema>;
+
 /** Email address or phone number in one login field. */
 export const identifierSchema = z
   .string()

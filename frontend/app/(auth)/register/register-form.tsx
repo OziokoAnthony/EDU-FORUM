@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { registerSchema, type AuthTokensResponse } from '@edu-forum/shared';
 import type { z } from 'zod';
+import { GoogleSignIn } from '@/components/google-sign-in';
 import { Alert, AuthCard, Button, Field } from '@/components/ui';
 import { api } from '@/lib/api';
 import { homeFor, useAuth } from '@/lib/auth';
@@ -63,6 +64,7 @@ export function RegisterForm({ next }: { next?: string | null }) {
         </>
       }
     >
+      <GoogleSignIn mode="signup" />
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-slate-800">I am a</legend>

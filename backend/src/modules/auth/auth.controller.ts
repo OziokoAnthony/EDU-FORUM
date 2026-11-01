@@ -5,6 +5,7 @@ import {
   API_PREFIX,
   changePasswordSchema,
   forgotPasswordSchema,
+  googleSignInSchema,
   loginSchema,
   refreshSchema,
   registerSchema,
@@ -79,6 +80,18 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthTokensResponse> {
     const { session, user, deletionCancelled } = await this.auth.login(body, client(req));
+    return { ...respond(res, session, user), ...(deletionCancelled ? { deletionCancelled } : {}) };
+  }
+
+  @Public()
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  async google(
+    @Body(new ZodValidationPipe(googleSignInSchema)) body: z.output<typeof googleSignInSchema>,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthTokensResponse> {
+    const { session, user, deletionCancelled } = await this.auth.googleSignIn(body, client(req));
     return { ...respond(res, session, user), ...(deletionCancelled ? { deletionCancelled } : {}) };
   }
 

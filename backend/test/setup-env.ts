@@ -2,6 +2,8 @@
 process.env.MAIL_DRIVER = 'memory';
 process.env.SMS_DRIVER = 'memory';
 process.env.PUSH_DRIVER = 'memory';
+process.env.GOOGLE_AUTH_DRIVER = 'memory';
+process.env.GOOGLE_CLIENT_ID = 'test-client.apps.googleusercontent.com';
 process.env.VAPID_PUBLIC_KEY = 'BTestPublicKeyForE2EOnly';
 process.env.REFRESH_REUSE_GRACE_SECONDS ??= '0';
 // Most suites make many auth calls; test/rate-limit.e2e-spec.ts checks the real limit.

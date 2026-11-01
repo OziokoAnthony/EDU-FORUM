@@ -429,6 +429,14 @@ covers the window).
   requests drop all devices. "Install" appears in the top bar when the browser offers it; iPhone users
   add to Home Screen from Safari's Share menu.
 
+- **Google sign-in (user, 2026-11-01):** `POST /auth/google` with the ID token from Google's button
+  (`components/google-sign-in.tsx`, hidden until `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; API off until
+  `GOOGLE_CLIENT_ID`). The token is checked with Node crypto against Google's published keys (no
+  library): RS256, issuer, audience, expiry, verified email. Signs into the account linked by
+  `google_id`, else links the account with the same email (marking it verified), else answers 422
+  `details.signupRequired` until the person picks teacher/principal/director and accepts the terms.
+  Admin accounts cannot use Google. `GOOGLE_AUTH_DRIVER=memory` accepts `test.<claims>` tokens in tests.
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

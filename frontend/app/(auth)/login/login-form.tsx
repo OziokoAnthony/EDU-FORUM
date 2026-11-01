@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { loginSchema, type AuthTokensResponse } from '@edu-forum/shared';
 import type { z } from 'zod';
 import { rememberDeletionCancelled } from '@/components/account-settings';
+import { GoogleSignIn } from '@/components/google-sign-in';
 import { Alert, AuthCard, Button, Field } from '@/components/ui';
 import { api } from '@/lib/api';
 import { homeFor, useAuth } from '@/lib/auth';
@@ -65,6 +66,7 @@ export function LoginForm({ next, deletedOn }: { next?: string | null; deletedOn
           </Alert>
         </div>
       ) : null}
+      <GoogleSignIn mode="signin" />
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         <Field
           label="Email or phone number"

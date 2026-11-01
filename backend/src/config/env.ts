@@ -13,6 +13,9 @@ const envSchema = z.object({
   REFRESH_REUSE_GRACE_SECONDS: z.coerce.number().int().min(0).default(10),
   OTP_SECRET: z.string().min(32),
   AUTH_RATE_LIMIT: z.coerce.number().int().positive().default(5),
+  /** Google sign-in: the OAuth client ID (…apps.googleusercontent.com). Off when empty; "memory" in tests. */
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_AUTH_DRIVER: z.enum(['google', 'memory']).default('google'),
 
   MAIL_DRIVER: z.enum(['smtp', 'memory']).default('smtp'),
   SMTP_HOST: z.string().default('localhost'),
