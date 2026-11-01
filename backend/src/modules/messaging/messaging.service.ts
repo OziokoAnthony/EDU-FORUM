@@ -23,14 +23,17 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { RealtimeGateway } from '../../infra/realtime/realtime.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UploadsService, type ScanOutcome } from '../uploads/uploads.service';
+import { AVAILABLE_USER } from '../../common/available-user';
 
 const notFound = () => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Conversation not found');
 const rule = (message: string) => new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE', message);
 const ROLE_NAME = { principal: 'Principal', director: 'Director' } as const;
+/** Erased, or waiting for erasure (hidden from the moment deletion is requested). */
+const gone = (u: { deletedAt: Date | null; deletionRequestedAt: Date | null }) => !!(u.deletedAt || u.deletionRequestedAt);
 
 const CONVERSATION_INCLUDE = {
-  employer: { select: { id: true, role: true, email: true, deletedAt: true } },
-  teacher: { select: { id: true, fullName: true, userId: true, user: { select: { email: true, deletedAt: true } } } },
+  employer: { select: { id: true, role: true, email: true, deletedAt: true, deletionRequestedAt: true } },
+  teacher: { select: { id: true, fullName: true, userId: true, user: { select: { email: true, deletedAt: true, deletionRequestedAt: true } } } },
 } satisfies Prisma.ConversationInclude;
 type ConversationRow = Prisma.ConversationGetPayload<{ include: typeof CONVERSATION_INCLUDE }>;
 type MessageRow = Prisma.MessageGetPayload<{ include: { attachmentUpload: { select: { scanStatus: true } } } }>;
@@ -64,7 +67,7 @@ export class MessagingService implements OnModuleInit {
   /** Opens (or returns the existing) chat with a teacher. */
   async start(user: AuthUser, input: z.output<typeof startConversationSchema>): Promise<ConversationItem> {
     const teacher = await this.prisma.teacherProfile.findFirst({
-      where: { id: input.teacherId, deletedAt: null, user: { status: 'active', deletedAt: null } },
+      where: { id: input.teacherId, deletedAt: null, user: AVAILABLE_USER },
       select: { id: true, isPublished: true, applications: { where: { vacancy: { createdById: user.id } }, select: { id: true }, take: 1 } },
     });
     // Teachers you can see: published profiles, or anyone who applied to your vacancies.
@@ -132,7 +135,7 @@ export class MessagingService implements OnModuleInit {
     const c = await this.own(user, id);
     if (c.blockedById) throw rule(c.blockedById === user.id ? 'Unblock this chat to send messages' : 'You cannot send messages in this chat');
     const other = this.otherUserId(user, c);
-    if (c.employer.deletedAt || c.teacher.user.deletedAt) throw rule('This account has been deleted');
+    if (gone(c.employer) || gone(c.teacher.user)) throw rule('This account has been deleted');
     // Teachers reply; they never open chats, but they can write once one exists.
 
     let upload: Upload | null = null;
@@ -284,12 +287,17 @@ export class MessagingService implements OnModuleInit {
     const amTeacher = user.id === c.teacher.userId;
     const other = amTeacher
       ? {
-          name: c.employer.deletedAt ? 'Deleted user' : ROLE_NAME[c.employer.role as keyof typeof ROLE_NAME] ?? 'School leader',
+          name: gone(c.employer) ? 'Deleted user' : ROLE_NAME[c.employer.role as keyof typeof ROLE_NAME] ?? 'School leader',
           role: c.employer.role as 'principal' | 'director',
           teacherId: null,
-          deleted: !!c.employer.deletedAt,
+          deleted: gone(c.employer),
         }
-      : { name: c.teacher.user.deletedAt ? 'Deleted teacher' : (c.teacher.fullName ?? 'Teacher'), role: 'teacher' as const, teacherId: c.teacher.id, deleted: !!c.teacher.user.deletedAt };
+      : {
+          name: gone(c.teacher.user) ? 'Deleted teacher' : (c.teacher.fullName ?? 'Teacher'),
+          role: 'teacher' as const,
+          teacherId: gone(c.teacher.user) ? null : c.teacher.id,
+          deleted: gone(c.teacher.user),
+        };
     return {
       id: c.id,
       other,

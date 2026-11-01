@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { salaryRange } from '@/lib/format';
 import { useMyVacancies, useRefreshVacancies } from '@/lib/vacancies';
 import { HiringNav } from './hiring-nav';
+import { HiringOverview } from './hiring-overview';
 
 const STATUS_STYLE: Record<VacancyStatus, string> = {
   draft: 'bg-slate-100 text-slate-700',
@@ -22,7 +23,7 @@ const STATUS_STYLE: Record<VacancyStatus, string> = {
   closed: 'bg-slate-200 text-slate-600',
 };
 
-/** Principals and directors: their vacancies, by status, with the lifecycle actions. */
+/** Principals and directors: overview (FR-10), then their vacancies by status with the lifecycle actions. */
 export function HiringHome() {
   const [tab, setTab] = useState<VacancyStatus | undefined>(undefined);
   const vacancies = useMyVacancies(tab);
@@ -36,6 +37,8 @@ export function HiringHome() {
           Post a vacancy
         </Link>
       </div>
+
+      <HiringOverview />
 
       <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Filter by status">
         {[undefined, ...VACANCY_STATUSES].map((s) => (

@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useMyProfile, useRefreshTeacher } from '@/lib/teacher';
 import { stepHref, type WizardStepKey } from './onboarding/wizard-steps';
+import { TeacherStats } from './teacher-stats';
 
 /** Which wizard step fixes each completeness item. */
 const STEP_FOR: Record<CompletenessKey, WizardStepKey> = {
@@ -21,7 +22,7 @@ const STEP_FOR: Record<CompletenessKey, WizardStepKey> = {
   bio: 'personal',
 };
 
-/** Teacher home: completeness, what is missing, publish/unpublish. Full dashboard stats come later. */
+/** Teacher home (FR-10): completeness, what is missing, publish/unpublish, activity and recommended jobs. */
 export function TeacherHome() {
   const { authed } = useAuth();
   const refresh = useRefreshTeacher();
@@ -116,6 +117,8 @@ export function TeacherHome() {
           Continue profile setup
         </Link>
       )}
+
+      <TeacherStats />
 
       <section className="grid gap-3 sm:grid-cols-2">
         <Link href="/teacher/jobs" className="lift rounded-lg border border-emerald-200 bg-emerald-50 p-4 hover:bg-emerald-100 sm:col-span-2">

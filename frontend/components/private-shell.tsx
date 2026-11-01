@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import type { UserRole } from '@edu-forum/shared';
 import { AuthProvider, homeFor, useAuth } from '@/lib/auth';
 import { RealtimeProvider } from '@/lib/realtime';
+import { DeletionCancelledNotice } from './account-settings';
 import { NotificationBell } from './notification-bell';
 import { SiteBanner } from './site-banner';
 
@@ -41,6 +43,14 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
         <SiteBanner compact>
         <div className="flex items-center gap-2">
         {user.role !== 'admin' ? <NotificationBell href={user.role === 'teacher' ? '/teacher/notifications' : '/hiring/notifications'} /> : null}
+        {user.role !== 'admin' ? (
+          <Link
+            href={user.role === 'teacher' ? '/teacher/account' : '/hiring/account'}
+            className="rounded-sm border border-gold/60 bg-black/40 px-3 py-1.5 font-heading text-sm uppercase tracking-[0.12em] text-gold hover:bg-black/60"
+          >
+            Account
+          </Link>
+        ) : null}
         <button
           type="button"
           onClick={async () => {
@@ -54,6 +64,7 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
         </div>
         </SiteBanner>
       </header>
+      <DeletionCancelledNotice />
       <div className="animate-fade-in">{children}</div>
     </RealtimeProvider>
   );

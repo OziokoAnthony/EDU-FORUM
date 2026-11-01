@@ -38,7 +38,7 @@ test('teacher applies; director shortlists with a message and exports CSV; teach
   await signIn(director, directorEmail);
   await expect(director).toHaveURL(/\/hiring$/);
   await director.getByRole('link', { name: 'Applicants (1)' }).click();
-  await expect(director.getByRole('heading', { name: 'Applicants' })).toBeVisible();
+  await expect(director.getByRole('heading', { name: 'Applicants', exact: true })).toBeVisible();
   await director.getByRole('link', { name: new RegExp(`Ada ${tag}`) }).click();
   await expect(director.getByRole('heading', { name: `Ada ${tag}` })).toBeVisible();
   await expect(director.getByText('I would love to join your team.')).toBeVisible();

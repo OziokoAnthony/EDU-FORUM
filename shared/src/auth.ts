@@ -111,6 +111,8 @@ export interface AuthTokensResponse {
   /** Seconds until the access token expires. */
   expiresIn: number;
   user: MeResponse;
+  /** Login only: true when signing in cancelled a pending account deletion. */
+  deletionCancelled?: boolean;
 }
 
 export interface MeResponse {

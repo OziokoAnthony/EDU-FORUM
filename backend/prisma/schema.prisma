@@ -488,6 +488,9 @@ model TeacherProfile {
   visibility         ProfileVisibility  @default(visible)
   /// Set by admin unpublish (moderation) with a reason.
   moderationNote     String?            @map("moderation_note")
+  /// "Finish your profile" reminders: 3 days after sign-up, then weekly, at most 3.
+  incompleteRemindersSent Int           @default(0) @map("incomplete_reminders_sent")
+  incompleteRemindedAt    DateTime?     @map("incomplete_reminded_at")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
   deletedAt          DateTime?          @map("deleted_at")
@@ -677,6 +680,8 @@ model Vacancy {
   needsReview            Boolean             @default(false) @map("needs_review")
   takedownReason         String?             @map("takedown_reason")
   viewsCount             Int                 @default(0) @map("views_count")
+  /// "Closes in 3 days" reminder sent to the poster; cleared when the deadline changes.
+  expiryReminderSentAt   DateTime?           @map("expiry_reminder_sent_at")
   createdAt              DateTime            @default(now()) @map("created_at")
   updatedAt              DateTime            @updatedAt @map("updated_at")
   deletedAt              DateTime?           @map("deleted_at")

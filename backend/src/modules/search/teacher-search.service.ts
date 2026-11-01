@@ -10,6 +10,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { cvViewKey } from '../teachers/teacher.mapper';
 import { UploadsService } from '../uploads/uploads.service';
 import { point, teacherMatchScore } from './match-sql';
+import { AVAILABLE_USER, availableUserSql } from '../../common/available-user';
 
 type Query = z.output<typeof teacherSearchSchema>;
 type Wanted = { subjects: string[]; levels: string[]; minQualRank: number | null; minExperience: number | null; certifications: string[] };
@@ -19,7 +20,7 @@ const notFound = () => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Teac
 
 /** A teacher is findable when published, visible, and their account is active. */
 const FINDABLE = Prisma.sql`t.is_published AND t.visibility = 'visible' AND t.deleted_at IS NULL
-  AND u.status = 'active' AND u.deleted_at IS NULL`;
+  AND ${availableUserSql('u')}`;
 
 /**
  * Teacher search, profile view and CV links for principals and directors. Responses carry
@@ -179,7 +180,7 @@ export class TeacherSearchService {
 
   private async findable(teacherId: string) {
     const t = await this.prisma.teacherProfile.findFirst({
-      where: { id: teacherId, isPublished: true, visibility: 'visible', deletedAt: null, user: { status: 'active', deletedAt: null } },
+      where: { id: teacherId, isPublished: true, visibility: 'visible', deletedAt: null, user: AVAILABLE_USER },
       include: {
         user: { select: { phone: true, email: true } },
         qualifications: { where: { deletedAt: null }, include: { type: true }, orderBy: { yearObtained: 'desc' } },

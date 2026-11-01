@@ -18,13 +18,14 @@ import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { VacancySearchService } from '../search/vacancy-search.service';
 import { toVacancyResponse, VACANCY_INCLUDE } from '../vacancies/vacancy.serializer';
+import { availableUserSql, isAvailable } from '../../common/available-user';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SHORT_ID = /-([a-z2-9]{8})$/;
 /** A live vacancy, as SQL over `v` (same rule as public search). */
 const LIVE = Prisma.sql`v.status = 'published' AND v.deleted_at IS NULL AND v.takedown_reason IS NULL
   AND (v.deadline IS NULL OR v.deadline >= CURRENT_DATE)
-  AND EXISTS (SELECT 1 FROM users pu WHERE pu.id = v.created_by AND pu.status = 'active' AND pu.deleted_at IS NULL)`;
+  AND EXISTS (SELECT 1 FROM users pu WHERE pu.id = v.created_by AND ${availableUserSql('pu')})`;
 
 const notFound = () => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Page not found');
 const k = (n: number) => (n >= 1000 ? `₦${Math.round(n / 1000)}k` : `₦${n}`);
@@ -46,9 +47,9 @@ export class SeoService {
     if (!shortId) throw notFound();
     const v = await this.prisma.vacancy.findFirst({
       where: { shortId, deletedAt: null },
-      include: { ...VACANCY_INCLUDE, createdBy: { select: { role: true, status: true } } },
+      include: { ...VACANCY_INCLUDE, createdBy: { select: { role: true, status: true, deletedAt: true, deletionRequestedAt: true } } },
     });
-    if (!v || v.takedownReason || v.createdBy.status !== 'active' || (v.status !== 'published' && v.status !== 'closed')) throw notFound();
+    if (!v || v.takedownReason || !isAvailable(v.createdBy) || (v.status !== 'published' && v.status !== 'closed')) throw notFound();
     if (v.status === 'closed' && v.closedAt && Date.now() - v.closedAt.getTime() > GONE_AFTER_DAYS * DAY_MS) {
       throw new ApiException(HttpStatus.GONE, 'GONE', 'This position has closed');
     }

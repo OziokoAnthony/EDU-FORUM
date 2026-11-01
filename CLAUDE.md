@@ -119,7 +119,8 @@ frontend/              # Next.js (package @edu-forum/frontend)
   e2e/                 # Playwright (mobile-360 + desktop projects)
 backend/               # NestJS (package @edu-forum/backend)
   src/modules/         # auth, users, teachers, cv, vacancies,
-                       # search, applications, invitations, interviews, saved, community,
+                       # search, applications, invitations, interviews, saved, dashboards,
+                       # reminders, community,
                        # messaging, notifications, reports, meta, admin, uploads
   src/common/          # guards, filters, pipes, serializers
   prisma/schema.prisma
@@ -312,6 +313,31 @@ covers the window).
   `-weekly` Monday 06:00 UTC; each run lists up to 10 matches published since `last_alerted_at`
   (searches take an internal `since`), one notice + email per search, link back to the search
   page with the filters in the URL. Turning alerts back on starts from now.
+- **Dashboards, reminders, export, deletion (Phase 11, confirmed 2026-11-01):**
+  `GET /teachers/me/dashboard` (completeness, applications by status, pending invitations,
+  upcoming interviews, distinct principal/director viewers and CV viewers in the last 7 days, saved
+  jobs, 3 recommended vacancies); `GET /teachers/me/profile-views` lists views by kind with the
+  viewer's role only. `GET /hiring/dashboard` replaces the PRD's `/schools/me/dashboard` (own live
+  and paused vacancies with applicant and unviewed counts, pipeline by status, pending invitations,
+  upcoming interviews, 3 recommended teachers for the newest live vacancy).
+  Reminders (`reminders` category, daily 06:00 UTC): `vacancy-expiry-reminders` once per deadline when a
+  live vacancy closes within 3 days (`expiry_reminder_sent_at`, cleared when the deadline changes);
+  `profile-incomplete-reminders` for verified, never-published teachers 3 days after sign-up, then
+  weekly, at most 3 (`incomplete_reminders_sent`, `incomplete_reminded_at`).
+  `GET /me/export` (added beyond the PRD table): one JSON download of everything the account holds,
+  own files as 10-minute links; anonymous schools stay hidden, other people appear by role.
+  `DELETE /me` hides the account at once (`AVAILABLE_USER` / `availableUserSql` in
+  `common/available-user.ts` = active, not erased, no deletion pending: search, profile, chats show
+  "Deleted user/teacher", public job pages, applying, invitations, alerts), revokes sessions, drops
+  sockets and emails the erase date; admins cannot use it. Signing in within 30 days cancels
+  (`deletionCancelled: true` on the login response; job pages are re-announced). The daily
+  `account-erasure` job (01:30 UTC) erases after 30 days: contact details, password, profile fields,
+  qualifications, certifications, experience, CVs, saved items, notifications and every stored file;
+  the profile row stays as "Deleted teacher", applications keep their status (cover note and answers
+  erased, CV link 404), message text stays but attachments go, a leader's open vacancies close
+  (`cancelled`) and their notes are deleted. Each erasure is audit-logged (`account.erased`).
+  `AccountModule` is listed after `SearchModule` in `AppModule`: importing `SeoModule` earlier puts
+  `/teachers/:id` ahead of `/teachers/me`.
 
 - **Look (user, 2026-10-31):** dark portal style inspired by zone94.com, done by remapping the
   Tailwind palette in `globals.css` (slate = dark neutrals, emerald-800/900 = gold text), Oswald

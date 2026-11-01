@@ -28,6 +28,7 @@ import { SeoNotifier } from '../seo/seo-notifier';
 import { ReferenceCheckService } from '../meta/reference-check.service';
 import { sanitizeDescription } from './sanitize-description';
 import { toMyVacancyResponse, toVacancyResponse, VACANCY_INCLUDE, type VacancyRow } from './vacancy.serializer';
+import { isAvailable } from '../../common/available-user';
 
 type VacancyFields = z.output<typeof vacancyRecordSchema>;
 
@@ -103,7 +104,9 @@ export class VacanciesService implements OnModuleInit {
     if (current.status === 'published' && merged.deadline && merged.deadline < today()) {
       throw invalid('deadline', 'The deadline cannot be in the past');
     }
-    const after = await this.prisma.vacancy.update({ where: { id }, data: { ...data, slug } });
+    // A new deadline earns a new "closes in 3 days" reminder.
+    const deadlineMoved = current.deadline?.getTime() !== data.deadline?.getTime();
+    const after = await this.prisma.vacancy.update({ where: { id }, data: { ...data, slug, ...(deadlineMoved ? { expiryReminderSentAt: null } : {}) } });
     // PRD FR-4: salary or title changes notify applicants.
     await this.applications.notifyVacancyChange(current, after);
     if (after.status === 'published') await this.seo.notify({ path: jobPath(after), shortId: after.shortId, type: 'URL_UPDATED' });
@@ -182,10 +185,10 @@ export class VacanciesService implements OnModuleInit {
    * taken-down ones only exist for their poster.
    */
   async getPublic(viewer: AuthUser | undefined, id: string): Promise<VacancyResponse> {
-    const v = await this.prisma.vacancy.findFirst({ where: { id, deletedAt: null }, include: { ...VACANCY_INCLUDE, createdBy: { select: { role: true, status: true } } } });
+    const v = await this.prisma.vacancy.findFirst({ where: { id, deletedAt: null }, include: { ...VACANCY_INCLUDE, createdBy: { select: { role: true, status: true, deletedAt: true, deletionRequestedAt: true } } } });
     if (!v) throw notFound();
     const isOwner = viewer?.id === v.createdById;
-    const isPublic = (v.status === 'published' || v.status === 'closed') && !v.takedownReason && v.createdBy.status === 'active';
+    const isPublic = (v.status === 'published' || v.status === 'closed') && !v.takedownReason && isAvailable(v.createdBy);
     if (!isPublic && !isOwner) throw notFound();
     if (!isOwner && v.status === 'published') {
       await this.prisma.vacancy.update({ where: { id }, data: { viewsCount: { increment: 1 } } });

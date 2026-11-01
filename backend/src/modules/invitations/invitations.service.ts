@@ -21,6 +21,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { ApplicationsService } from '../applications/applications.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { toVacancyResponse, VACANCY_INCLUDE } from '../vacancies/vacancy.serializer';
+import { AVAILABLE_USER } from '../../common/available-user';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const notFound = () => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Invitation not found');
@@ -46,7 +47,7 @@ export class InvitationsService {
     if (!vacancy) throw new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Vacancy not found');
     if (vacancy.status !== 'published' || vacancy.takedownReason) throw rule('Publish the vacancy before inviting teachers');
     const teacher = await this.prisma.teacherProfile.findFirst({
-      where: { id: input.teacherId, deletedAt: null, isPublished: true, user: { status: 'active', deletedAt: null } },
+      where: { id: input.teacherId, deletedAt: null, isPublished: true, user: AVAILABLE_USER },
       select: { id: true, userId: true, fullName: true, user: { select: { email: true } } },
     });
     if (!teacher) throw new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Teacher not found');

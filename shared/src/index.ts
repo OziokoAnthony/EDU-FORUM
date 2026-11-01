@@ -15,3 +15,4 @@ export * from './invitations';
 export * from './interviews';
 export * from './messaging';
 export * from './saved';
+export * from './dashboards';

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { loginSchema, type AuthTokensResponse } from '@edu-forum/shared';
 import type { z } from 'zod';
+import { rememberDeletionCancelled } from '@/components/account-settings';
 import { Alert, AuthCard, Button, Field } from '@/components/ui';
 import { api } from '@/lib/api';
 import { homeFor, useAuth } from '@/lib/auth';
@@ -15,7 +16,7 @@ import { applyApiError } from '@/lib/form-errors';
 type Input = z.input<typeof loginSchema>;
 type Output = z.output<typeof loginSchema>;
 
-export function LoginForm({ next }: { next?: string | null }) {
+export function LoginForm({ next, deletedOn }: { next?: string | null; deletedOn?: string | null }) {
   const router = useRouter();
   const { status, user, setSession } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export function LoginForm({ next }: { next?: string | null }) {
         method: 'POST',
         body: { identifier: values.identifier.value, password: values.password },
       });
+      if (res.deletionCancelled) rememberDeletionCancelled();
       setSession(res);
     } catch (err) {
       setFormError(applyApiError(err, setError));
@@ -56,6 +58,13 @@ export function LoginForm({ next }: { next?: string | null }) {
         </>
       }
     >
+      {deletedOn ? (
+        <div className="mb-5">
+          <Alert kind="info">
+            Your account is hidden and will be deleted on {deletedOn}. Changed your mind? Sign in before then to keep it.
+          </Alert>
+        </div>
+      ) : null}
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         <Field
           label="Email or phone number"

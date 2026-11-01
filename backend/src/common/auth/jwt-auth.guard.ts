@@ -67,9 +67,10 @@ export class JwtAuthGuard implements CanActivate {
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, role: true, status: true, deletedAt: true, emailVerifiedAt: true, phoneVerifiedAt: true },
+      select: { id: true, role: true, status: true, deletedAt: true, deletionRequestedAt: true, emailVerifiedAt: true, phoneVerifiedAt: true },
     });
-    if (!user || user.deletedAt) throw unauthorized('Sign in to continue');
+    // Deletion requested: signing in again (which cancels it) is the only way back.
+    if (!user || user.deletedAt || user.deletionRequestedAt) throw unauthorized('Sign in to continue');
     if (user.status === 'suspended') {
       throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'Your account is suspended');
     }

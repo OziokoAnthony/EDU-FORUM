@@ -31,8 +31,8 @@ export class RealtimeGateway implements OnGatewayConnection {
     try {
       if (typeof token !== 'string') throw new Error('no token');
       const payload = await this.jwt.verifyAsync<AccessTokenPayload>(token);
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, status: true, deletedAt: true } });
-      if (!user || user.status !== 'active' || user.deletedAt) throw new Error('inactive');
+      const user = await this.prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, status: true, deletedAt: true, deletionRequestedAt: true } });
+      if (!user || user.status !== 'active' || user.deletedAt || user.deletionRequestedAt) throw new Error('inactive');
       await client.join(room(user.id));
     } catch {
       client.emit('unauthorized');

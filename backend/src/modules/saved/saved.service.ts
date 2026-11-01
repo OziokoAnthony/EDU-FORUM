@@ -26,6 +26,7 @@ import { JOB_QUEUE, type JobQueue } from '../../infra/queue/job-queue';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TeacherSearchService } from '../search/teacher-search.service';
 import { toVacancyListItem, VacancySearchService } from '../search/vacancy-search.service';
+import { AVAILABLE_USER } from '../../common/available-user';
 
 /** Jobs and their crons (UTC; Nigeria is UTC+1, so 06:00 UTC = 7am WAT). */
 export const ALERT_JOBS: Record<Exclude<AlertFrequency, 'off'>, { name: string; cron: string }> = {
@@ -181,7 +182,7 @@ export class SavedService implements OnModuleInit {
   /** Runs the saved searches due at this frequency; each gets at most one alert with new matches. */
   async sendAlerts(frequency: AlertFrequency, now = new Date()): Promise<number> {
     const due = await this.prisma.savedSearch.findMany({
-      where: { alertFrequency: frequency, deletedAt: null, user: { status: 'active', deletedAt: null } },
+      where: { alertFrequency: frequency, deletedAt: null, user: AVAILABLE_USER },
       include: { user: true },
     });
     let sent = 0;

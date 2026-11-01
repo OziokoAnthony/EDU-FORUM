@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { hash, verify } from '@node-rs/argon2';
 import {
   CONSENT_VERSION,
@@ -12,9 +12,13 @@ import {
 import type { z } from 'zod';
 import { ApiException } from '../../common/filters/api-exception.filter';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { JOB_QUEUE, type JobQueue } from '../../infra/queue/job-queue';
 import type { User } from '../../generated/prisma/client';
 import { OneTimeCodesService } from './one-time-codes.service';
 import { SessionService } from './session.service';
+
+/** Handled by AccountDeletionService (users module): re-announces the user's live vacancies. */
+export const ACCOUNT_RESTORED_JOB = 'account-restored';
 
 type Identifier = z.output<typeof identifierSchema>;
 interface ClientInfo {
@@ -28,6 +32,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly sessions: SessionService,
     private readonly codes: OneTimeCodesService,
+    @Inject(JOB_QUEUE) private readonly queue: JobQueue,
   ) {}
 
   async register(input: z.output<typeof registerSchema>, client: ClientInfo) {
@@ -62,8 +67,14 @@ export class AuthService {
     if (user.status === 'suspended') {
       throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'Your account is suspended');
     }
-    const updated = await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    return this.startSession(updated, client);
+    // Signing in within the 30-day grace period cancels a requested account deletion.
+    const deletionCancelled = !!user.deletionRequestedAt;
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date(), ...(deletionCancelled ? { deletionRequestedAt: null } : {}) },
+    });
+    if (deletionCancelled) await this.queue.add(ACCOUNT_RESTORED_JOB, { userId: user.id });
+    return { ...(await this.startSession(updated, client)), deletionCancelled };
   }
 
   refresh(refreshToken: string | undefined, client: ClientInfo) {

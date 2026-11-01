@@ -78,8 +78,8 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthTokensResponse> {
-    const { session, user } = await this.auth.login(body, client(req));
-    return respond(res, session, user);
+    const { session, user, deletionCancelled } = await this.auth.login(body, client(req));
+    return { ...respond(res, session, user), ...(deletionCancelled ? { deletionCancelled } : {}) };
   }
 
   /** Reads the refresh token from the httpOnly cookie (web) or the body (future mobile apps). */

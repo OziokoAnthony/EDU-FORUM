@@ -35,6 +35,7 @@ import { toVacancyResponse, VACANCY_INCLUDE } from '../vacancies/vacancy.seriali
 import { SeoNotifier } from '../seo/seo-notifier';
 import { NotificationsService } from '../notifications/notifications.service';
 import { applicationEmails } from './application-emails';
+import { AVAILABLE_USER } from '../../common/available-user';
 
 const notFound = () => new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'Application not found');
 const rule = (message: string) => new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, 'BUSINESS_RULE', message);
@@ -78,7 +79,7 @@ export class ApplicationsService {
     const cv = teacher.cvs[0];
     if (!cv) throw rule('Upload a CV before applying');
 
-    const vacancy = await this.prisma.vacancy.findFirst({ where: { id: vacancyId, deletedAt: null, takedownReason: null, createdBy: { status: 'active' } } });
+    const vacancy = await this.prisma.vacancy.findFirst({ where: { id: vacancyId, deletedAt: null, takedownReason: null, createdBy: AVAILABLE_USER } });
     const today = new Date().toISOString().slice(0, 10);
     if (!vacancy || vacancy.status !== 'published' || (vacancy.deadline && vacancy.deadline.toISOString().slice(0, 10) < today)) {
       throw new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'This vacancy is not open for applications');
@@ -363,6 +364,8 @@ export class ApplicationsService {
   /** The CV exactly as it was sent (the snapshot), 10-minute link, logged. */
   async cvLink(user: AuthUser, id: string, download: boolean): Promise<CvLinkResponse> {
     const a = await this.ownApplication(user, id);
+    const teacher = await this.prisma.teacherProfile.findUniqueOrThrow({ where: { id: a.teacherId }, select: { deletedAt: true } });
+    if (teacher.deletedAt) throw new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'This teacher deleted their account, so their CV is no longer available');
     const snap = await this.prisma.cvSnapshot.findUniqueOrThrow({ where: { id: a.cvSnapshotId } });
     const key = download ? snap.objectKey : cvViewKey(snap);
     if (!key) throw new ApiException(HttpStatus.NOT_FOUND, 'NOT_FOUND', 'The CV preview is not available');

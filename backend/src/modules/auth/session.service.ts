@@ -54,7 +54,7 @@ export class SessionService {
   async rotate(refreshToken: string, client: ClientInfo): Promise<IssuedSession> {
     const current = await this.prisma.refreshToken.findUnique({
       where: { tokenHash: hashToken(refreshToken) },
-      include: { user: { select: { id: true, role: true, status: true, deletedAt: true } } },
+      include: { user: { select: { id: true, role: true, status: true, deletedAt: true, deletionRequestedAt: true } } },
     });
     if (!current) throw invalidSession();
 
@@ -66,7 +66,7 @@ export class SessionService {
       // a revoked token means theft: the whole family is revoked.
       const graceMs = this.config.getOrThrow<number>('REFRESH_REUSE_GRACE_SECONDS') * 1000;
       const recentlyRotated = current.replacedBy && Date.now() - current.revokedAt.getTime() < graceMs;
-      if (recentlyRotated && !user.deletedAt && user.status === 'active' && current.expiresAt > new Date()) {
+      if (recentlyRotated && !user.deletedAt && !user.deletionRequestedAt && user.status === 'active' && current.expiresAt > new Date()) {
         return (await this.issue(user, client, current.familyId)).session;
       }
       await this.revokeFamily(current.familyId);
@@ -74,7 +74,7 @@ export class SessionService {
     }
     if (current.expiresAt < new Date()) throw invalidSession();
 
-    if (user.deletedAt || user.status !== 'active') {
+    if (user.deletedAt || user.deletionRequestedAt || user.status !== 'active') {
       await this.revokeFamily(current.familyId);
       throw invalidSession();
     }

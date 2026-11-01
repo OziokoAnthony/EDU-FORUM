@@ -14,18 +14,21 @@ import { AdminModule } from './modules/admin/admin.controller';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CvModule } from './modules/cv/cv.module';
+import { DashboardsModule } from './modules/dashboards/dashboards.module';
 import { HealthModule } from './modules/health/health.module';
 import { InterviewsModule } from './modules/interviews/interviews.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 import { ConversationsModule } from './modules/messaging/messaging.module';
 import { MetaModule } from './modules/meta/meta.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { RemindersModule } from './modules/reminders/reminders.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SavedModule } from './modules/saved/saved.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { SearchModule } from './modules/search/search.module';
 import { VacanciesModule } from './modules/vacancies/vacancies.module';
+import { AccountModule } from './modules/users/account.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -63,6 +66,9 @@ import { UsersModule } from './modules/users/users.module';
     InterviewsModule,
     ConversationsModule,
     SavedModule,
+    DashboardsModule,
+    RemindersModule,
+    AccountModule,
     ReportsModule,
     AdminModule,
   ],
