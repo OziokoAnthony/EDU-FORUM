@@ -10,7 +10,9 @@ import {
   type ListResponse,
   type MetaItem,
 } from '@edu-forum/shared';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { JsonLd } from '@/components/json-ld';
+import { ADSENSE_CLIENT, getAdsConfig } from '@/lib/ads';
 import { VacancyCard } from '@/components/vacancy-card';
 import { salaryRange, shortDate } from '@/lib/format';
 import { serverGet, SITE_URL } from '@/lib/server-api';
@@ -23,13 +25,22 @@ import { Breadcrumbs } from './breadcrumbs';
  */
 export async function JobView({ page }: { page: JobPageResponse }) {
   const v = page.vacancy;
-  const subjects = (await serverGet<ListResponse<MetaItem>>('/meta/subjects', ['meta'])).data?.data ?? [];
+  const subjects =
+    (await serverGet<ListResponse<MetaItem>>('/meta/subjects', ['meta'])).data?.data ?? [];
   const subjectName = (slug: string) => subjects.find((s) => s.slug === slug)?.name ?? slug;
   const closed = v.status !== 'published';
   const applyHref = `/login?next=${encodeURIComponent(`/teacher/jobs/${v.id}`)}`;
+  // Sidebar ad (desktop) only when switched on, so the page keeps its single column otherwise.
+  const sidebar =
+    !!ADSENSE_CLIENT &&
+    (await getAdsConfig()).slots.some(
+      (a) => a.pageType === 'job_detail' && a.slotName === 'sidebar',
+    );
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+    <main
+      className={`mx-auto space-y-6 px-4 py-6 ${sidebar ? 'max-w-3xl lg:max-w-5xl' : 'max-w-3xl'}`}
+    >
       <JsonLd data={jobPostingJsonLd(v, SITE_URL)} />
       <JsonLd data={breadcrumbJsonLd(page.breadcrumbs, SITE_URL)} />
       <Breadcrumbs crumbs={page.breadcrumbs} />
@@ -41,7 +52,10 @@ export async function JobView({ page }: { page: JobPageResponse }) {
           {v.schoolType ? ` · ${SCHOOL_TYPE_LABELS[v.schoolType]}` : ''}
         </p>
         <p className="text-slate-600">
-          <Link href={`/jobs/${v.location.state.slug}/${v.location.lga.slug}`} className="underline">
+          <Link
+            href={`/jobs/${v.location.state.slug}/${v.location.lga.slug}`}
+            className="underline"
+          >
             {v.location.lga.name}
           </Link>
           ,{' '}
@@ -49,7 +63,9 @@ export async function JobView({ page }: { page: JobPageResponse }) {
             {v.location.state.name}
           </Link>
         </p>
-        <p className="text-lg font-semibold text-slate-900">{salaryRange(v.salaryMin, v.salaryMax, v.salaryPeriod)}</p>
+        <p className="text-lg font-semibold text-slate-900">
+          {salaryRange(v.salaryMin, v.salaryMax, v.salaryPeriod)}
+        </p>
         <p className="text-sm text-slate-600">
           {JOB_TYPE_LABELS[v.jobType]} · {v.openings} opening{v.openings === 1 ? '' : 's'}
           {v.publishedAt ? ` · posted ${shortDate(v.publishedAt)}` : ''}
@@ -58,47 +74,77 @@ export async function JobView({ page }: { page: JobPageResponse }) {
       </header>
 
       {closed ? (
-        <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-4 font-semibold text-amber-900">
+        <p
+          role="status"
+          className="rounded-lg border border-amber-200 bg-amber-50 p-4 font-semibold text-amber-900"
+        >
           This position has closed. See similar jobs below.
         </p>
       ) : (
-        <Link href={applyHref} className="flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-600 sm:w-auto sm:px-8">
+        <Link
+          href={applyHref}
+          className="flex w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-3 text-base font-semibold text-white hover:bg-emerald-600 sm:w-auto sm:px-8"
+        >
           Apply free with your CV
         </Link>
       )}
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-slate-900">About the job</h2>
-        <div
-          className="space-y-2 text-slate-800 [&_a]:text-emerald-800 [&_a]:underline [&_h2]:font-semibold [&_h3]:font-semibold [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
-          // Sanitised server-side (sanitize-html allow-list) before it is stored.
-          dangerouslySetInnerHTML={{ __html: v.description }}
-        />
-      </section>
+      {/* Ads sit below the Apply button, never beside or above it (CLAUDE.md). */}
+      <div className={sidebar ? 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]' : ''}>
+        <div className="space-y-6">
+          <section className="space-y-2">
+            <h2 className="text-lg font-semibold text-slate-900">About the job</h2>
+            <div
+              className="space-y-2 text-slate-800 [&_a]:text-emerald-800 [&_a]:underline [&_h2]:font-semibold [&_h3]:font-semibold [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
+              // Sanitised server-side (sanitize-html allow-list) before it is stored.
+              dangerouslySetInnerHTML={{ __html: v.description }}
+            />
+          </section>
 
-      <section className="space-y-1">
-        <h2 className="text-lg font-semibold text-slate-900">Subjects and levels</h2>
-        <p className="flex flex-wrap gap-2">
-          {v.subjects.map((s) => (
-            <Link key={s} href={`/jobs/${v.location.state.slug}/${s}-teacher`} className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800 hover:bg-slate-200">
-              {subjectName(s)} jobs in {v.location.state.name}
-            </Link>
-          ))}
-        </p>
-        {v.minExperienceYears ? <p className="text-slate-700">At least {v.minExperienceYears} years of experience.</p> : null}
-        {v.benefits.length ? <p className="text-slate-700">Benefits: {v.benefits.map((b) => BENEFIT_LABELS[b]).join(', ')}</p> : null}
-      </section>
+          <AdSlot pageType="job_detail" slot="below_description" />
 
-      {page.similar.length ? (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-900">Similar jobs</h2>
-          <ul className="space-y-3">
-            {page.similar.map((s) => (
-              <VacancyCard key={s.id} v={s} href={jobPath(s)} />
-            ))}
-          </ul>
-        </section>
-      ) : null}
+          <section className="space-y-1">
+            <h2 className="text-lg font-semibold text-slate-900">Subjects and levels</h2>
+            <p className="flex flex-wrap gap-2">
+              {v.subjects.map((s) => (
+                <Link
+                  key={s}
+                  href={`/jobs/${v.location.state.slug}/${s}-teacher`}
+                  className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800 hover:bg-slate-200"
+                >
+                  {subjectName(s)} jobs in {v.location.state.name}
+                </Link>
+              ))}
+            </p>
+            {v.minExperienceYears ? (
+              <p className="text-slate-700">At least {v.minExperienceYears} years of experience.</p>
+            ) : null}
+            {v.benefits.length ? (
+              <p className="text-slate-700">
+                Benefits: {v.benefits.map((b) => BENEFIT_LABELS[b]).join(', ')}
+              </p>
+            ) : null}
+          </section>
+
+          {page.similar.length ? (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900">Similar jobs</h2>
+              <ul className="space-y-3">
+                {page.similar.map((s) => (
+                  <VacancyCard key={s.id} v={s} href={jobPath(s)} />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
+        {sidebar ? (
+          <AdSlot
+            pageType="job_detail"
+            slot="sidebar"
+            className="hidden h-fit lg:sticky lg:top-20 lg:block"
+          />
+        ) : null}
+      </div>
     </main>
   );
 }

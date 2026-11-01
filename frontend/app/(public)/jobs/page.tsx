@@ -9,6 +9,9 @@ import {
   type StateItem,
   type VacancyListItem,
 } from '@edu-forum/shared';
+import { AD_IN_FEED_EVERY } from '@edu-forum/shared';
+import { Fragment } from 'react';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { JsonLd } from '@/components/json-ld';
 import { Breadcrumbs } from '@/components/public/breadcrumbs';
 import { VacancyCard } from '@/components/vacancy-card';
@@ -96,8 +99,11 @@ export default async function Page({ searchParams }: Props) {
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-slate-600">No jobs match. Try fewer filters.</p>
       ) : (
         <ul className="stagger space-y-3">
-          {jobs.map((v) => (
-            <VacancyCard key={v.id} v={v} href={jobPath(v)} />
+          {jobs.map((v, i) => (
+            <Fragment key={v.id}>
+              <VacancyCard v={v} href={jobPath(v)} />
+              {(i + 1) % AD_IN_FEED_EVERY === 0 && i < jobs.length - 1 ? <AdSlot pageType="job_search" slot="in_feed" listItem /> : null}
+            </Fragment>
           ))}
         </ul>
       )}

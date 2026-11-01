@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { breadcrumbJsonLd, jobPath, type Paginated, type SeoMeta, type VacancyListItem } from '@edu-forum/shared';
+import { AD_IN_FEED_EVERY } from '@edu-forum/shared';
+import { Fragment } from 'react';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { JsonLd } from '@/components/json-ld';
 import { VacancyCard } from '@/components/vacancy-card';
 import { serverGet, SITE_URL } from '@/lib/server-api';
@@ -37,8 +40,11 @@ export async function LandingView({ meta, page }: { meta: SeoMeta; page: number 
         </div>
       ) : (
         <ul className="stagger space-y-3">
-          {jobs.map((v) => (
-            <VacancyCard key={v.id} v={v} href={jobPath(v)} />
+          {jobs.map((v, i) => (
+            <Fragment key={v.id}>
+              <VacancyCard v={v} href={jobPath(v)} />
+              {(i + 1) % AD_IN_FEED_EVERY === 0 && i < jobs.length - 1 ? <AdSlot pageType="landing" slot="in_feed" listItem /> : null}
+            </Fragment>
           ))}
         </ul>
       )}

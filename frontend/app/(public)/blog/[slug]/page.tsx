@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { articleJsonLd, breadcrumbJsonLd, type BlogCommentItem, type BlogPostDetail, type Paginated } from '@edu-forum/shared';
+import { AD_MAX_IN_ARTICLE, articleJsonLd, breadcrumbJsonLd, type BlogCommentItem, type BlogPostDetail, type Paginated } from '@edu-forum/shared';
+import { Fragment } from 'react';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { BlogCard, blogDate, coverSrc } from '@/components/blog/blog-card';
 import { BlogInteractions } from '@/components/blog/interactions';
 import { JsonLd } from '@/components/json-ld';
 import { Breadcrumbs } from '@/components/public/breadcrumbs';
 import { getSeoMeta, toMetadata } from '@/lib/seo-metadata';
 import { serverGet, SITE_URL } from '@/lib/server-api';
+import { adPositions, topLevelBlocks } from '@/lib/split-article';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -30,6 +33,8 @@ export default async function Page({ params }: Props) {
   const [{ data: meta }, { data: post }] = await Promise.all([getSeoMeta(`/blog/${slug}`), serverGet<BlogPostDetail>(`/posts/by-slug/${slug}`, tags(slug))]);
   if (!meta || !post) notFound();
   // Comments are in the HTML for everyone (and Google); the island takes over for signed-in actions.
+  const blocks = topLevelBlocks(post.body);
+  const ads = adPositions(blocks.length, AD_MAX_IN_ARTICLE);
   const { data: comments } = await serverGet<Paginated<BlogCommentItem>>(`/posts/${post.id}/comments?limit=50`, tags(slug));
 
   return (
@@ -55,7 +60,15 @@ export default async function Page({ params }: Props) {
           <p className="text-sm text-slate-500">
             By <span className="font-semibold text-slate-700">{post.author.name}</span> · <time dateTime={post.publishedAt}>{blogDate(post.publishedAt)}</time>
           </p>
-          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: post.body }} />
+          {/* Up to 3 in-article ads, between top-level paragraphs only (CLAUDE.md). */}
+          <div className="prose-blog">
+            {blocks.map((b, i) => (
+              <Fragment key={i}>
+                <div dangerouslySetInnerHTML={{ __html: b }} />
+                {ads.includes(i) ? <AdSlot pageType="blog_post" slot="in_article" className="not-prose my-6" /> : null}
+              </Fragment>
+            ))}
+          </div>
         </div>
         <BlogInteractions post={post} initialComments={comments} />
       </article>

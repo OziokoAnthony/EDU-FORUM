@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { APP_NAME, jobPath, websiteJsonLd, type LandingPageItem, type Paginated, type VacancyListItem } from '@edu-forum/shared';
+import { AdSlot } from '@/components/ads/ad-slot';
 import { JsonLd } from '@/components/json-ld';
 import { HeroSlider } from '@/components/public/hero-slider';
 import { VacancyCard } from '@/components/vacancy-card';
@@ -62,6 +63,7 @@ export default async function HomePage() {
           </Link>
         </section>
       ) : null}
+      <AdSlot pageType="home" slot="below_fold" className="rounded-lg bg-panel p-3 shadow-sm" />
 
       </div>
       <aside className="space-y-3">

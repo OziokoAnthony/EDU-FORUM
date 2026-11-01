@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { APP_NAME } from '@edu-forum/shared';
 import { BookIcon, HomeIcon, JobsIcon } from '@/components/icons';
+import { AdScripts } from '@/components/ads/ad-scripts';
 import { TopBar } from '@/components/top-bar';
 
 const TABS = [
@@ -16,6 +17,7 @@ const TABS = [
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <AdScripts />
       <TopBar
         search={{ action: '/jobs', placeholder: 'Search teaching jobs' }}
         tabs={TABS}

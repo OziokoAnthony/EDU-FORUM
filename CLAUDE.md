@@ -88,8 +88,18 @@ traffic is the business. Every public-page change must keep SEO intact.
   user has not consented.
 - Load the AdSense script once in the public layout only, with
   `NEXT_PUBLIC_ADSENSE_CLIENT` from env. Serve `ads.txt` at the root.
-- Cookie consent banner before ads load; Google-certified consent tool for EEA/UK/CH
-  visitors. Privacy policy must mention Google advertising cookies.
+- Consent (user, 2026-11-01; replaces "own banner + Google tool for EEA/UK/CH only"): Google's
+  Privacy & Messaging consent tool for every visitor, loaded before the AdSense script; AdSense
+  waits for the visitor's choice. Privacy policy must mention Google advertising cookies.
+- Built (2026-11-01), switched off: no script, no ad space and a placeholder `ads.txt` until
+  `NEXT_PUBLIC_ADSENSE_CLIENT` is set (build-time variable: rebuild after setting it). Spaces are
+  defined in `shared/src/ads.ts` (`AD_SLOTS`: home below the fold, `/jobs` and landing pages
+  in-feed after every 6th job, job page below the description and a desktop sidebar that starts
+  below the Apply button, blog posts in-article between top-level paragraphs, at most 3). Each
+  starts off; admins switch it on with its AdSense slot ID on Admin → Ads (`GET /admin/ads`,
+  `PUT /admin/ads/:pageType/:slotName`, audit-logged, refreshes the `ads` cache tag). Public pages
+  read `GET /ads/config` (only spaces that are on). `<AdSlot>` is a server component, so a space
+  that is off renders nothing and one that is on reserves its height (no CLS).
 
 ## Default stack (change only if the user says so)
 
