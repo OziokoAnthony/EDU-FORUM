@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { SwitchAccount } from '@/components/switch-account';
 import { Alert, AuthCard, Button } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { homeFor, useAuth } from '@/lib/auth';
@@ -73,6 +74,7 @@ export function VerifyEmail({ token }: { token: string | null }) {
           Sign in to get a new link
         </Link>
       ) : null}
+      <SwitchAccount />
     </AuthCard>
   );
 }

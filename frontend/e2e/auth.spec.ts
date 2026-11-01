@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { API, signIn } from './helpers';
 
 // Uses the real API (backend dev server) and reads the email from Mailpit (docker compose).
 const MAILPIT = 'http://localhost:8025/api/v1';
@@ -88,4 +89,19 @@ test('a director signs up, verifies and lands in the hiring area', async ({ page
   // A director cannot open the teacher area.
   await page.goto('/teacher');
   await expect(page).toHaveURL(/\/hiring$/);
+});
+
+test('an unconfirmed account can sign out from the confirm page and use another account', async ({ page }, info) => {
+  const email = `pw-switch-${info.project.name}-${Date.now()}@e2e.edu-forum.test`;
+  await fetch(`${API}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: 'teach2026', role: 'teacher', consent: true }),
+  });
+  await signIn(page, email);
+  await expect(page).toHaveURL(/\/verify-email/);
+  // /login sends a signed-in, unconfirmed user back here, so the way out must be on this page.
+  await page.getByRole('button', { name: 'Sign out and use a different account' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByLabel('Email or phone number')).toBeVisible();
 });

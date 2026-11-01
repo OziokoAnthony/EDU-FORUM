@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { verifyPhoneSchema } from '@edu-forum/shared';
 import type { z } from 'zod';
+import { SwitchAccount } from '@/components/switch-account';
 import { Alert, AuthCard, Button, Field } from '@/components/ui';
 import { api } from '@/lib/api';
 import { homeFor, useAuth } from '@/lib/auth';
@@ -69,6 +70,7 @@ export function VerifyPhoneForm({ initialPhone }: { initialPhone: string }) {
           Send a new code
         </button>
       </form>
+      <SwitchAccount />
     </AuthCard>
   );
 }
