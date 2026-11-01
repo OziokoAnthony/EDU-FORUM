@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import type { AdminStats } from '@edu-forum/shared';
+import { legalPlaceholders, type AdminStats } from '@edu-forum/shared';
 import { Alert } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { AdminNav } from './admin-nav';
@@ -33,6 +33,12 @@ export default function Page() {
     <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
       <AdminNav current="overview" />
       <h1 className="text-2xl font-bold text-slate-900">Admin overview</h1>
+      {legalPlaceholders().length ? (
+        <Alert kind="info">
+          Before launch: fill in the business details used on the privacy policy, terms and contact page ({legalPlaceholders().join(', ')} in{' '}
+          <code>shared/src/legal.ts</code>), and set <code>SUPPORT_EMAIL</code> so contact messages are emailed.
+        </Alert>
+      ) : null}
       {stats.isPending ? (
         <p className="text-slate-500">Loading…</p>
       ) : stats.isError || !s ? (

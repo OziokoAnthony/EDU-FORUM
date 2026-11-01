@@ -14,6 +14,7 @@ import { AdminModule } from './modules/admin/admin.controller';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AdsModule } from './modules/ads/ads.module';
+import { ContactModule } from './modules/contact/contact.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { CommunityModule } from './modules/community/community.module';
 import { CvModule } from './modules/cv/cv.module';
@@ -76,6 +77,7 @@ import { UsersModule } from './modules/users/users.module';
     // After SearchModule (BlogModule imports SeoModule, which pulls in search routes).
     BlogModule,
     AdsModule,
+    ContactModule,
     ReportsModule,
     AdminModule,
   ],

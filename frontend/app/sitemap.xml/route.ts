@@ -20,6 +20,7 @@ export async function GET() {
       { path: '/sitemaps/vacancies.xml', lastmod: newest(jobs?.data ?? []) },
       { path: '/sitemaps/landing.xml', lastmod: newest(landing?.data ?? []) },
       { path: '/sitemaps/blog.xml', lastmod: newest(blog?.data ?? []) },
+      { path: '/sitemaps/pages.xml' },
     ]),
   );
 }

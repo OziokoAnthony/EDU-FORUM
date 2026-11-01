@@ -7,7 +7,7 @@ export const LANDING_MIN_LIVE_JOBS = 3;
 /** Closed jobs answer 410 Gone this long after closing (CLAUDE.md). */
 export const GONE_AFTER_DAYS = 30;
 
-export type SeoPageKind = 'home' | 'jobs' | 'state' | 'lga' | 'subject' | 'state_subject' | 'job' | 'blog' | 'blog_category' | 'blog_post';
+export type SeoPageKind = 'home' | 'jobs' | 'state' | 'lga' | 'subject' | 'state_subject' | 'job' | 'blog' | 'blog_category' | 'blog_post' | 'page';
 
 export interface Breadcrumb {
   name: string;
@@ -28,6 +28,15 @@ export interface SeoMeta {
   /** Slugs to filter the job list with on landing pages. */
   filters: { state?: string; lga?: string; subject?: string; category?: string };
 }
+
+/** About, legal and help pages (user, 2026-11-01): indexable, no ads, in the sitemap. */
+export const STATIC_PAGES = [
+  { path: '/about', name: 'About us', title: 'About EDU-FORUM: free teacher recruitment in Nigeria', description: 'EDU-FORUM connects teachers with principals and directors across all 36 states and the FCT. Free for everyone: find teaching jobs or recruit qualified teachers.' },
+  { path: '/safety', name: 'Safety tips', title: 'Job safety tips for teachers', description: 'Never pay to apply for a teaching job. How to spot fake vacancies, attend interviews safely and report scams on EDU-FORUM.' },
+  { path: '/contact', name: 'Contact us', title: 'Contact EDU-FORUM', description: 'Questions about your account, jobs or advertising? Send the EDU-FORUM team a message.' },
+  { path: '/privacy', name: 'Privacy policy', title: 'Privacy policy', description: 'How EDU-FORUM collects, uses, shares and protects your personal data under the Nigeria Data Protection Act 2023, including advertising cookies.' },
+  { path: '/terms', name: 'Terms of use', title: 'Terms of use', description: 'The rules for using EDU-FORUM: free accounts, honest profiles and vacancies, no fees, community and blog rules, and moderation.' },
+] as const;
 
 /** GET /seo/landing-pages */
 export interface LandingPageItem {

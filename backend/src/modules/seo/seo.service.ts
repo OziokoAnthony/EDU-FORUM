@@ -7,6 +7,7 @@ import {
   jobPath,
   LANDING_MIN_LIVE_JOBS,
   SALARY_PERIOD_LABELS,
+  STATIC_PAGES,
   vacancySearchSchema,
   type Breadcrumb,
   type JobPageResponse,
@@ -86,6 +87,8 @@ export class SeoService {
       return this.page('home', '/', `${APP_NAME}: teaching jobs in Nigeria`, 'Find teaching jobs near you in every Nigerian state, or recruit qualified teachers by subject, level and location. Free for teachers, principals and directors.', APP_NAME, [home], await this.count(), true, {});
     }
     if (parts[0] === 'blog') return this.blogMeta(parts);
+    const fixed = STATIC_PAGES.find((p) => p.path === clean);
+    if (fixed) return this.page('page', fixed.path, fixed.title, fixed.description, fixed.name, [home, { name: fixed.name, path: fixed.path }], 0, true, {});
     if (parts[0] !== 'jobs') throw notFound();
 
     if (parts.length === 1) {

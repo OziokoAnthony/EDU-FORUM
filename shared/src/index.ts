@@ -19,3 +19,4 @@ export * from './dashboards';
 export * from './community';
 export * from './blog';
 export * from './ads';
+export * from './legal';

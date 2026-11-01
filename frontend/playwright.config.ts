@@ -21,7 +21,7 @@ export default defineConfig({
       reuseExistingServer: true,
       timeout: 120_000,
       // Many sign-ups/sign-ins in a few seconds; the 5/min limit itself is tested in the API suite.
-      env: { AUTH_RATE_LIMIT: '1000' },
+      env: { AUTH_RATE_LIMIT: '1000', CONTACT_RATE_LIMIT: '1000' },
     },
     {
       // Production build: pages are compiled once up front, so tests do not wait on the dev

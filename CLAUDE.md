@@ -408,6 +408,15 @@ covers the window).
   `POST /admin/posts/:id/reject`, `POST /admin/posts/:id/remove`, `POST /admin/blog-comments/:id/remove`.
   Reports accept `blog_post` / `blog_comment`; community posts can share a blog post (`blogPostId`).
 
+- **Legal and help pages (user, 2026-11-01):** `/about`, `/safety`, `/contact`, `/privacy`, `/terms`
+  (public, indexable, no ads, `STATIC_PAGES` in `shared/src/seo.ts`, `/sitemaps/pages.xml`, footer links;
+  job pages link to `/safety`). Plain-English drafts for a lawyer to review before launch. The operator
+  name, address and email are placeholders in `LEGAL` (`shared/src/legal.ts`); the admin overview lists
+  any still unfilled. Contact form: `POST /contact` (public; links refused; hidden `website` field for
+  bots; same message within 24 h kept once; `CONTACT_RATE_LIMIT` per email and per network per hour,
+  default 3; emailed to `SUPPORT_EMAIL` when set), admin `GET /admin/contact-messages?status=`,
+  `POST /admin/contact-messages/:id/close` (Admin → Messages). IPs are stored only as SHA-256 hashes.
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

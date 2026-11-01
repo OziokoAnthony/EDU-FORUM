@@ -395,6 +395,7 @@ model User {
   communityLikes         CommunityLike[]
   communityBlocks        CommunityBlock[]           @relation("CommunityBlocker")
   communityBlockedBy     CommunityBlock[]           @relation("CommunityBlocked")
+  contactMessages        ContactMessage[]
 
   @@index([role, status])
   @@map("users")
@@ -1232,4 +1233,27 @@ model CommunityBlock {
   @@unique([blockerId, blockedId])
   @@index([blockedId])
   @@map("community_blocks")
+}
+
+/// Contact form messages (user, 2026-11-01): kept for admins and emailed to SUPPORT_EMAIL.
+model ContactMessage {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  email     String
+  topic     String
+  message   String
+  status    String    @default("open")
+  /// Set when the sender was signed in.
+  userId    String?   @map("user_id") @db.Uuid
+  /// SHA-256 of the sender's IP (for the hourly limit; the address itself is not stored).
+  ipHash    String    @map("ip_hash")
+  closedAt  DateTime? @map("closed_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([email, createdAt])
+  @@index([ipHash, createdAt])
+  @@map("contact_messages")
 }

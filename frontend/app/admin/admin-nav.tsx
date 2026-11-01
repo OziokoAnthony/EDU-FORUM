@@ -5,6 +5,7 @@ const LINKS = [
   ['reports', '/admin/reports', 'Reports'],
   ['blog', '/admin/blog', 'Blog'],
   ['ads', '/admin/ads', 'Ads'],
+  ['messages', '/admin/messages', 'Messages'],
   ['users', '/admin/users', 'Users'],
   ['vacancies', '/admin/vacancies', 'Vacancies'],
   ['teachers', '/admin/teachers', 'Teachers'],

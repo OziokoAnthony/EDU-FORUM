@@ -88,6 +88,12 @@ export async function JobView({ page }: { page: JobPageResponse }) {
           Apply free with your CV
         </Link>
       )}
+      <p className="text-sm text-slate-600">
+        Stay safe: never pay anyone to apply or to get a job.{' '}
+        <Link href="/safety" className="font-semibold text-brand hover:underline">
+          Safety tips
+        </Link>
+      </p>
 
       {/* Ads sit below the Apply button, never beside or above it (CLAUDE.md). */}
       <div className={sidebar ? 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]' : ''}>

@@ -56,6 +56,26 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               Jobs in Rivers
             </Link>
           </p>
+          <p className="flex flex-wrap gap-4">
+            <Link href="/about" className="text-brand hover:underline">
+              About us
+            </Link>
+            <Link href="/blog" className="text-brand hover:underline">
+              Blog
+            </Link>
+            <Link href="/safety" className="text-brand hover:underline">
+              Safety tips
+            </Link>
+            <Link href="/contact" className="text-brand hover:underline">
+              Contact
+            </Link>
+            <Link href="/privacy" className="text-brand hover:underline">
+              Privacy policy
+            </Link>
+            <Link href="/terms" className="text-brand hover:underline">
+              Terms of use
+            </Link>
+          </p>
           <p className="text-xs text-slate-500">
             Photos from <Link href="https://www.pexels.com" className="underline">Pexels</Link> (free licence).
           </p>

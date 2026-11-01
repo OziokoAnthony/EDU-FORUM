@@ -18,6 +18,10 @@ const envSchema = z.object({
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().default(1025),
   MAIL_FROM: z.string().default('EDU-FORUM <no-reply@edu-forum.local>'),
+  /** Where contact-form messages are emailed (they are always kept for admins too). */
+  SUPPORT_EMAIL: z.string().default(''),
+  /** Contact messages per email address and per network per hour (raised for browser tests). */
+  CONTACT_RATE_LIMIT: z.coerce.number().int().positive().default(3),
   SMS_DRIVER: z.enum(['console', 'memory']).default('console'),
 
   // Background jobs (virus scan, DOC→PDF, purges). "inline" runs a job inside the request (tests).
