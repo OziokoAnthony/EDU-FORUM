@@ -8,7 +8,7 @@ import { AuthProvider, homeFor, useAuth } from '@/lib/auth';
 import { RealtimeProvider } from '@/lib/realtime';
 import { DeletionCancelledNotice } from './account-settings';
 import { NotificationBell } from './notification-bell';
-import { BookmarkIcon, CalendarIcon, ChatIcon, FileIcon, HomeIcon, JobsIcon, MailIcon, PeopleIcon, ShieldIcon, TeachersIcon } from './icons';
+import { BookIcon, BookmarkIcon, CalendarIcon, ChatIcon, FileIcon, HomeIcon, JobsIcon, MailIcon, PeopleIcon, ShieldIcon, TeachersIcon } from './icons';
 import { BottomTabs, TopBar, type Tab } from './top-bar';
 
 /**
@@ -87,6 +87,7 @@ const NAV: Record<'teacher' | 'hiring' | 'admin', Area> = {
       { href: '/teacher/invitations', label: 'Invitations', icon: <MailIcon className={mi} /> },
       { href: '/teacher/interviews', label: 'Interviews', icon: <CalendarIcon className={mi} /> },
       { href: '/teacher/saved', label: 'Saved', icon: <BookmarkIcon className={mi} /> },
+      { href: '/teacher/blog', label: 'My blog posts', icon: <BookIcon className={mi} /> },
       { href: '/teacher/account', label: 'Account', icon: <ShieldIcon className={mi} /> },
     ],
   },
@@ -104,6 +105,7 @@ const NAV: Record<'teacher' | 'hiring' | 'admin', Area> = {
       { href: '/hiring/invitations', label: 'Invitations', icon: <MailIcon className={mi} /> },
       { href: '/hiring/interviews', label: 'Interviews', icon: <CalendarIcon className={mi} /> },
       { href: '/hiring/saved', label: 'Saved', icon: <BookmarkIcon className={mi} /> },
+      { href: '/hiring/blog', label: 'My blog posts', icon: <BookIcon className={mi} /> },
       { href: '/hiring/account', label: 'Account', icon: <ShieldIcon className={mi} /> },
     ],
   },

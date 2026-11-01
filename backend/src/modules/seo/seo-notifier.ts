@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { JOB_QUEUE, type JobQueue } from '../../infra/queue/job-queue';
 
 export const SEO_NOTIFY_JOB = 'seo-notify';
+/** Blog pages: refresh the web app's cache only (Google's Indexing API is for job pages). */
+export const SEO_REVALIDATE_JOB = 'seo-revalidate';
 
 export interface SeoChange {
   path: string;
@@ -22,6 +24,8 @@ export class SeoNotifier implements OnModuleInit {
   private readonly logger = new Logger('SeoNotifier');
   /** INDEXING_DRIVER=memory: what would have been sent (tests). */
   readonly sent: SeoChange[] = [];
+  /** INDEXING_DRIVER=memory: cache tags that would have been refreshed (tests). */
+  readonly revalidated: string[][] = [];
 
   constructor(
     private readonly config: ConfigService,
@@ -30,10 +34,31 @@ export class SeoNotifier implements OnModuleInit {
 
   onModuleInit(): void {
     this.queue.register(SEO_NOTIFY_JOB, (data) => this.deliver(data as unknown as SeoChange));
+    this.queue.register(SEO_REVALIDATE_JOB, (data) => this.refresh((data as { tags: string[] }).tags));
   }
 
   notify(change: SeoChange): Promise<void> {
     return this.queue.add(SEO_NOTIFY_JOB, { ...change });
+  }
+
+  /** Refresh cached public pages by tag, e.g. ['blog', 'blog:my-post']. */
+  revalidate(tags: string[]): Promise<void> {
+    return this.queue.add(SEO_REVALIDATE_JOB, { tags });
+  }
+
+  private async refresh(tags: string[]): Promise<void> {
+    if (this.config.get('INDEXING_DRIVER') === 'memory') {
+      this.revalidated.push(tags);
+      return;
+    }
+    const secret = this.config.get<string>('REVALIDATE_SECRET');
+    if (!secret) return;
+    const res = await fetch(`${this.config.getOrThrow<string>('APP_URL')}/api/revalidate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-revalidate-secret': secret },
+      body: JSON.stringify({ tags: [...tags, 'seo'] }),
+    });
+    if (!res.ok) throw new Error(`Revalidate failed: ${res.status}`);
   }
 
   private async deliver(change: SeoChange): Promise<void> {

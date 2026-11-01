@@ -7,7 +7,7 @@ export const LANDING_MIN_LIVE_JOBS = 3;
 /** Closed jobs answer 410 Gone this long after closing (CLAUDE.md). */
 export const GONE_AFTER_DAYS = 30;
 
-export type SeoPageKind = 'home' | 'jobs' | 'state' | 'lga' | 'subject' | 'state_subject' | 'job';
+export type SeoPageKind = 'home' | 'jobs' | 'state' | 'lga' | 'subject' | 'state_subject' | 'job' | 'blog' | 'blog_category' | 'blog_post';
 
 export interface Breadcrumb {
   name: string;
@@ -26,7 +26,7 @@ export interface SeoMeta {
   breadcrumbs: Breadcrumb[];
   liveJobs: number;
   /** Slugs to filter the job list with on landing pages. */
-  filters: { state?: string; lga?: string; subject?: string };
+  filters: { state?: string; lga?: string; subject?: string; category?: string };
 }
 
 /** GET /seo/landing-pages */

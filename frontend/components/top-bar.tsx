@@ -1,22 +1,26 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { APP_NAME } from '@edu-forum/shared';
+import logoFull from '@/public/brand/logo.png';
+import logoIcon from '@/public/brand/logo-icon.png';
 import { SearchIcon } from './icons';
 
 export type Tab = { href: string; label: string; icon: React.ReactNode; exact?: boolean };
 
 const isActive = (path: string, t: Tab) => (t.exact ? path === t.href : path === t.href || path.startsWith(`${t.href}/`));
 
-/** The round "E" mark + name. Our own mark, not anyone else's logo. */
+/**
+ * The user's eduforum logo (user, 2026-11-01; cut from eduforum-logo.mp4): the icon alone on
+ * small screens, the full logo with the name where there is room.
+ */
 export function Logo({ href = '/', compact = false }: { href?: string; compact?: boolean }) {
   return (
-    <Link href={href} className="flex shrink-0 items-center gap-2" aria-label={`${APP_NAME} home`}>
-      <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-xl font-extrabold text-white">
-        E
-      </span>
-      <span className={`${compact ? 'hidden lg:block' : 'hidden sm:block'} text-xl font-extrabold tracking-tight text-brand`}>{APP_NAME}</span>
+    <Link href={href} className="flex shrink-0 items-center" aria-label={`${APP_NAME} home`}>
+      <Image src={logoIcon} alt="" width={40} height={40} priority className={`h-10 w-10 ${compact ? 'lg:hidden' : 'sm:hidden'}`} />
+      <Image src={logoFull} alt="" height={44} priority className={`h-11 w-auto ${compact ? 'hidden lg:block' : 'hidden sm:block'}`} />
     </Link>
   );
 }

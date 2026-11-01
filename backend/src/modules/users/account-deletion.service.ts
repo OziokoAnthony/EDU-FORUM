@@ -134,6 +134,18 @@ export class AccountDeletionService implements OnModuleInit {
         await tx.communityPost.update({ where: { id: c.postId }, data: { commentsCount: { decrement: 1 } } });
       }
       await tx.communityComment.updateMany({ where: { authorId: userId }, data: { body: '', deletedAt: now } });
+      // Blog: the account's posts and comments go (text and cover erased); its likes too.
+      for (const like of await tx.blogLike.findMany({ where: { userId } })) {
+        const data = { likesCount: { decrement: 1 } };
+        if (like.targetType === 'post') await tx.post.updateMany({ where: { id: like.targetId }, data });
+        else await tx.blogComment.updateMany({ where: { id: like.targetId }, data });
+      }
+      await tx.blogLike.deleteMany({ where: { userId } });
+      for (const c of await tx.blogComment.findMany({ where: { authorId: userId, deletedAt: null, removedReason: null }, select: { postId: true } })) {
+        await tx.post.update({ where: { id: c.postId }, data: { commentsCount: { decrement: 1 } } });
+      }
+      await tx.blogComment.updateMany({ where: { authorId: userId }, data: { body: '', deletedAt: now } });
+      await tx.post.updateMany({ where: { authorId: userId }, data: { body: '', excerpt: null, coverImageKey: null, coverUploadId: null, deletedAt: now } });
 
       if (p) {
         await tx.qualification.deleteMany({ where: { teacherId: p.id } });

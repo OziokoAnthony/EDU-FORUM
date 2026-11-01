@@ -36,6 +36,12 @@ export class ReportsService {
     if (type === 'community_post') {
       return (await this.prisma.communityPost.findFirst({ where: { id, deletedAt: null, removedReason: null }, select: { authorId: true } }))?.authorId ?? null;
     }
+    if (type === 'blog_post') {
+      return (await this.prisma.post.findFirst({ where: { id, status: 'published', deletedAt: null, removedReason: null }, select: { authorId: true } }))?.authorId ?? null;
+    }
+    if (type === 'blog_comment') {
+      return (await this.prisma.blogComment.findFirst({ where: { id, deletedAt: null, removedReason: null }, select: { authorId: true } }))?.authorId ?? null;
+    }
     if (type === 'community_comment') {
       return (await this.prisma.communityComment.findFirst({ where: { id, deletedAt: null, removedReason: null }, select: { authorId: true } }))?.authorId ?? null;
     }

@@ -11,6 +11,7 @@ import {
   type CommunityCommentItem,
   type CommunityPhotoItem,
   type CommunityPostItem,
+  type CommunitySharedBlog,
   type CommunitySharedJob,
   type CommunitySharedPost,
   type LikeResponse,
@@ -20,7 +21,7 @@ import { ChevronIcon, CloseIcon, CommentIcon, DotsIcon, ShareIcon, ThumbIcon } f
 import { Portal } from '@/components/portal';
 import { ReportButton } from '@/components/report-button';
 import { Alert } from '@/components/ui';
-import { ApiError } from '@/lib/api';
+import { API_URL, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { money } from '@/lib/format';
 import { useSocketEvent } from '@/lib/realtime';
@@ -159,6 +160,22 @@ function Photos({ photos }: { photos: CommunityPhotoItem[] }) {
         </Portal>
       ) : null}
     </>
+  );
+}
+
+function BlogCard({ blog }: { blog: CommunitySharedBlog }) {
+  return (
+    <a href={blog.path} className="block border-y border-slate-200 bg-slate-50 hover:bg-slate-100">
+      {blog.hasCover ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={`${API_URL}/posts/${blog.id}/cover`} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover" />
+      ) : null}
+      <div className="px-4 py-3">
+        <p className="text-xs font-semibold uppercase text-slate-500">From the blog</p>
+        <p className="font-semibold text-slate-900">{blog.title}</p>
+        <p className="line-clamp-2 text-sm text-slate-600">{blog.excerpt}</p>
+      </div>
+    </a>
   );
 }
 
@@ -314,6 +331,7 @@ export function PostCard({ post, area, startOpen = false }: { post: CommunityPos
       </header>
 
       <PostBody body={post.body} photos={post.photos} job={post.job} />
+      {post.blog ? <BlogCard blog={post.blog} /> : null}
       {post.shared ? <SharedBox shared={post.shared} area={area} /> : null}
       {error ? (
         <div className="px-4 pt-2">

@@ -1,5 +1,7 @@
 import { APP_NAME } from '@edu-forum/shared';
 import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import Image from 'next/image';
+import logoFull from '@/public/brand/logo.png';
 import { PhotoCollage, PhotoStrip } from './photo-collage';
 
 export const Field = forwardRef<
@@ -71,7 +73,7 @@ export function AuthCard({ title, children, footer }: { title: string; children:
   return (
     <main className="mx-auto grid w-full max-w-6xl items-start gap-6 px-4 py-6 lg:grid-cols-[1fr_26rem] lg:gap-12 lg:py-14">
       <div className="space-y-4 text-center lg:pt-6 lg:text-left">
-        <p className="text-4xl font-extrabold tracking-tight text-brand lg:text-6xl">{APP_NAME}</p>
+        <Image src={logoFull} alt={APP_NAME} priority sizes="(min-width: 1024px) 420px, 280px" className="mx-auto h-auto w-[280px] mix-blend-multiply lg:mx-0 lg:w-[420px]" />
         <p className="text-lg text-slate-700 lg:text-2xl lg:leading-snug">Find teaching jobs and recruit teachers across Nigeria, free.</p>
         <div className="hidden lg:block">
           <PhotoCollage />

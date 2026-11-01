@@ -197,6 +197,8 @@ enum ReportTargetType {
   message
   community_post
   community_comment
+  blog_post
+  blog_comment
 }
 
 enum ReportStatus {
@@ -207,7 +209,15 @@ enum ReportStatus {
 
 enum PostStatus {
   draft
+  /// Sent to an admin for approval (user, 2026-11-01: anyone registered writes, admins approve).
+  pending
   published
+  rejected
+}
+
+enum BlogLikeTarget {
+  post
+  comment
 }
 
 enum AdPageType {
@@ -357,32 +367,34 @@ model User {
   updatedAt            DateTime   @updatedAt @map("updated_at")
   deletedAt            DateTime?  @map("deleted_at")
 
-  teacherProfile  TeacherProfile?
-  refreshTokens   RefreshToken[]
-  authTokens      AuthToken[]
+  teacherProfile TeacherProfile?
+  refreshTokens  RefreshToken[]
+  authTokens     AuthToken[]
 
-  createdVacancies        Vacancy[]                  @relation("VacancyCreatedBy")
-  employerConversations   Conversation[]             @relation("ConversationEmployer")
-  sentInvitations         Invitation[]               @relation("InvitationInvitedBy")
-  applicationNotes        ApplicationNote[]
-  statusChanges           ApplicationStatusHistory[]
-  savedItems              SavedItem[]
-  savedSearches           SavedSearch[]
-  sentMessages            Message[]
-  notifications           Notification[]
-  profileViews            ProfileView[]              @relation("ProfileViewViewer")
-  reports                 Report[]                   @relation("ReportReporter")
-  resolvedReports         Report[]                   @relation("ReportResolvedBy")
-  auditLogs               AuditLog[]
-  reviewedCertifications  Certification[]            @relation("CertificationReviewedBy")
-  uploads                 Upload[]
-  posts                   Post[]
-  blockedConversations    Conversation[]             @relation("ConversationBlockedBy")
-  communityPosts          CommunityPost[]
-  communityComments       CommunityComment[]
-  communityLikes          CommunityLike[]
-  communityBlocks         CommunityBlock[]           @relation("CommunityBlocker")
-  communityBlockedBy      CommunityBlock[]           @relation("CommunityBlocked")
+  createdVacancies       Vacancy[]                  @relation("VacancyCreatedBy")
+  employerConversations  Conversation[]             @relation("ConversationEmployer")
+  sentInvitations        Invitation[]               @relation("InvitationInvitedBy")
+  applicationNotes       ApplicationNote[]
+  statusChanges          ApplicationStatusHistory[]
+  savedItems             SavedItem[]
+  savedSearches          SavedSearch[]
+  sentMessages           Message[]
+  notifications          Notification[]
+  profileViews           ProfileView[]              @relation("ProfileViewViewer")
+  reports                Report[]                   @relation("ReportReporter")
+  resolvedReports        Report[]                   @relation("ReportResolvedBy")
+  auditLogs              AuditLog[]
+  reviewedCertifications Certification[]            @relation("CertificationReviewedBy")
+  uploads                Upload[]
+  posts                  Post[]
+  blogComments           BlogComment[]
+  blogLikes              BlogLike[]
+  blockedConversations   Conversation[]             @relation("ConversationBlockedBy")
+  communityPosts         CommunityPost[]
+  communityComments      CommunityComment[]
+  communityLikes         CommunityLike[]
+  communityBlocks        CommunityBlock[]           @relation("CommunityBlocker")
+  communityBlockedBy     CommunityBlock[]           @relation("CommunityBlocked")
 
   @@index([role, status])
   @@map("users")
@@ -448,9 +460,10 @@ model Upload {
 
   user User @relation(fields: [userId], references: [id])
 
-
   message        Message?
   communityPhoto CommunityPhoto?
+  postCover      Post?
+
   @@index([userId, purpose])
   @@map("uploads")
 }
@@ -458,64 +471,64 @@ model Upload {
 // ─────────────────────────── Teachers ───────────────────────────
 
 model TeacherProfile {
-  id                 String             @id @default(uuid()) @db.Uuid
-  userId             String             @unique @map("user_id") @db.Uuid
-  fullName           String?            @map("full_name")
-  gender             Gender?
-  dob                DateTime?          @db.Date
-  photoKey           String?            @map("photo_key")
-  bio                String?
+  id       String    @id @default(uuid()) @db.Uuid
+  userId   String    @unique @map("user_id") @db.Uuid
+  fullName String?   @map("full_name")
+  gender   Gender?
+  dob      DateTime? @db.Date
+  photoKey String?   @map("photo_key")
+  bio      String?
 
   // Location (required to publish). address_line, lat, lng are never returned to principals/directors.
-  countryCode        String?            @map("country_code") @db.Char(2)
-  stateId            String?            @map("state_id") @db.Uuid
-  lgaId              String?            @map("lga_id") @db.Uuid
-  area               String?
-  addressLine        String?            @map("address_line")
-  lat                Float?
-  lng                Float?
-  geog               Unsupported("geography(Point, 4326)")?
+  countryCode String?                                @map("country_code") @db.Char(2)
+  stateId     String?                                @map("state_id") @db.Uuid
+  lgaId       String?                                @map("lga_id") @db.Uuid
+  area        String?
+  addressLine String?                                @map("address_line")
+  lat         Float?
+  lng         Float?
+  geog        Unsupported("geography(Point, 4326)")?
 
-  willingToRelocate  Boolean            @default(false) @map("willing_to_relocate")
-  preferredStates    String[]           @default([]) @map("preferred_states") // state slugs
-  subjects           String[]           @default([]) // subject slugs
-  levels             String[]           @default([]) // level slugs
-  jobTypes           JobType[]          @default([]) @map("job_types")
-  expectedSalaryMin  Int?               @map("expected_salary_min")
-  expectedSalaryMax  Int?               @map("expected_salary_max")
-  availableFrom      DateTime?          @map("available_from") @db.Date
+  willingToRelocate       Boolean            @default(false) @map("willing_to_relocate")
+  preferredStates         String[]           @default([]) @map("preferred_states") // state slugs
+  subjects                String[]           @default([]) // subject slugs
+  levels                  String[]           @default([]) // level slugs
+  jobTypes                JobType[]          @default([]) @map("job_types")
+  expectedSalaryMin       Int?               @map("expected_salary_min")
+  expectedSalaryMax       Int?               @map("expected_salary_max")
+  availableFrom           DateTime?          @map("available_from") @db.Date
   /// Fresh graduate: explicit "no experience yet" (requires an NYSC/teaching-practice entry).
-  noExperienceYet    Boolean            @default(false) @map("no_experience_yet")
+  noExperienceYet         Boolean            @default(false) @map("no_experience_yet")
   /// Computed from WorkExperience rows by the service on every change.
-  yearsExperience    Float              @default(0) @map("years_experience")
-  completenessScore  Int                @default(0) @map("completeness_score")
+  yearsExperience         Float              @default(0) @map("years_experience")
+  completenessScore       Int                @default(0) @map("completeness_score")
   /// Last completed onboarding step, for the resumable wizard.
-  onboardingSteps    String[]           @default([]) @map("onboarding_steps")
-  verificationStatus VerificationStatus @default(unverified) @map("verification_status")
-  isPublished        Boolean            @default(false) @map("is_published")
-  publishedAt        DateTime?          @map("published_at")
-  visibility         ProfileVisibility  @default(visible)
+  onboardingSteps         String[]           @default([]) @map("onboarding_steps")
+  verificationStatus      VerificationStatus @default(unverified) @map("verification_status")
+  isPublished             Boolean            @default(false) @map("is_published")
+  publishedAt             DateTime?          @map("published_at")
+  visibility              ProfileVisibility  @default(visible)
   /// Set by admin unpublish (moderation) with a reason.
-  moderationNote     String?            @map("moderation_note")
+  moderationNote          String?            @map("moderation_note")
   /// "Finish your profile" reminders: 3 days after sign-up, then weekly, at most 3.
-  incompleteRemindersSent Int           @default(0) @map("incomplete_reminders_sent")
-  incompleteRemindedAt    DateTime?     @map("incomplete_reminded_at")
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  deletedAt          DateTime?          @map("deleted_at")
+  incompleteRemindersSent Int                @default(0) @map("incomplete_reminders_sent")
+  incompleteRemindedAt    DateTime?          @map("incomplete_reminded_at")
+  createdAt               DateTime           @default(now()) @map("created_at")
+  updatedAt               DateTime           @updatedAt @map("updated_at")
+  deletedAt               DateTime?          @map("deleted_at")
 
   user  User   @relation(fields: [userId], references: [id])
   state State? @relation(fields: [stateId], references: [id])
   lga   Lga?   @relation(fields: [lgaId], references: [id])
 
-  qualifications  Qualification[]
-  certifications  Certification[]
-  experiences     WorkExperience[]
-  cvs             Cv[]
-  applications    Application[]
-  invitations     Invitation[]
-  conversations   Conversation[]
-  profileViews    ProfileView[]
+  qualifications Qualification[]
+  certifications Certification[]
+  experiences    WorkExperience[]
+  cvs            Cv[]
+  applications   Application[]
+  invitations    Invitation[]
+  conversations  Conversation[]
+  profileViews   ProfileView[]
 
   @@index([isPublished, visibility, verificationStatus])
   @@index([stateId, lgaId])
@@ -545,21 +558,21 @@ model Qualification {
 }
 
 model Certification {
-  id                  String             @id @default(uuid()) @db.Uuid
-  teacherId           String             @map("teacher_id") @db.Uuid
-  certificationTypeId String             @map("certification_type_id") @db.Uuid
+  id                  String         @id @default(uuid()) @db.Uuid
+  teacherId           String         @map("teacher_id") @db.Uuid
+  certificationTypeId String         @map("certification_type_id") @db.Uuid
   issuer              String
   number              String
-  issuedAt            DateTime?          @map("issued_at") @db.Date
-  expiresAt           DateTime?          @map("expires_at") @db.Date
-  fileKey             String?            @map("file_key")
-  verificationStatus  DocumentStatus     @default(pending) @map("verification_status")
-  reviewedById        String?            @map("reviewed_by") @db.Uuid
-  reviewedAt          DateTime?          @map("reviewed_at")
-  rejectionReason     String?            @map("rejection_reason")
-  createdAt           DateTime           @default(now()) @map("created_at")
-  updatedAt           DateTime           @updatedAt @map("updated_at")
-  deletedAt           DateTime?          @map("deleted_at")
+  issuedAt            DateTime?      @map("issued_at") @db.Date
+  expiresAt           DateTime?      @map("expires_at") @db.Date
+  fileKey             String?        @map("file_key")
+  verificationStatus  DocumentStatus @default(pending) @map("verification_status")
+  reviewedById        String?        @map("reviewed_by") @db.Uuid
+  reviewedAt          DateTime?      @map("reviewed_at")
+  rejectionReason     String?        @map("rejection_reason")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+  deletedAt           DateTime?      @map("deleted_at")
 
   teacher    TeacherProfile    @relation(fields: [teacherId], references: [id])
   type       CertificationType @relation(fields: [certificationTypeId], references: [id])
@@ -594,22 +607,22 @@ model WorkExperience {
 
 /// One active CV per teacher (partial unique index in migration SQL); old versions kept 90 days.
 model Cv {
-  id          String     @id @default(uuid()) @db.Uuid
-  teacherId   String     @map("teacher_id") @db.Uuid
-  objectKey   String     @map("object_key")
+  id         String     @id @default(uuid()) @db.Uuid
+  teacherId  String     @map("teacher_id") @db.Uuid
+  objectKey  String     @map("object_key")
   /// DOC/DOCX converted to PDF on upload for the CV viewer.
-  pdfKey      String?    @map("pdf_key")
-  fileName    String     @map("file_name")
-  mimeType    CvMimeType @map("mime_type")
-  sizeBytes   Int        @map("size_bytes")
-  isActive    Boolean    @default(false) @map("is_active")
-  scanStatus  ScanStatus @default(pending) @map("scan_status")
-  uploadedAt  DateTime   @default(now()) @map("uploaded_at")
+  pdfKey     String?    @map("pdf_key")
+  fileName   String     @map("file_name")
+  mimeType   CvMimeType @map("mime_type")
+  sizeBytes  Int        @map("size_bytes")
+  isActive   Boolean    @default(false) @map("is_active")
+  scanStatus ScanStatus @default(pending) @map("scan_status")
+  uploadedAt DateTime   @default(now()) @map("uploaded_at")
   /// Set when replaced; purge job deletes the file 90 days after this.
-  replacedAt  DateTime?  @map("replaced_at")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-  deletedAt   DateTime?  @map("deleted_at")
+  replacedAt DateTime?  @map("replaced_at")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+  deletedAt  DateTime?  @map("deleted_at")
 
   teacher   TeacherProfile @relation(fields: [teacherId], references: [id])
   snapshots CvSnapshot[]
@@ -641,36 +654,36 @@ model CvSnapshot {
 // ─────────────────────────── Vacancies ───────────────────────────
 
 model Vacancy {
-  id                     String              @id @default(uuid()) @db.Uuid
+  id             String       @id @default(uuid()) @db.Uuid
   /// The principal or director who posted it.
-  createdById            String              @map("created_by") @db.Uuid
+  createdById    String       @map("created_by") @db.Uuid
   /// Typed on each vacancy; hidden in every public response when location_visibility = anonymous.
-  schoolName             String?             @map("school_name")
+  schoolName     String?      @map("school_name")
   /// Optional (user, 2026-10-31); shown on anonymous vacancies instead of the school name.
-  schoolType             SchoolType?         @map("school_type")
+  schoolType     SchoolType?  @map("school_type")
   /// SEO URL is /jobs/{slug}-{shortId}; never changes once published.
-  slug                   String
-  shortId                String              @unique @map("short_id")
-  title                  String
-  subjects               String[]            @default([])
-  levels                 String[]            @default([])
-  jobType                JobType             @map("job_type")
-  salaryMin              Int                 @map("salary_min")
-  salaryMax              Int                 @map("salary_max")
-  salaryCurrency         String              @default("NGN") @map("salary_currency") @db.Char(3)
-  salaryPeriod           SalaryPeriod        @default(monthly) @map("salary_period")
+  slug           String
+  shortId        String       @unique @map("short_id")
+  title          String
+  subjects       String[]     @default([])
+  levels         String[]     @default([])
+  jobType        JobType      @map("job_type")
+  salaryMin      Int          @map("salary_min")
+  salaryMax      Int          @map("salary_max")
+  salaryCurrency String       @default("NGN") @map("salary_currency") @db.Char(3)
+  salaryPeriod   SalaryPeriod @default(monthly) @map("salary_period")
   /// Rich text (sanitised HTML), ≥ 100 characters of text.
-  description            String
+  description    String
 
-  countryCode            String              @default("NG") @map("country_code") @db.Char(2)
-  stateId                String              @map("state_id") @db.Uuid
-  lgaId                  String              @map("lga_id") @db.Uuid
-  area                   String?
-  addressLine            String?             @map("address_line")
-  lat                    Float?
-  lng                    Float?
-  geog                   Unsupported("geography(Point, 4326)")?
-  locationVisibility     LocationVisibility  @map("location_visibility")
+  countryCode        String                                 @default("NG") @map("country_code") @db.Char(2)
+  stateId            String                                 @map("state_id") @db.Uuid
+  lgaId              String                                 @map("lga_id") @db.Uuid
+  area               String?
+  addressLine        String?                                @map("address_line")
+  lat                Float?
+  lng                Float?
+  geog               Unsupported("geography(Point, 4326)")?
+  locationVisibility LocationVisibility                     @map("location_visibility")
 
   requiredQualifications String[]            @default([]) @map("required_qualifications")
   minExperienceYears     Int?                @map("min_experience_years")
@@ -695,9 +708,9 @@ model Vacancy {
   updatedAt              DateTime            @updatedAt @map("updated_at")
   deletedAt              DateTime?           @map("deleted_at")
 
-  createdBy User   @relation("VacancyCreatedBy", fields: [createdById], references: [id])
-  state     State  @relation(fields: [stateId], references: [id])
-  lga       Lga    @relation(fields: [lgaId], references: [id])
+  createdBy User  @relation("VacancyCreatedBy", fields: [createdById], references: [id])
+  state     State @relation(fields: [stateId], references: [id])
+  lga       Lga   @relation(fields: [lgaId], references: [id])
 
   applications   Application[]
   invitations    Invitation[]
@@ -715,21 +728,21 @@ model Vacancy {
 // ─────────────────────────── Applications ───────────────────────────
 
 model Application {
-  id                String            @id @default(uuid()) @db.Uuid
-  vacancyId         String            @map("vacancy_id") @db.Uuid
-  teacherId         String            @map("teacher_id") @db.Uuid
-  cvSnapshotId      String            @map("cv_snapshot_id") @db.Uuid
-  coverNote         String?           @map("cover_note")
+  id               String            @id @default(uuid()) @db.Uuid
+  vacancyId        String            @map("vacancy_id") @db.Uuid
+  teacherId        String            @map("teacher_id") @db.Uuid
+  cvSnapshotId     String            @map("cv_snapshot_id") @db.Uuid
+  coverNote        String?           @map("cover_note")
   /// [{ questionId, answer }]
-  screeningAnswers  Json              @default("[]") @map("screening_answers")
-  source            ApplicationSource @default(applied)
-  status            ApplicationStatus @default(applied)
-  rating            Int?              // 1–5 (check constraint in migration SQL)
-  matchScore        Int               @default(0) @map("match_score")
-  shortlistedAt     DateTime?         @map("shortlisted_at")
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
-  deletedAt         DateTime?         @map("deleted_at")
+  screeningAnswers Json              @default("[]") @map("screening_answers")
+  source           ApplicationSource @default(applied)
+  status           ApplicationStatus @default(applied)
+  rating           Int? // 1–5 (check constraint in migration SQL)
+  matchScore       Int               @default(0) @map("match_score")
+  shortlistedAt    DateTime?         @map("shortlisted_at")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
 
   vacancy    Vacancy        @relation(fields: [vacancyId], references: [id])
   teacher    TeacherProfile @relation(fields: [teacherId], references: [id])
@@ -897,20 +910,20 @@ model Conversation {
 }
 
 model Message {
-  id             String    @id @default(uuid()) @db.Uuid
-  conversationId String    @map("conversation_id") @db.Uuid
-  senderId       String    @map("sender_id") @db.Uuid
-  body           String?
-  attachmentKey  String?   @map("attachment_key")
-  attachmentName String?   @map("attachment_name")
-  attachmentMime String?   @map("attachment_mime")
-  attachmentSize Int?      @map("attachment_size")
+  id                 String    @id @default(uuid()) @db.Uuid
+  conversationId     String    @map("conversation_id") @db.Uuid
+  senderId           String    @map("sender_id") @db.Uuid
+  body               String?
+  attachmentKey      String?   @map("attachment_key")
+  attachmentName     String?   @map("attachment_name")
+  attachmentMime     String?   @map("attachment_mime")
+  attachmentSize     Int?      @map("attachment_size")
   /// The upload row: its scan_status decides when the attachment can be opened.
-  attachmentUploadId String? @unique @map("attachment_upload_id") @db.Uuid
-  readAt         DateTime? @map("read_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
+  attachmentUploadId String?   @unique @map("attachment_upload_id") @db.Uuid
+  readAt             DateTime? @map("read_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
 
   conversation     Conversation @relation(fields: [conversationId], references: [id])
   sender           User         @relation(fields: [senderId], references: [id])
@@ -1003,23 +1016,83 @@ model Post {
   id              String     @id @default(uuid()) @db.Uuid
   authorId        String     @map("author_id") @db.Uuid
   title           String
-  slug            String     @unique
+  /// Set on first approval from the title; never changes after (CLAUDE.md SEO rules).
+  slug            String?    @unique
+  /// Blog category slug (reference data `blog-categories`).
   category        String?
   excerpt         String?
   body            String
   coverImageKey   String?    @map("cover_image_key")
+  coverUploadId   String?    @unique @map("cover_upload_id") @db.Uuid
   metaTitle       String?    @map("meta_title")
   metaDescription String?    @map("meta_description")
   status          PostStatus @default(draft)
+  /// Why an admin rejected the post (shown to the writer).
+  reviewNote      String?    @map("review_note")
+  submittedAt     DateTime?  @map("submitted_at")
   publishedAt     DateTime?  @map("published_at")
+  /// Admin takedown after publishing (with the reason); the writer is told.
+  removedReason   String?    @map("removed_reason")
+  likesCount      Int        @default(0) @map("likes_count")
+  commentsCount   Int        @default(0) @map("comments_count")
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @updatedAt @map("updated_at")
   deletedAt       DateTime?  @map("deleted_at")
 
-  author User @relation(fields: [authorId], references: [id])
+  author         User            @relation(fields: [authorId], references: [id])
+  coverUpload    Upload?         @relation(fields: [coverUploadId], references: [id])
+  comments       BlogComment[]
+  communityPosts CommunityPost[]
 
   @@index([status, publishedAt])
+  @@index([category, publishedAt])
+  @@index([authorId])
   @@map("posts")
+}
+
+model BlogCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("blog_categories")
+}
+
+model BlogComment {
+  id            String    @id @default(uuid()) @db.Uuid
+  postId        String    @map("post_id") @db.Uuid
+  authorId      String    @map("author_id") @db.Uuid
+  body          String
+  likesCount    Int       @default(0) @map("likes_count")
+  removedReason String?   @map("removed_reason")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  post   Post @relation(fields: [postId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([postId, createdAt])
+  @@index([authorId])
+  @@map("blog_comments")
+}
+
+/// One like per person per post or comment.
+model BlogLike {
+  id         String         @id @default(uuid()) @db.Uuid
+  userId     String         @map("user_id") @db.Uuid
+  targetType BlogLikeTarget @map("target_type")
+  targetId   String         @map("target_id") @db.Uuid
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@map("blog_likes")
 }
 
 /// Admin can switch ad slots off per page type without a deploy.
@@ -1062,6 +1135,8 @@ model CommunityPost {
   vacancyId     String?   @map("vacancy_id") @db.Uuid
   /// A share (repost) of another post; always the original, never a share of a share.
   sharedPostId  String?   @map("shared_post_id") @db.Uuid
+  /// A shared blog post (published ones only).
+  blogPostId    String?   @map("blog_post_id") @db.Uuid
   likesCount    Int       @default(0) @map("likes_count")
   commentsCount Int       @default(0) @map("comments_count")
   sharesCount   Int       @default(0) @map("shares_count")
@@ -1074,6 +1149,7 @@ model CommunityPost {
   author   User               @relation(fields: [authorId], references: [id])
   vacancy  Vacancy?           @relation(fields: [vacancyId], references: [id])
   shared   CommunityPost?     @relation("CommunityShares", fields: [sharedPostId], references: [id])
+  blogPost Post?              @relation(fields: [blogPostId], references: [id])
   shares   CommunityPost[]    @relation("CommunityShares")
   photos   CommunityPhoto[]
   comments CommunityComment[]

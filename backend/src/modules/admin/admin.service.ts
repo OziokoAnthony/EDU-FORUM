@@ -357,6 +357,11 @@ export class AdminService {
       const p = await this.prisma.communityPost.findUnique({ where: { id }, select: { body: true } });
       return p?.body ? p.body.slice(0, 80) : 'Community post';
     }
+    if (type === 'blog_post') return (await this.prisma.post.findUnique({ where: { id }, select: { title: true } }))?.title ?? 'Blog post';
+    if (type === 'blog_comment') {
+      const c = await this.prisma.blogComment.findUnique({ where: { id }, select: { body: true } });
+      return c?.body ? c.body.slice(0, 80) : 'Blog comment';
+    }
     if (type === 'community_comment') {
       const c = await this.prisma.communityComment.findUnique({ where: { id }, select: { body: true } });
       return c?.body ? c.body.slice(0, 80) : 'Community comment';
@@ -377,6 +382,7 @@ export class AdminService {
       'certification-types': () => this.prisma.certificationType.findMany({ orderBy: order }),
       lgas: () => this.prisma.lga.findMany({ orderBy: [{ state: { name: 'asc' } }, order], include: { state: { select: { name: true } } } }),
       'community-tags': () => this.prisma.communityTag.findMany({ orderBy: [{ sortOrder: 'asc' }, order] }),
+      'blog-categories': () => this.prisma.blogCategory.findMany({ orderBy: [{ sortOrder: 'asc' }, order] }),
     }[type]();
     return { data };
   }
@@ -409,6 +415,7 @@ export class AdminService {
         'certification-types': () => this.prisma.certificationType.update({ where: { id }, data: { ...data, issuer: input.issuer } }),
         lgas: () => this.prisma.lga.update({ where: { id }, data }),
         'community-tags': () => this.prisma.communityTag.update({ where: { id }, data: { ...data, sortOrder: input.sortOrder } }),
+        'blog-categories': () => this.prisma.blogCategory.update({ where: { id }, data: { ...data, sortOrder: input.sortOrder } }),
       }[type]();
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') throw notFound('Item');
@@ -436,6 +443,8 @@ export class AdminService {
         return this.prisma.certificationType.create({ data: { ...base, issuer: input.issuer ?? null } });
       case 'community-tags':
         return this.prisma.communityTag.create({ data: { ...base, sortOrder: input.sortOrder ?? 0 } });
+      case 'blog-categories':
+        return this.prisma.blogCategory.create({ data: { ...base, sortOrder: input.sortOrder ?? 0 } });
       case 'lgas':
         if (!input.stateId) throw new ApiException(HttpStatus.BAD_REQUEST, 'VALIDATION_ERROR', 'Validation failed', { issues: [{ path: 'stateId', message: 'Choose the state' }] });
         return this.prisma.lga.create({ data: { ...base, stateId: input.stateId } });

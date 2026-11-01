@@ -32,8 +32,10 @@ export const createPostSchema = z
     vacancyId: z.uuid().optional(),
     /** Share (repost) another community post; sharing a share shares the original. */
     sharedPostId: z.uuid().optional(),
+    /** Share a published blog post into the feed. */
+    blogPostId: z.uuid().optional(),
   })
-  .refine((v) => v.body.length > 0 || v.uploadIds.length > 0 || !!v.vacancyId || !!v.sharedPostId, {
+  .refine((v) => v.body.length > 0 || v.uploadIds.length > 0 || !!v.vacancyId || !!v.sharedPostId || !!v.blogPostId, {
     path: ['body'],
     message: 'Write something, add a photo or share a job',
   });
@@ -97,6 +99,15 @@ export type CommunitySharedPost =
   | { available: true; id: string; author: CommunityAuthor; body: string; tag: CommunityTagItem | null; photos: CommunityPhotoItem[]; job: CommunitySharedJob | null; createdAt: string }
   | { available: false; id: string };
 
+/** A published blog post shared into the feed. */
+export interface CommunitySharedBlog {
+  id: string;
+  title: string;
+  excerpt: string;
+  path: string;
+  hasCover: boolean;
+}
+
 export interface CommunityPostItem {
   id: string;
   author: CommunityAuthor;
@@ -106,6 +117,7 @@ export interface CommunityPostItem {
   photos: CommunityPhotoItem[];
   job: CommunitySharedJob | null;
   shared: CommunitySharedPost | null;
+  blog: CommunitySharedBlog | null;
   likes: number;
   likedByMe: boolean;
   comments: number;

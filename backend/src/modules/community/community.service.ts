@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import {
   APP_NAME,
   COMMUNITY_WS_EVENTS,
+  blogPath,
+  htmlToText,
   jobPath,
   type blockUserSchema,
   type commentsQuerySchema,
@@ -12,6 +14,7 @@ import {
   type CommunityPostItem,
   type CommunityPhotoItem,
   type CommunityPostUpdate,
+  type CommunitySharedBlog,
   type CommunitySharedPost,
   type CommunitySharedJob,
   type CommunityTagItem,
@@ -51,7 +54,10 @@ const BASE_INCLUDE = {
 } satisfies Prisma.CommunityPostInclude;
 type BaseRow = Prisma.CommunityPostGetPayload<{ include: typeof BASE_INCLUDE }>;
 /** A post plus, for a share, the original post. */
-const POST_INCLUDE = { ...BASE_INCLUDE, shared: { include: BASE_INCLUDE } } satisfies Prisma.CommunityPostInclude;
+const BLOG_INCLUDE = {
+  include: { author: { select: { status: true, deletedAt: true, deletionRequestedAt: true } }, coverUpload: { select: { scanStatus: true } } },
+} satisfies Prisma.PostDefaultArgs;
+const POST_INCLUDE = { ...BASE_INCLUDE, shared: { include: BASE_INCLUDE }, blogPost: BLOG_INCLUDE } satisfies Prisma.CommunityPostInclude;
 type PostRow = Prisma.CommunityPostGetPayload<{ include: typeof POST_INCLUDE }>;
 
 /** Visible posts: not deleted or removed, author still around. */
@@ -127,6 +133,13 @@ export class CommunityService implements OnModuleInit {
       sharedPostId = original.sharedPostId ?? original.id;
       if (original.sharedPostId) await this.visiblePost(user, sharedPostId);
     }
+    if (input.blogPostId) {
+      const b = await this.prisma.post.findFirst({
+        where: { id: input.blogPostId, status: 'published', deletedAt: null, removedReason: null, slug: { not: null }, author: AVAILABLE_USER },
+        select: { id: true },
+      });
+      if (!b) throw rule('Only published blog posts can be shared');
+    }
     const ids = [...new Set(input.uploadIds)];
     const claimed: Upload[] = [];
     for (const id of ids) claimed.push(await this.uploads.claim(user.id, id, 'community_photo'));
@@ -138,6 +151,7 @@ export class CommunityService implements OnModuleInit {
         tag,
         vacancyId: input.vacancyId ?? null,
         sharedPostId,
+        blogPostId: input.blogPostId ?? null,
         photos: { create: claimed.map((u, i) => ({ uploadId: u.id, objectKey: u.objectKey, position: i })) },
       },
     });
@@ -421,6 +435,20 @@ export class CommunityService implements OnModuleInit {
     };
   }
 
+  /** A shared blog post, while it is still public. */
+  private sharedBlog(r: PostRow): CommunitySharedBlog | null {
+    const b = r.blogPost;
+    if (!b || b.status !== 'published' || b.deletedAt || b.removedReason || !b.slug || !isAvailable(b.author)) return null;
+    const text = b.excerpt ?? htmlToText(b.body).replace(/\s+/g, ' ');
+    return {
+      id: b.id,
+      title: b.title,
+      excerpt: text.length > 200 ? `${text.slice(0, 197).trimEnd()}…` : text,
+      path: blogPath(b.slug),
+      hasCover: !!b.coverImageKey && b.coverUpload?.scanStatus === 'clean',
+    };
+  }
+
   private photoItems(row: BaseRow): Promise<CommunityPhotoItem[]> {
     return Promise.all(
       row.photos.map(async (p) =>
@@ -460,6 +488,7 @@ export class CommunityService implements OnModuleInit {
         photos: await this.photoItems(r),
         job: this.sharedJob(r),
         shared: await this.sharedItem(user, r, hidden, tags),
+        blog: this.sharedBlog(r),
         likes: r.likesCount,
         likedByMe: liked.has(r.id),
         comments: r.commentsCount,

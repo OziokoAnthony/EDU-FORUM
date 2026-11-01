@@ -9,7 +9,15 @@ import { useAuth } from '@/lib/auth';
 import { shortDate } from '@/lib/format';
 import { AdminNav, askReason } from '../admin-nav';
 
-const TARGET_LABEL = { teacher_profile: 'Teacher profile', vacancy: 'Vacancy', message: 'Message', community_post: 'Community post', community_comment: 'Community comment' } as const;
+const TARGET_LABEL = { teacher_profile: 'Teacher profile', vacancy: 'Vacancy', message: 'Message', community_post: 'Community post', community_comment: 'Community comment', blog_post: 'Blog post', blog_comment: 'Blog comment' } as const;
+
+/** Removal endpoints for community and blog items (each emails the author the reason). */
+const REMOVE_PATH = {
+  community_post: (id: string) => `/admin/community/posts/${id}/remove`,
+  community_comment: (id: string) => `/admin/community/comments/${id}/remove`,
+  blog_post: (id: string) => `/admin/posts/${id}/remove`,
+  blog_comment: (id: string) => `/admin/blog-comments/${id}/remove`,
+} as const;
 
 /** FR-11 reports queue: act on the target (take down / hide), then resolve or dismiss. */
 export default function Page() {
@@ -47,6 +55,11 @@ export default function Page() {
     } else if (r.targetType === 'teacher_profile') {
       const reason = askReason('hide this profile');
       if (reason) void run(() => authed(`/admin/teachers/${r.targetId}/unpublish`, { method: 'POST', body: { reason } }), 'Profile hidden.');
+    } else if (r.targetType in REMOVE_PATH) {
+      const what = TARGET_LABEL[r.targetType].toLowerCase();
+      const reason = askReason(`remove this ${what}`);
+      const path = REMOVE_PATH[r.targetType as keyof typeof REMOVE_PATH](r.targetId);
+      if (reason) void run(() => authed(path, { method: 'POST', body: { reason } }), `The ${what} was removed and its author told why.`);
     }
   }
 
@@ -94,7 +107,7 @@ export default function Page() {
                 <div className="flex flex-wrap gap-4 text-sm font-semibold">
                   {r.targetType !== 'message' ? (
                     <button type="button" className="text-red-700 underline" onClick={() => actOnTarget(r)}>
-                      {r.targetType === 'vacancy' ? 'Take down vacancy' : 'Hide profile'}
+                      {r.targetType === 'vacancy' ? 'Take down vacancy' : r.targetType === 'teacher_profile' ? 'Hide profile' : `Remove ${TARGET_LABEL[r.targetType].toLowerCase()}`}
                     </button>
                   ) : null}
                   <button type="button" className="text-emerald-800 underline" onClick={() => close(r, 'resolved')}>

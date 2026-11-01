@@ -83,6 +83,11 @@ export async function deleteTestUsers(prisma: PrismaService, phones: string[] = 
   const teacherId = { teacher: { userId: { in: ids } } };
   await prisma.auditLog.deleteMany({ where: { actorId: { in: ids } } });
   const testPost = { post: { authorId: { in: ids } } };
+  const testBlog = { post: { authorId: { in: ids } } };
+  await prisma.blogLike.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.blogComment.deleteMany({ where: { OR: [{ authorId: { in: ids } }, testBlog] } });
+  await prisma.communityPost.updateMany({ where: { blogPost: { authorId: { in: ids } } }, data: { blogPostId: null } });
+  await prisma.post.deleteMany({ where: { authorId: { in: ids } } });
   await prisma.communityLike.deleteMany({ where: { userId: { in: ids } } });
   await prisma.communityBlock.deleteMany({ where: { OR: [{ blockerId: { in: ids } }, { blockedId: { in: ids } }] } });
   await prisma.communityComment.deleteMany({ where: { OR: [{ authorId: { in: ids } }, testPost] } });

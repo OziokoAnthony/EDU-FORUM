@@ -51,7 +51,7 @@ describe('Notifications (e2e)', () => {
   it('email preferences: default on, switched-off categories skip the email but still notify in-app', async () => {
     const me = await verifiedUser(t);
     const prefs = await t.http.get('/api/v1/notifications/preferences').set('Authorization', me.auth).expect(200);
-    expect(prefs.body.email).toEqual({ applications: true, invitations: true, interviews: true, messages: true, alerts: true, reminders: true, community: true });
+    expect(prefs.body.email).toEqual({ applications: true, invitations: true, interviews: true, messages: true, alerts: true, reminders: true, community: true, blog: true });
 
     const updated = await t.http.put('/api/v1/notifications/preferences').set('Authorization', me.auth).send({ email: { messages: false } }).expect(200);
     expect(updated.body.email).toMatchObject({ messages: false, applications: true });

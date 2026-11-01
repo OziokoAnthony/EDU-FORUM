@@ -62,10 +62,12 @@ export function CommunityFeed({ area }: { area: Area }) {
   const tag = params.get('tag') ?? undefined;
   const shareJob = params.get('share');
   const sharePost = params.get('sharePost');
+  const shareBlog = params.get('shareBlog');
+  const shareBlogTitle = params.get('title');
   const tags = useTags();
   const [fresh, setFresh] = useState(0);
   const [composing, setComposing] = useState(false);
-  const open = composing || !!shareJob || !!sharePost;
+  const open = composing || !!shareJob || !!sharePost || !!shareBlog;
 
   const key = [...COMMUNITY_KEY, 'feed', tag ?? 'all'];
   const feed = useInfiniteQuery({
@@ -115,7 +117,7 @@ export function CommunityFeed({ area }: { area: Area }) {
   const tagHref = (slug?: string) => (slug ? `${base}?tag=${slug}` : base);
   const closeComposer = () => {
     setComposing(false);
-    if (shareJob || sharePost) router.replace(tagHref(tag), { scroll: false });
+    if (shareJob || sharePost || shareBlog) router.replace(tagHref(tag), { scroll: false });
   };
   const allTags = [
     { slug: undefined, name: 'All posts' } as { slug?: string; name: string },
@@ -247,6 +249,7 @@ export function CommunityFeed({ area }: { area: Area }) {
             defaultTag={tag}
             shareVacancyId={shareJob}
             sharePostId={sharePost}
+            shareBlog={shareBlog ? { id: shareBlog, title: shareBlogTitle } : null}
             onClose={closeComposer}
             onPosted={() => {
               closeComposer();
@@ -422,6 +425,7 @@ function Composer({
   defaultTag,
   shareVacancyId,
   sharePostId,
+  shareBlog,
   onClose,
   onPosted,
 }: {
@@ -430,6 +434,7 @@ function Composer({
   defaultTag?: string;
   shareVacancyId: string | null;
   sharePostId: string | null;
+  shareBlog: { id: string; title: string | null } | null;
   onClose: () => void;
   onPosted: () => void;
 }) {
@@ -500,6 +505,7 @@ function Composer({
           uploadIds,
           vacancyId: vacancyId ?? undefined,
           sharedPostId: sharePostId ?? undefined,
+          blogPostId: shareBlog?.id,
         },
       });
       onPosted();
@@ -517,7 +523,7 @@ function Composer({
     }
   }
 
-  const canPost = !phone && (!!body.trim() || files.length > 0 || !!vacancyId || !!sharePostId);
+  const canPost = !phone && (!!body.trim() || files.length > 0 || !!vacancyId || !!sharePostId || !!shareBlog);
   const s = shared.data;
   const original = s?.shared?.available ? s.shared : s;
 
@@ -608,6 +614,12 @@ function Composer({
               >
                 Remove
               </button>
+            </div>
+          ) : null}
+
+          {shareBlog ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+              Sharing blog post: <span className="font-semibold">{shareBlog.title ?? 'from the blog'}</span>
             </div>
           ) : null}
 

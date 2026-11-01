@@ -120,7 +120,7 @@ frontend/              # Next.js (package @edu-forum/frontend)
 backend/               # NestJS (package @edu-forum/backend)
   src/modules/         # auth, users, teachers, cv, vacancies,
                        # search, applications, invitations, interviews, saved, dashboards,
-                       # reminders, community,
+                       # reminders, community, blog,
                        # messaging, notifications, reports, meta, admin, uploads
   src/common/          # guards, filters, pipes, serializers
   prisma/schema.prisma
@@ -367,7 +367,8 @@ covers the window).
   pages change together. Community gets: three columns on desktop (menu left, feed middle,
   suggested jobs/teachers right), a "What's on your mind?" box that opens the composer pop-up, a
   photo grid with a full-screen swipeable viewer, and Like / Comment / Share buttons, where Share
-  reposts the post to the feed. Stock photos are Pexels, sources in
+  reposts the post to the feed. Logo: the user's eduforum logo (cut from `eduforum-logo.mp4`) in
+  `frontend/public/brand/` (full logo + icon) and `app/icon.png` / `app/apple-icon.png`. Stock photos are Pexels, sources in
   `frontend/public/images/stock/CREDITS.md`.
 - **Blog (user, 2026-11-01; replaces the PRD's admin-only CMS):** any registered teacher, principal
   or director writes posts (Tiptap); publishing sends the post to an admin, who approves (it goes
@@ -378,6 +379,24 @@ covers the window).
   only registered users like and comment. Share buttons (WhatsApp, Facebook, X, copy link) and
   "share into the community feed". Community rules apply: phone numbers blocked, report, admin
   remove with a reason, blocks hide comments both ways.
+  Built (2026-11-01): starter categories Career tips, Exam prep, School news (reference data
+  `blog-categories`). A draft needs only a title; sending needs a category and 300+ visible
+  characters. The slug is set from the title on first approval and never changes. Editing a
+  published post sends it back for approval and takes it offline until then (admins' own posts
+  publish directly). Teachers appear by name, principals/directors by role, admins as
+  "EDU-FORUM team". Covers use the `post_cover` upload and are served by `GET /posts/:id/cover`
+  (302 to a fresh 10-minute link) so cached pages never hold an expired URL. Blog pages fetch with
+  tags `blog` / `blog:{slug}`; the API refreshes them through the `seo-revalidate` job (no Indexing
+  API ping: that is for job pages). Category pages are indexed with 3+ posts; `?page=2+` is noindex.
+  Notifications: `blog_review` (approved/not approved) and `blog_comment`, category `blog`.
+  Endpoints: public `GET /posts`, `GET /posts/by-slug/:slug`, `GET /posts/:id/comments`,
+  `GET /posts/:id/cover`, `GET /blog/categories`, `GET /seo/sitemap/blog`; writers (teacher, leader,
+  admin; verified) `GET /posts/mine`, `GET /posts/mine/:id`, `POST /posts`, `PATCH /posts/:id`,
+  `POST /posts/:id/submit`, `DELETE /posts/:id`, `POST|DELETE /posts/:id/like`,
+  `POST /posts/:id/comments`, `DELETE /blog-comments/:id`, `POST|DELETE /blog-comments/:id/like`;
+  admin `GET /admin/posts?status=`, `GET /admin/posts/:id`, `POST /admin/posts/:id/approve`,
+  `POST /admin/posts/:id/reject`, `POST /admin/posts/:id/remove`, `POST /admin/blog-comments/:id/remove`.
+  Reports accept `blog_post` / `blog_comment`; community posts can share a blog post (`blogPostId`).
 
 ## API conventions
 

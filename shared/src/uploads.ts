@@ -13,7 +13,7 @@ const IMAGE_MIME_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp'
 const DOCUMENT_MIME_TYPES = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' } as const;
 
 /** Upload purposes the API signs. */
-export const SIGNABLE_PURPOSES = ['cv', 'profile_photo', 'qualification_file', 'certification_file', 'message_attachment', 'community_photo'] as const;
+export const SIGNABLE_PURPOSES = ['cv', 'profile_photo', 'qualification_file', 'certification_file', 'message_attachment', 'community_photo', 'post_cover'] as const;
 export type SignablePurpose = (typeof SIGNABLE_PURPOSES)[number];
 
 /** Allowed MIME types per purpose, each with the extensions the file name may use. */
@@ -26,6 +26,8 @@ export const UPLOAD_RULES: Record<SignablePurpose, { mimeTypes: Record<string, s
   message_attachment: { mimeTypes: { 'application/pdf': 'pdf', ...IMAGE_MIME_TYPES }, label: 'PDF, JPG, PNG or WebP' },
   // Community posts: up to 4 photos (confirmed 2026-11-01).
   community_photo: { mimeTypes: IMAGE_MIME_TYPES, label: 'JPG, PNG or WebP' },
+  // Blog cover photo (user, 2026-11-01).
+  post_cover: { mimeTypes: IMAGE_MIME_TYPES, label: 'JPG, PNG or WebP' },
 };
 
 /** Extensions accepted for a canonical extension (".jpeg" is a ".jpg"). */

@@ -17,3 +17,4 @@ export * from './messaging';
 export * from './saved';
 export * from './dashboards';
 export * from './community';
+export * from './blog';

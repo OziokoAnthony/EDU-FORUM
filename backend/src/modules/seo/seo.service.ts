@@ -1,6 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   APP_NAME,
+  blogPath,
+  htmlToText,
   GONE_AFTER_DAYS,
   jobPath,
   LANDING_MIN_LIVE_JOBS,
@@ -18,7 +20,7 @@ import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { VacancySearchService } from '../search/vacancy-search.service';
 import { toVacancyResponse, VACANCY_INCLUDE } from '../vacancies/vacancy.serializer';
-import { availableUserSql, isAvailable } from '../../common/available-user';
+import { AVAILABLE_USER, availableUserSql, isAvailable } from '../../common/available-user';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SHORT_ID = /-([a-z2-9]{8})$/;
@@ -83,6 +85,7 @@ export class SeoService {
     if (parts.length === 0) {
       return this.page('home', '/', `${APP_NAME}: teaching jobs in Nigeria`, 'Find teaching jobs near you in every Nigerian state, or recruit qualified teachers by subject, level and location. Free for teachers, principals and directors.', APP_NAME, [home], await this.count(), true, {});
     }
+    if (parts[0] === 'blog') return this.blogMeta(parts);
     if (parts[0] !== 'jobs') throw notFound();
 
     if (parts.length === 1) {
@@ -181,6 +184,32 @@ export class SeoService {
       live, // closed jobs: noindex (CLAUDE.md)
       {},
     );
+  }
+
+  /** Blog pages: /blog, /blog/category/{slug} (indexed with 3+ posts), /blog/{slug}. */
+  private async blogMeta(parts: string[]): Promise<SeoMeta> {
+    const home: Breadcrumb = { name: 'Home', path: '/' };
+    const blog: Breadcrumb = { name: 'Blog', path: '/blog' };
+    const live = { status: 'published', deletedAt: null, removedReason: null, slug: { not: null }, author: AVAILABLE_USER } satisfies Prisma.PostWhereInput;
+    if (parts.length === 1) {
+      const n = await this.prisma.post.count({ where: live });
+      return this.page('blog', '/blog', `Teaching blog: career tips, exam prep and school news`, `Articles by teachers, principals and directors across Nigeria: career tips, WAEC and NECO exam prep, and school news on ${APP_NAME}.`, `${APP_NAME} blog`, [home, blog], n, n > 0, {});
+    }
+    if (parts.length === 3 && parts[1] === 'category') {
+      const c = await this.prisma.blogCategory.findFirst({ where: { slug: parts[2], isActive: true } });
+      if (!c) throw notFound();
+      const n = await this.prisma.post.count({ where: { ...live, category: c.slug } });
+      const path = `/blog/category/${c.slug}`;
+      return this.page('blog_category', path, `${c.name}: articles for teachers in Nigeria`, `${n} ${c.name.toLowerCase()} article${n === 1 ? '' : 's'} by teachers, principals and directors on the ${APP_NAME} blog.`, c.name, [home, blog, { name: c.name, path }], n, n >= LANDING_MIN_LIVE_JOBS, { category: c.slug });
+    }
+    if (parts.length !== 2) throw notFound();
+    const post = await this.prisma.post.findFirst({ where: { ...live, slug: parts[1] } });
+    if (!post) throw notFound();
+    const c = post.category ? await this.prisma.blogCategory.findUnique({ where: { slug: post.category } }) : null;
+    const path = blogPath(post.slug!);
+    const text = post.excerpt ?? htmlToText(post.body).replace(/\s+/g, ' ');
+    const crumbs = [home, blog, ...(c ? [{ name: c.name, path: `/blog/category/${c.slug}` }] : []), { name: post.title, path }];
+    return this.page('blog_post', path, post.metaTitle ?? post.title, post.metaDescription ?? text, post.title, crumbs, 1, true, c ? { category: c.slug } : {});
   }
 
   /** GET /seo/landing-pages — combinations with at least `minJobs` live jobs (sitemap). */

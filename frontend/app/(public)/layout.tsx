@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { APP_NAME } from '@edu-forum/shared';
-import { HomeIcon, JobsIcon } from '@/components/icons';
+import { BookIcon, HomeIcon, JobsIcon } from '@/components/icons';
 import { TopBar } from '@/components/top-bar';
 
 const TABS = [
   { href: '/', label: 'Home', icon: <HomeIcon />, exact: true },
   { href: '/jobs', label: 'Jobs', icon: <JobsIcon /> },
+  { href: '/blog', label: 'Blog', icon: <BookIcon /> },
 ];
 
 /**

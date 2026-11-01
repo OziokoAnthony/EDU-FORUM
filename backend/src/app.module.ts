@@ -13,6 +13,7 @@ import { RealtimeModule } from './infra/realtime/realtime.module';
 import { AdminModule } from './modules/admin/admin.controller';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BlogModule } from './modules/blog/blog.module';
 import { CommunityModule } from './modules/community/community.module';
 import { CvModule } from './modules/cv/cv.module';
 import { DashboardsModule } from './modules/dashboards/dashboards.module';
@@ -71,6 +72,8 @@ import { UsersModule } from './modules/users/users.module';
     RemindersModule,
     AccountModule,
     CommunityModule,
+    // After SearchModule (BlogModule imports SeoModule, which pulls in search routes).
+    BlogModule,
     ReportsModule,
     AdminModule,
   ],
