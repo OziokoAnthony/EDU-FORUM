@@ -353,6 +353,14 @@ export class AdminService {
   private async targetLabel(type: AdminReportItem['targetType'], id: string): Promise<string> {
     if (type === 'vacancy') return (await this.prisma.vacancy.findUnique({ where: { id }, select: { title: true } }))?.title ?? 'Deleted vacancy';
     if (type === 'teacher_profile') return (await this.prisma.teacherProfile.findUnique({ where: { id }, select: { fullName: true } }))?.fullName ?? 'Teacher profile';
+    if (type === 'community_post') {
+      const p = await this.prisma.communityPost.findUnique({ where: { id }, select: { body: true } });
+      return p?.body ? p.body.slice(0, 80) : 'Community post';
+    }
+    if (type === 'community_comment') {
+      const c = await this.prisma.communityComment.findUnique({ where: { id }, select: { body: true } });
+      return c?.body ? c.body.slice(0, 80) : 'Community comment';
+    }
     const m = await this.prisma.message.findUnique({ where: { id }, select: { body: true } });
     return m?.body ? m.body.slice(0, 80) : 'Message';
   }
@@ -368,6 +376,7 @@ export class AdminService {
       'qualification-types': () => this.prisma.qualificationType.findMany({ orderBy: [{ rank: 'asc' }, order] }),
       'certification-types': () => this.prisma.certificationType.findMany({ orderBy: order }),
       lgas: () => this.prisma.lga.findMany({ orderBy: [{ state: { name: 'asc' } }, order], include: { state: { select: { name: true } } } }),
+      'community-tags': () => this.prisma.communityTag.findMany({ orderBy: [{ sortOrder: 'asc' }, order] }),
     }[type]();
     return { data };
   }
@@ -399,6 +408,7 @@ export class AdminService {
         'qualification-types': () => this.prisma.qualificationType.update({ where: { id }, data: { ...data, rank: input.rank } }),
         'certification-types': () => this.prisma.certificationType.update({ where: { id }, data: { ...data, issuer: input.issuer } }),
         lgas: () => this.prisma.lga.update({ where: { id }, data }),
+        'community-tags': () => this.prisma.communityTag.update({ where: { id }, data: { ...data, sortOrder: input.sortOrder } }),
       }[type]();
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') throw notFound('Item');
@@ -424,6 +434,8 @@ export class AdminService {
         return this.prisma.qualificationType.create({ data: { ...base, rank: input.rank ?? 0 } });
       case 'certification-types':
         return this.prisma.certificationType.create({ data: { ...base, issuer: input.issuer ?? null } });
+      case 'community-tags':
+        return this.prisma.communityTag.create({ data: { ...base, sortOrder: input.sortOrder ?? 0 } });
       case 'lgas':
         if (!input.stateId) throw new ApiException(HttpStatus.BAD_REQUEST, 'VALIDATION_ERROR', 'Validation failed', { issues: [{ path: 'stateId', message: 'Choose the state' }] });
         return this.prisma.lga.create({ data: { ...base, stateId: input.stateId } });

@@ -117,6 +117,20 @@ export class AccountDeletionService implements OnModuleInit {
         data: { attachmentKey: null, attachmentName: null, attachmentMime: null, attachmentSize: null, attachmentUploadId: null },
       });
       await tx.upload.updateMany({ where: { userId, deletedAt: null }, data: { deletedAt: now, fileName: 'deleted' } });
+      // Community: the account's own posts and comments go (text erased); likes and blocks too.
+      for (const like of await tx.communityLike.findMany({ where: { userId } })) {
+        const data = { likesCount: { decrement: 1 } };
+        if (like.targetType === 'post') await tx.communityPost.updateMany({ where: { id: like.targetId }, data });
+        else await tx.communityComment.updateMany({ where: { id: like.targetId }, data });
+      }
+      await tx.communityLike.deleteMany({ where: { userId } });
+      await tx.communityBlock.deleteMany({ where: { OR: [{ blockerId: userId }, { blockedId: userId }] } });
+      await tx.communityPhoto.deleteMany({ where: { post: { authorId: userId } } });
+      await tx.communityPost.updateMany({ where: { authorId: userId }, data: { body: '', deletedAt: now } });
+      for (const c of await tx.communityComment.findMany({ where: { authorId: userId, deletedAt: null, removedReason: null }, select: { postId: true } })) {
+        await tx.communityPost.update({ where: { id: c.postId }, data: { commentsCount: { decrement: 1 } } });
+      }
+      await tx.communityComment.updateMany({ where: { authorId: userId }, data: { body: '', deletedAt: now } });
 
       if (p) {
         await tx.qualification.deleteMany({ where: { teacherId: p.id } });

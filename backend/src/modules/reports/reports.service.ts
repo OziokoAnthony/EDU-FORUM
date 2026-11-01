@@ -5,7 +5,7 @@ import type { AuthUser } from '../../common/auth/auth-user';
 import { ApiException } from '../../common/filters/api-exception.filter';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
-/** PRD POST /reports: anyone signed in can report a teacher profile, vacancy or message. */
+/** PRD POST /reports: anyone signed in can report a teacher profile, vacancy, message, or community post/comment. */
 @Injectable()
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -32,6 +32,12 @@ export class ReportsService {
     }
     if (type === 'vacancy') {
       return (await this.prisma.vacancy.findFirst({ where: { id, deletedAt: null }, select: { createdById: true } }))?.createdById ?? null;
+    }
+    if (type === 'community_post') {
+      return (await this.prisma.communityPost.findFirst({ where: { id, deletedAt: null, removedReason: null }, select: { authorId: true } }))?.authorId ?? null;
+    }
+    if (type === 'community_comment') {
+      return (await this.prisma.communityComment.findFirst({ where: { id, deletedAt: null, removedReason: null }, select: { authorId: true } }))?.authorId ?? null;
     }
     // Only someone in the chat can report one of its messages (others would learn it exists).
     const message = await this.prisma.message.findFirst({

@@ -133,6 +133,11 @@ function VacancyCard({ v }: { v: MyVacancyResponse }) {
             Recommended teachers
           </Link>
         ) : null}
+        {v.status === 'published' ? (
+          <Link href={`/hiring/community?share=${v.id}`} className="font-semibold text-emerald-800 underline">
+            Share in community
+          </Link>
+        ) : null}
         {action('Duplicate', () => act('/duplicate'))}
         {v.status === 'draft' ? action('Delete', () => act('', 'DELETE'), true) : null}
       </div>

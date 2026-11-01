@@ -88,6 +88,11 @@ export function JobDetail({ id }: { id: string }) {
       <ApplyPanel v={v} />
       <div className="flex flex-wrap items-center gap-4">
         <SaveButton itemType="vacancy" itemId={v.id} />
+        {v.status === 'published' ? (
+          <Link href={`/teacher/community?share=${v.id}`} className="font-semibold text-emerald-800 underline">
+            Share in community
+          </Link>
+        ) : null}
         <ReportButton targetType="vacancy" targetId={v.id} label="Report this job" />
       </div>
     </main>

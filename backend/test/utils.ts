@@ -82,6 +82,12 @@ export async function deleteTestUsers(prisma: PrismaService, phones: string[] = 
   if (ids.length === 0) return;
   const teacherId = { teacher: { userId: { in: ids } } };
   await prisma.auditLog.deleteMany({ where: { actorId: { in: ids } } });
+  const testPost = { post: { authorId: { in: ids } } };
+  await prisma.communityLike.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.communityBlock.deleteMany({ where: { OR: [{ blockerId: { in: ids } }, { blockedId: { in: ids } }] } });
+  await prisma.communityComment.deleteMany({ where: { OR: [{ authorId: { in: ids } }, testPost] } });
+  await prisma.communityPhoto.deleteMany({ where: { OR: [testPost, { upload: { userId: { in: ids } } }] } });
+  await prisma.communityPost.deleteMany({ where: { OR: [{ authorId: { in: ids } }, { vacancy: { createdById: { in: ids } } }] } });
   await prisma.report.deleteMany({ where: { OR: [{ reporterId: { in: ids } }, { resolvedById: { in: ids } }] } });
   const testChat = { OR: [{ employerId: { in: ids } }, { teacher: { userId: { in: ids } } }] };
   await prisma.message.deleteMany({ where: { OR: [{ senderId: { in: ids } }, { conversation: testChat }] } });

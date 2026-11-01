@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { shortDate } from '@/lib/format';
 import { AdminNav, askReason } from '../admin-nav';
 
-const TARGET_LABEL = { teacher_profile: 'Teacher profile', vacancy: 'Vacancy', message: 'Message' } as const;
+const TARGET_LABEL = { teacher_profile: 'Teacher profile', vacancy: 'Vacancy', message: 'Message', community_post: 'Community post', community_comment: 'Community comment' } as const;
 
 /** FR-11 reports queue: act on the target (take down / hide), then resolve or dismiss. */
 export default function Page() {

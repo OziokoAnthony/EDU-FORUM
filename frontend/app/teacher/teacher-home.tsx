@@ -125,6 +125,10 @@ export function TeacherHome() {
           <p className="font-semibold text-emerald-900">Find teaching jobs</p>
           <p className="text-sm text-slate-600">Jobs that match your subjects, levels and location</p>
         </Link>
+        <Link href="/teacher/community" className="lift rounded-lg border border-gold/50 bg-gold/10 p-4 sm:col-span-2">
+          <p className="font-semibold text-slate-900">Community</p>
+          <p className="text-sm text-slate-600">Share lesson ideas, exam tips and news with teachers and school leaders</p>
+        </Link>
         <Link href="/teacher/applications" className="lift rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
           <p className="font-semibold text-slate-900">My applications</p>
           <p className="text-sm text-slate-600">Status of every job you applied for</p>

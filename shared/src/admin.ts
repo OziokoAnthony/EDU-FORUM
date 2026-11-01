@@ -3,7 +3,7 @@ import type { UserRole } from './auth';
 
 // ───────────── reports (any signed-in user) ─────────────
 
-export const REPORT_TARGETS = ['teacher_profile', 'vacancy', 'message'] as const;
+export const REPORT_TARGETS = ['teacher_profile', 'vacancy', 'message', 'community_post', 'community_comment'] as const;
 export const REPORT_REASONS = ['scam_or_fraud', 'fake_or_misleading', 'inappropriate', 'spam', 'discrimination', 'other'] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 export type ReportReason = (typeof REPORT_REASONS)[number];
@@ -85,7 +85,7 @@ export const resolveReportSchema = z.object({
 });
 
 /** Reference lists admins manage (PRD: subjects, levels, qualifications, certifications, LGAs). */
-export const META_TYPES = ['subjects', 'levels', 'qualification-types', 'certification-types', 'lgas'] as const;
+export const META_TYPES = ['subjects', 'levels', 'qualification-types', 'certification-types', 'lgas', 'community-tags'] as const;
 export type MetaType = (typeof META_TYPES)[number];
 export const metaItemSchema = z.object({
   name: z.string().trim().min(2, 'Enter a name').max(120),

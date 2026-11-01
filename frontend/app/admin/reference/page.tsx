@@ -16,6 +16,7 @@ const LABEL: Record<MetaType, string> = {
   'qualification-types': 'Qualifications',
   'certification-types': 'Certifications',
   lgas: 'LGAs / cities',
+  'community-tags': 'Community topics',
 };
 
 interface Item {

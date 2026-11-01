@@ -195,6 +195,8 @@ enum ReportTargetType {
   teacher_profile
   vacancy
   message
+  community_post
+  community_comment
 }
 
 enum ReportStatus {
@@ -223,6 +225,7 @@ enum UploadPurpose {
   certification_file
   message_attachment
   post_cover
+  community_photo
 }
 
 // ─────────────────────────── Reference data ───────────────────────────
@@ -375,6 +378,11 @@ model User {
   uploads                 Upload[]
   posts                   Post[]
   blockedConversations    Conversation[]             @relation("ConversationBlockedBy")
+  communityPosts          CommunityPost[]
+  communityComments       CommunityComment[]
+  communityLikes          CommunityLike[]
+  communityBlocks         CommunityBlock[]           @relation("CommunityBlocker")
+  communityBlockedBy      CommunityBlock[]           @relation("CommunityBlocked")
 
   @@index([role, status])
   @@map("users")
@@ -441,7 +449,8 @@ model Upload {
   user User @relation(fields: [userId], references: [id])
 
 
-  message Message?
+  message        Message?
+  communityPhoto CommunityPhoto?
   @@index([userId, purpose])
   @@map("uploads")
 }
@@ -690,8 +699,9 @@ model Vacancy {
   state     State  @relation(fields: [stateId], references: [id])
   lga       Lga    @relation(fields: [lgaId], references: [id])
 
-  applications Application[]
-  invitations  Invitation[]
+  applications   Application[]
+  invitations    Invitation[]
+  communityPosts CommunityPost[]
 
   @@index([status, publishedAt])
   @@index([createdById, status])
@@ -1024,4 +1034,120 @@ model AdSettings {
 
   @@unique([pageType, slotName])
   @@map("ad_settings")
+}
+
+// ─────────────────────────── Community (user, 2026-10-31) ───────────────────────────
+
+/// Topic tags for community posts (admin-managed like subjects; deactivated, never deleted).
+model CommunityTag {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("community_tags")
+}
+
+/// A status post in the one shared feed. Signed-in users only (noindex, no ads).
+model CommunityPost {
+  id            String    @id @default(uuid()) @db.Uuid
+  authorId      String    @map("author_id") @db.Uuid
+  body          String
+  /// Topic tag slug (optional).
+  tag           String?
+  /// A shared job: the card is rendered through the public vacancy serializer.
+  vacancyId     String?   @map("vacancy_id") @db.Uuid
+  likesCount    Int       @default(0) @map("likes_count")
+  commentsCount Int       @default(0) @map("comments_count")
+  /// Set by an admin removal (with the reason); the author is told.
+  removedReason String?   @map("removed_reason")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  author   User               @relation(fields: [authorId], references: [id])
+  vacancy  Vacancy?           @relation(fields: [vacancyId], references: [id])
+  photos   CommunityPhoto[]
+  comments CommunityComment[]
+
+  /// Feed: newest first with an id tiebreak (cursor pagination).
+  @@index([createdAt(sort: Desc), id])
+  @@index([tag, createdAt(sort: Desc)])
+  @@index([authorId])
+  @@map("community_posts")
+}
+
+/// Up to 4 per post; shown only once the virus scan is clean.
+model CommunityPhoto {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  uploadId  String   @unique @map("upload_id") @db.Uuid
+  objectKey String   @map("object_key")
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  post   CommunityPost @relation(fields: [postId], references: [id])
+  upload Upload        @relation(fields: [uploadId], references: [id])
+
+  @@index([postId, position])
+  @@map("community_photos")
+}
+
+model CommunityComment {
+  id            String    @id @default(uuid()) @db.Uuid
+  postId        String    @map("post_id") @db.Uuid
+  authorId      String    @map("author_id") @db.Uuid
+  body          String
+  likesCount    Int       @default(0) @map("likes_count")
+  removedReason String?   @map("removed_reason")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  post   CommunityPost @relation(fields: [postId], references: [id])
+  author User          @relation(fields: [authorId], references: [id])
+
+  @@index([postId, createdAt])
+  @@map("community_comments")
+}
+
+enum CommunityLikeTarget {
+  post
+  comment
+}
+
+/// One like per user per post or comment.
+model CommunityLike {
+  id         String              @id @default(uuid()) @db.Uuid
+  userId     String              @map("user_id") @db.Uuid
+  targetType CommunityLikeTarget @map("target_type")
+  targetId   String              @map("target_id") @db.Uuid
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@map("community_likes")
+}
+
+/// Blocking hides each side's posts and comments from the other, both ways.
+model CommunityBlock {
+  id        String   @id @default(uuid()) @db.Uuid
+  blockerId String   @map("blocker_id") @db.Uuid
+  blockedId String   @map("blocked_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  blocker User @relation("CommunityBlocker", fields: [blockerId], references: [id])
+  blocked User @relation("CommunityBlocked", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("community_blocks")
 }

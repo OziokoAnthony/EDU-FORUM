@@ -13,6 +13,7 @@ import { RealtimeModule } from './infra/realtime/realtime.module';
 import { AdminModule } from './modules/admin/admin.controller';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CommunityModule } from './modules/community/community.module';
 import { CvModule } from './modules/cv/cv.module';
 import { DashboardsModule } from './modules/dashboards/dashboards.module';
 import { HealthModule } from './modules/health/health.module';
@@ -69,6 +70,7 @@ import { UsersModule } from './modules/users/users.module';
     DashboardsModule,
     RemindersModule,
     AccountModule,
+    CommunityModule,
     ReportsModule,
     AdminModule,
   ],

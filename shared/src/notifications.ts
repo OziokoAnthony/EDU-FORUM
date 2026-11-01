@@ -4,7 +4,7 @@ import { z } from 'zod';
  * Email categories a user can switch off (FR-9). In-app notifications are always on.
  * SMS/WhatsApp join in v1.1 (Termii).
  */
-export const NOTIFICATION_CATEGORIES = ['applications', 'invitations', 'interviews', 'messages', 'alerts', 'reminders'] as const;
+export const NOTIFICATION_CATEGORIES = ['applications', 'invitations', 'interviews', 'messages', 'alerts', 'reminders', 'community'] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 export const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> = {
@@ -14,6 +14,7 @@ export const NOTIFICATION_CATEGORY_LABELS: Record<NotificationCategory, string> 
   messages: 'New chat messages',
   alerts: 'Saved-search job alerts',
   reminders: 'Reminders (expiring vacancies, unfinished profile)',
+  community: 'Comments on my community posts',
 };
 
 /** What triggered a notification; each belongs to one category. */
@@ -30,6 +31,7 @@ export const NOTIFICATION_TYPES = {
   vacancy_expiring: 'reminders',
   profile_incomplete: 'reminders',
   moderation: 'reminders',
+  community_comment: 'community',
 } as const satisfies Record<string, NotificationCategory>;
 export type NotificationType = keyof typeof NOTIFICATION_TYPES;
 

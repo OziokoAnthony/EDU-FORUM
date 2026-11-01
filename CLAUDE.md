@@ -193,6 +193,23 @@ covers the window).
   posts (same signed-upload + ClamAV pipeline); sharing a job vacancy into the feed (anonymous
   vacancies still hide the school); topic tags (e.g. Lesson ideas, Job tips, Salary talk);
   notifications when someone comments on your post (via the Phase 11 notification system).
+  Built (2026-11-01): a single 👍 like on posts and comments; posts ≤ 2,000 chars, comments
+  ≤ 1,000, up to 4 photos (JPG/PNG/WebP ≤ 5 MB, `community_photo` upload, photos that fail the
+  scan are dropped); newest first, cursor pages of 20; one optional tag per post. Starter tags
+  (General, Lesson ideas, Exam prep (WAEC/NECO), Classroom management, Job tips, Salary talk) are
+  seeded by the migration; admins add/retire them as reference data `community-tags`. Text with a
+  Nigerian phone number (`containsPhoneNumber`) is rejected on posts and comments. Teachers appear
+  by name and photo; principals/directors appear as "Principal"/"Director" (no profile). Only live
+  vacancies can be shared, through the public serializer (anonymous schools stay hidden). Blocks
+  work both ways (neither sees the other's posts/comments). Live events: `community:post`,
+  `community:post-updated`, `community:post-removed`, `community:comment` to the `community` room.
+  Erasing an account removes its posts, comments, likes, blocks and photos.
+  Endpoints (`/community`, teacher or leader, verified): `GET tags`, `GET|POST posts`,
+  `GET|DELETE posts/:id`, `POST|DELETE posts/:id/like`, `GET|POST posts/:id/comments`,
+  `DELETE comments/:id`, `POST|DELETE comments/:id/like`, `GET|POST blocks`, `DELETE blocks/:userId`;
+  admin: `POST /admin/community/posts/:id/remove`, `POST /admin/community/comments/:id/remove`
+  (`{ reason }`, emails the author, audit-logged). Reports accept `community_post` and
+  `community_comment`.
 - PRD PDF garbles some paths; use the hyphenated forms (`/auth/resend-verification`,
   `/auth/change-password`, `/vacancies/:id/applications/bulk-status`, `/saved-searches/:id`,
   `/webhooks/storage/scan-result`, `/vacancies/by-slug/:slug`,
