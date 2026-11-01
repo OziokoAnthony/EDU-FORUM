@@ -447,6 +447,21 @@ covers the window).
   `TERMII_SMS_ROUTE` dnd/generic), `GEOCODER_DRIVER=google` (+`GOOGLE_MAPS_API_KEY`, Nigeria only,
   `GET /meta/geocode`). The API refuses to start if a chosen provider has no key.
 
+- **Resources (user, 2026-11-01; uploaded by admins only):** teaching materials (lesson notes, schemes
+  of work, lesson plans, past questions, teaching aids; PDF/Word/PowerPoint ≤ 5 MB) listed publicly at
+  `/resources` and `/resources/{slug}` (indexable) and downloaded by signed-in members through a counted
+  10-minute link; school calendar dates typed in by admins (all Nigeria or one state), shown on the home
+  page and `/calendar`; official exam timetables (PDF/image) per exam sitting at `/exams` and
+  `/exams/{slug}`, public download. Exams are reference data `exams` (seeded: WAEC, NECO, NABTEB, JAMB
+  UTME, BECE, Common Entrance, First School Leaving, IELTS, TRCN PQE). Upload purposes
+  `teaching_material` / `exam_timetable` are signable by admins only (`ADMIN_UPLOAD_PURPOSES`); files are
+  virus-scanned before they appear. No ads on these pages (not in the AdSense list). Endpoints: public
+  `GET /materials`, `GET /materials/by-slug/:slug`, `GET /calendar?state=`, `GET /exams`,
+  `GET /exams/:slug`, `GET /exams/timetables/:id/file`, `GET /seo/sitemap/resources`; members
+  `GET /materials/:id/download`; admin `GET|POST /admin/materials`, `DELETE /admin/materials/:id`,
+  `GET|POST /admin/calendar`, `PUT|DELETE /admin/calendar/:id`, `GET|POST /admin/exams/timetables`,
+  `DELETE /admin/exams/timetables/:id` (Admin → Resources; audit-logged).
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

@@ -17,6 +17,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AdsModule } from './modules/ads/ads.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { PushModule } from './modules/push/push.module';
+import { ResourcesModule } from './modules/resources/resources.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { CommunityModule } from './modules/community/community.module';
 import { CvModule } from './modules/cv/cv.module';
@@ -82,6 +83,7 @@ import { UsersModule } from './modules/users/users.module';
     AdsModule,
     ContactModule,
     PushModule,
+    ResourcesModule,
     ReportsModule,
     AdminModule,
   ],

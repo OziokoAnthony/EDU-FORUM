@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { APP_NAME, jobPath, websiteJsonLd, type LandingPageItem, type Paginated, type VacancyListItem } from '@edu-forum/shared';
+import { APP_NAME, jobPath, websiteJsonLd, type CalendarEventItem, type LandingPageItem, type Paginated, type VacancyListItem } from '@edu-forum/shared';
 import { AdSlot } from '@/components/ads/ad-slot';
 import { JsonLd } from '@/components/json-ld';
+import { CalendarRow } from '@/components/resources/resource-bits';
 import { HeroSlider } from '@/components/public/hero-slider';
 import { VacancyCard } from '@/components/vacancy-card';
 import { getSeoMeta, toMetadata } from '@/lib/seo-metadata';
@@ -23,6 +24,7 @@ export default async function HomePage() {
     serverGet<Paginated<VacancyListItem>>('/vacancies?sort=newest&limit=6', ['vacancies']),
     serverGet<{ data: LandingPageItem[] }>('/seo/landing-pages', ['vacancies', 'seo']),
   ]);
+  const { data: dates } = await serverGet<CalendarEventItem[]>('/calendar?limit=5', ['calendar']);
   const states = (landing?.data ?? []).filter((p) => p.kind === 'state').sort((a, b) => b.liveJobs - a.liveJobs).slice(0, 12);
 
   return (
@@ -67,6 +69,29 @@ export default async function HomePage() {
 
       </div>
       <aside className="space-y-3">
+      <section className="space-y-2 rounded-lg bg-panel p-4 shadow-sm">
+        <h2 className="text-2xl text-slate-900">School calendar</h2>
+        {dates?.length ? (
+          <ul className="divide-y divide-slate-100">
+            {dates.map((e) => (
+              <CalendarRow key={e.id} e={e} />
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-slate-600">Upcoming resumption dates, mid-term breaks and holidays appear here.</p>
+        )}
+        <p className="flex flex-wrap gap-x-4 text-sm font-semibold">
+          <Link href="/calendar" className="text-brand hover:underline">
+            Full calendar
+          </Link>
+          <Link href="/exams" className="text-brand hover:underline">
+            Exam timetables
+          </Link>
+          <Link href="/resources" className="text-brand hover:underline">
+            Teaching resources
+          </Link>
+        </p>
+      </section>
       {states.length ? (
         <section className="space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
           <h2 className="text-2xl text-slate-900">Jobs by state</h2>

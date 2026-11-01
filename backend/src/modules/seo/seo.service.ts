@@ -87,6 +87,7 @@ export class SeoService {
       return this.page('home', '/', `${APP_NAME}: teaching jobs in Nigeria`, 'Find teaching jobs near you in every Nigerian state, or recruit qualified teachers by subject, level and location. Free for teachers, principals and directors.', APP_NAME, [home], await this.count(), true, {});
     }
     if (parts[0] === 'blog') return this.blogMeta(parts);
+    if (parts[0] === 'resources' || parts[0] === 'calendar' || parts[0] === 'exams') return this.resourceMeta(parts);
     const fixed = STATIC_PAGES.find((p) => p.path === clean);
     if (fixed) return this.page('page', fixed.path, fixed.title, fixed.description, fixed.name, [home, { name: fixed.name, path: fixed.path }], 0, true, {});
     if (parts[0] !== 'jobs') throw notFound();
@@ -187,6 +188,34 @@ export class SeoService {
       live, // closed jobs: noindex (CLAUDE.md)
       {},
     );
+  }
+
+  /** Resources (user, 2026-11-01): /resources, /resources/{slug}, /calendar, /exams, /exams/{slug}. */
+  private async resourceMeta(parts: string[]): Promise<SeoMeta> {
+    const home: Breadcrumb = { name: 'Home', path: '/' };
+    const clean = `/${parts.join('/')}`;
+    if (clean === '/calendar') {
+      return this.page('page', clean, 'Nigerian school calendar: resumption, mid-term and holidays', `School resumption dates, mid-term breaks, end of term and public holidays for schools across Nigeria, by state, on ${APP_NAME}.`, 'School calendar', [home, { name: 'School calendar', path: clean }], 0, true, {});
+    }
+    if (clean === '/exams') {
+      return this.page('page', clean, 'Exam timetables: WAEC, NECO, JAMB, BECE and more', `Download official timetables for WAEC, NECO, NABTEB, JAMB UTME, BECE, Common Entrance and other exams in Nigeria, free on ${APP_NAME}.`, 'Exam timetables', [home, { name: 'Exam timetables', path: clean }], 0, true, {});
+    }
+    if (parts[0] === 'exams' && parts.length === 2) {
+      const e = await this.prisma.exam.findFirst({ where: { slug: parts[1], isActive: true } });
+      if (!e) throw notFound();
+      return this.page('page', clean, `${e.name} timetable`, `Download the official ${e.fullName} timetable, with exam dates, free on ${APP_NAME}.`, `${e.name} timetable`, [home, { name: 'Exam timetables', path: '/exams' }, { name: e.name, path: clean }], 0, true, {});
+    }
+    const resources: Breadcrumb = { name: 'Teaching resources', path: '/resources' };
+    if (clean === '/resources') {
+      const n = await this.prisma.teachingMaterial.count({ where: { deletedAt: null, upload: { scanStatus: 'clean' } } });
+      return this.page('page', clean, 'Lesson notes and schemes of work for Nigerian teachers', `${n} free lesson notes, schemes of work, lesson plans and past questions for nursery, primary and secondary teachers in Nigeria.`, 'Teaching resources', [home, resources], n, n > 0, {});
+    }
+    if (parts[0] === 'resources' && parts.length === 2) {
+      const m = await this.prisma.teachingMaterial.findFirst({ where: { slug: parts[1], deletedAt: null, upload: { scanStatus: 'clean' } } });
+      if (!m) throw notFound();
+      return this.page('page', clean, m.title, m.description, m.title, [home, resources, { name: m.title, path: clean }], 1, true, {});
+    }
+    throw notFound();
   }
 
   /** Blog pages: /blog, /blog/category/{slug} (indexed with 3+ posts), /blog/{slug}. */

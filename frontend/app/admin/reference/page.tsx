@@ -18,6 +18,7 @@ const LABEL: Record<MetaType, string> = {
   lgas: 'LGAs / cities',
   'community-tags': 'Community topics',
   'blog-categories': 'Blog categories',
+  exams: 'Exams (timetables)',
 };
 
 interface Item {

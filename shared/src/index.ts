@@ -21,3 +21,4 @@ export * from './blog';
 export * from './ads';
 export * from './legal';
 export * from './push';
+export * from './resources';

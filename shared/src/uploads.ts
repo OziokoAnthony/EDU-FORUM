@@ -13,7 +13,9 @@ const IMAGE_MIME_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp'
 const DOCUMENT_MIME_TYPES = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' } as const;
 
 /** Upload purposes the API signs. */
-export const SIGNABLE_PURPOSES = ['cv', 'profile_photo', 'qualification_file', 'certification_file', 'message_attachment', 'community_photo', 'post_cover'] as const;
+export const SIGNABLE_PURPOSES = ['cv', 'profile_photo', 'qualification_file', 'certification_file', 'message_attachment', 'community_photo', 'post_cover', 'teaching_material', 'exam_timetable'] as const;
+/** Only admins may sign these (user, 2026-11-01: resources are uploaded by admins only). */
+export const ADMIN_UPLOAD_PURPOSES: readonly SignablePurpose[] = ['teaching_material', 'exam_timetable'];
 export type SignablePurpose = (typeof SIGNABLE_PURPOSES)[number];
 
 /** Allowed MIME types per purpose, each with the extensions the file name may use. */
@@ -28,6 +30,16 @@ export const UPLOAD_RULES: Record<SignablePurpose, { mimeTypes: Record<string, s
   community_photo: { mimeTypes: IMAGE_MIME_TYPES, label: 'JPG, PNG or WebP' },
   // Blog cover photo (user, 2026-11-01).
   post_cover: { mimeTypes: IMAGE_MIME_TYPES, label: 'JPG, PNG or WebP' },
+  // Resources (admins only).
+  teaching_material: {
+    mimeTypes: {
+      ...CV_MIME_TYPES,
+      'application/vnd.ms-powerpoint': 'ppt',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+    },
+    label: 'PDF, Word or PowerPoint',
+  },
+  exam_timetable: { mimeTypes: { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' }, label: 'PDF, JPG or PNG' },
 };
 
 /** Extensions accepted for a canonical extension (".jpeg" is a ".jpg"). */

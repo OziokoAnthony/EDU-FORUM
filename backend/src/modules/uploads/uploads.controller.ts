@@ -1,7 +1,7 @@
 import { Body, Controller, Headers, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { timingSafeEqual } from 'node:crypto';
-import { scanResultSchema, signUploadSchema, type SignUploadResponse } from '@edu-forum/shared';
+import { ADMIN_UPLOAD_PURPOSES, scanResultSchema, signUploadSchema, type SignUploadResponse } from '@edu-forum/shared';
 import type { z } from 'zod';
 import { CurrentUser, Public, RequireVerified } from '../../common/auth/decorators';
 import type { AuthUser } from '../../common/auth/auth-user';
@@ -20,6 +20,10 @@ export class UploadsController {
     @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(signUploadSchema)) body: z.output<typeof signUploadSchema>,
   ): Promise<SignUploadResponse> {
+    // Resources (teaching materials, exam timetables) are uploaded by admins only.
+    if (ADMIN_UPLOAD_PURPOSES.includes(body.purpose) && user.role !== 'admin') {
+      throw new ApiException(HttpStatus.FORBIDDEN, 'FORBIDDEN', 'Only admins can upload this');
+    }
     return this.uploads.sign(user.id, body);
   }
 }

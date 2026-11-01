@@ -85,7 +85,7 @@ export const resolveReportSchema = z.object({
 });
 
 /** Reference lists admins manage (PRD: subjects, levels, qualifications, certifications, LGAs). */
-export const META_TYPES = ['subjects', 'levels', 'qualification-types', 'certification-types', 'lgas', 'community-tags', 'blog-categories'] as const;
+export const META_TYPES = ['subjects', 'levels', 'qualification-types', 'certification-types', 'lgas', 'community-tags', 'blog-categories', 'exams'] as const;
 export type MetaType = (typeof META_TYPES)[number];
 export const metaItemSchema = z.object({
   name: z.string().trim().min(2, 'Enter a name').max(120),

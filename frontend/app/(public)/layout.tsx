@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { APP_NAME } from '@edu-forum/shared';
-import { BookIcon, HomeIcon, JobsIcon } from '@/components/icons';
+import { BookIcon, FileIcon, HomeIcon, JobsIcon } from '@/components/icons';
 import { AdScripts } from '@/components/ads/ad-scripts';
 import { TopBar } from '@/components/top-bar';
 
 const TABS = [
   { href: '/', label: 'Home', icon: <HomeIcon />, exact: true },
   { href: '/jobs', label: 'Jobs', icon: <JobsIcon /> },
+  { href: '/resources', label: 'Resources', icon: <FileIcon /> },
   { href: '/blog', label: 'Blog', icon: <BookIcon /> },
 ];
 
@@ -62,6 +63,15 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             </Link>
             <Link href="/blog" className="text-brand hover:underline">
               Blog
+            </Link>
+            <Link href="/resources" className="text-brand hover:underline">
+              Teaching resources
+            </Link>
+            <Link href="/calendar" className="text-brand hover:underline">
+              School calendar
+            </Link>
+            <Link href="/exams" className="text-brand hover:underline">
+              Exam timetables
             </Link>
             <Link href="/safety" className="text-brand hover:underline">
               Safety tips

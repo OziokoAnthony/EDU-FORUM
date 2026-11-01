@@ -236,6 +236,8 @@ enum UploadPurpose {
   message_attachment
   post_cover
   community_photo
+  teaching_material
+  exam_timetable
 }
 
 // ─────────────────────────── Reference data ───────────────────────────
@@ -266,6 +268,7 @@ model State {
 
   teacherProfiles TeacherProfile[]
   vacancies       Vacancy[]
+  calendarEvents  CalendarEvent[]
 
   @@unique([countryCode, name])
   @@map("states")
@@ -397,6 +400,9 @@ model User {
   communityBlockedBy     CommunityBlock[]           @relation("CommunityBlocked")
   contactMessages        ContactMessage[]
   pushSubscriptions      PushSubscription[]
+  teachingMaterials      TeachingMaterial[]
+  calendarEvents         CalendarEvent[]
+  examTimetables         ExamTimetable[]
 
   @@index([role, status])
   @@map("users")
@@ -465,6 +471,8 @@ model Upload {
   message        Message?
   communityPhoto CommunityPhoto?
   postCover      Post?
+  material       TeachingMaterial?
+  timetable      ExamTimetable?
 
   @@index([userId, purpose])
   @@map("uploads")
@@ -1274,4 +1282,104 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+// ─────────────────────────── Resources (user, 2026-11-01; admin uploads only) ───────────────────────────
+
+/// Lesson notes, schemes of work and other teaching materials. Listed publicly; members download.
+model TeachingMaterial {
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String
+  slug        String    @unique
+  description String
+  /// lesson_note | scheme_of_work | lesson_plan | past_questions | teaching_aid
+  kind        String
+  /// Subject slug (reference data); optional for general material.
+  subject     String?
+  /// e.g. primary-4, jss-2, ss-3 (CLASS_LEVELS in shared).
+  classLevel  String?   @map("class_level")
+  /// first | second | third
+  term        String?
+  uploadId    String    @unique @map("upload_id") @db.Uuid
+  objectKey   String    @map("object_key")
+  fileName    String    @map("file_name")
+  mimeType    String    @map("mime_type")
+  sizeBytes   Int       @map("size_bytes")
+  downloads   Int       @default(0)
+  createdById String    @map("created_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  upload    Upload @relation(fields: [uploadId], references: [id])
+  createdBy User   @relation(fields: [createdById], references: [id])
+
+  @@index([subject, classLevel])
+  @@index([createdAt])
+  @@map("teaching_materials")
+}
+
+/// School calendar dates typed in by admins, for all of Nigeria (no state) or one state.
+model CalendarEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  title       String
+  /// resumption | midterm_break | end_of_term | public_holiday | exam | other
+  kind        String
+  startDate   DateTime  @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  stateId     String?   @map("state_id") @db.Uuid
+  note        String?
+  createdById String    @map("created_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  state     State? @relation(fields: [stateId], references: [id])
+  createdBy User   @relation(fields: [createdById], references: [id])
+
+  @@index([startDate])
+  @@map("calendar_events")
+}
+
+/// External exams (WAEC, NECO, JAMB...). Reference data: admins add or retire them.
+model Exam {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  slug        String   @unique
+  fullName    String   @map("full_name")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  timetables ExamTimetable[]
+
+  @@map("exams")
+}
+
+/// The official timetable file for one exam sitting, uploaded by an admin. Public download.
+model ExamTimetable {
+  id          String    @id @default(uuid()) @db.Uuid
+  examId      String    @map("exam_id") @db.Uuid
+  year        Int
+  /// e.g. "May/June", "Nov/Dec", "Main"
+  session     String
+  startDate   DateTime? @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  uploadId    String    @unique @map("upload_id") @db.Uuid
+  objectKey   String    @map("object_key")
+  fileName    String    @map("file_name")
+  mimeType    String    @map("mime_type")
+  sizeBytes   Int       @map("size_bytes")
+  createdById String    @map("created_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  exam      Exam   @relation(fields: [examId], references: [id])
+  upload    Upload @relation(fields: [uploadId], references: [id])
+  createdBy User   @relation(fields: [createdById], references: [id])
+
+  @@index([examId, year])
+  @@map("exam_timetables")
 }
