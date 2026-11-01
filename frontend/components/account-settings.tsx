@@ -98,7 +98,7 @@ export function AccountSettings({ backHref }: { backHref: string }) {
         <p className="mt-1 text-slate-600">Signed in as {user?.email ?? user?.phone}</p>
       </div>
 
-      <section aria-labelledby="export" className="space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+      <section aria-labelledby="export" className="space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
         <h2 id="export" className="text-xl text-slate-900">
           Download my data
         </h2>

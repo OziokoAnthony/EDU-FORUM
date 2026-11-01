@@ -58,7 +58,7 @@ export function InterviewCard({ iv, as }: { iv: InterviewItem; as: 'teacher' | '
   const isLink = /^https?:\/\//i.test(iv.locationOrLink);
 
   return (
-    <li className="lift space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+    <li className="lift space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-semibold text-slate-900">{lagosTime(iv.scheduledAt)}</p>

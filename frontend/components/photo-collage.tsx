@@ -20,11 +20,11 @@ const TILES: Tile[] = [
 /** Side panel on sign-in and sign-up (laptops): the people, the school and the CV. */
 export function PhotoCollage() {
   return (
-    <div aria-hidden className="stagger grid h-full min-h-[34rem] grid-cols-3 grid-rows-3 gap-2">
+    <div aria-hidden className="stagger grid h-full min-h-[22rem] grid-cols-3 grid-rows-3 gap-2">
       {TILES.map((t, i) => (
         <figure key={i} className={`group relative overflow-hidden rounded-md border border-slate-200 ${t.span}`}>
           <Image src={t.image} alt="" fill sizes="(min-width: 1024px) 25vw, 0px" placeholder="blur" className={`object-cover ${t.position} transition-transform duration-700 group-hover:scale-105`} />
-          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6 font-heading text-sm uppercase tracking-[0.14em] text-gold">
+          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6 text-sm font-semibold text-white">
             {t.label}
           </figcaption>
         </figure>
@@ -38,7 +38,7 @@ export function PhotoStrip() {
   return (
     <div aria-hidden className="stagger flex justify-center gap-2 lg:hidden">
       {TILES.slice(0, 5).map((t, i) => (
-        <div key={i} className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-gold/70">
+        <div key={i} className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white shadow">
           <Image src={t.image} alt="" fill sizes="48px" className={`object-cover ${t.position}`} />
         </div>
       ))}

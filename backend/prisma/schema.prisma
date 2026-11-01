@@ -1060,8 +1060,11 @@ model CommunityPost {
   tag           String?
   /// A shared job: the card is rendered through the public vacancy serializer.
   vacancyId     String?   @map("vacancy_id") @db.Uuid
+  /// A share (repost) of another post; always the original, never a share of a share.
+  sharedPostId  String?   @map("shared_post_id") @db.Uuid
   likesCount    Int       @default(0) @map("likes_count")
   commentsCount Int       @default(0) @map("comments_count")
+  sharesCount   Int       @default(0) @map("shares_count")
   /// Set by an admin removal (with the reason); the author is told.
   removedReason String?   @map("removed_reason")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -1070,6 +1073,8 @@ model CommunityPost {
 
   author   User               @relation(fields: [authorId], references: [id])
   vacancy  Vacancy?           @relation(fields: [vacancyId], references: [id])
+  shared   CommunityPost?     @relation("CommunityShares", fields: [sharedPostId], references: [id])
+  shares   CommunityPost[]    @relation("CommunityShares")
   photos   CommunityPhoto[]
   comments CommunityComment[]
 
@@ -1077,6 +1082,7 @@ model CommunityPost {
   @@index([createdAt(sort: Desc), id])
   @@index([tag, createdAt(sort: Desc)])
   @@index([authorId])
+  @@index([sharedPostId])
   @@map("community_posts")
 }
 

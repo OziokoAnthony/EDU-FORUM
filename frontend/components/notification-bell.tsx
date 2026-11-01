@@ -12,7 +12,7 @@ export function NotificationBell({ href }: { href: string }) {
     <Link
       href={href}
       aria-label={count ? `Notifications, ${count} unread` : 'Notifications'}
-      className="relative flex h-9 w-9 items-center justify-center rounded-sm border border-gold/60 bg-black/40 text-gold hover:bg-black/60"
+      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-800 hover:bg-slate-200"
     >
       <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />

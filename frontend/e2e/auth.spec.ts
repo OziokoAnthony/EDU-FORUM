@@ -47,6 +47,7 @@ test('teacher signs up, verifies email from the inbox, and reaches the dashboard
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
 
+  await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.goto('/teacher');

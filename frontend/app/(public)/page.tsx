@@ -30,7 +30,7 @@ export default async function HomePage() {
       <div className="mt-3 px-0">
         <HeroSlider />
       </div>
-      <section className="mt-3 space-y-4 rounded-md border border-slate-200 bg-panel px-4 py-6 sm:px-8">
+      <section className="mt-3 space-y-4 rounded-lg border border-slate-200 bg-panel shadow-sm px-4 py-6 sm:px-8">
         <h1 className="animate-fade-up text-3xl text-slate-900 sm:text-4xl">Teaching jobs near you, in every Nigerian state</h1>
         <p className="animate-fade-up text-slate-600 [animation-delay:80ms]">
           Teachers find jobs by subject, level and distance and apply free with their CV. Principals and directors post vacancies and find
@@ -41,7 +41,7 @@ export default async function HomePage() {
             Search teaching jobs
           </label>
           <input id="home-q" name="q" placeholder="Subject, level or keyword" className="block w-full rounded-sm border border-slate-300 px-3 py-3 outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/30" />
-          <button type="submit" className="rounded-sm bg-emerald-700 px-5 font-heading uppercase tracking-[0.12em] text-white hover:bg-emerald-600">
+          <button type="submit" className="rounded-sm bg-emerald-700 px-5  text-white hover:bg-emerald-600">
             Search
           </button>
         </form>
@@ -50,7 +50,7 @@ export default async function HomePage() {
       <div className="space-y-3">
 
       {latest?.data.length ? (
-        <section className="space-y-3 rounded-md border border-slate-200 bg-panel p-4 sm:p-6">
+        <section className="space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4 sm:p-6">
           <h2 className="text-2xl text-slate-900">Latest teaching jobs</h2>
           <ul className="stagger space-y-3">
             {latest.data.map((v) => (
@@ -66,7 +66,7 @@ export default async function HomePage() {
       </div>
       <aside className="space-y-3">
       {states.length ? (
-        <section className="space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+        <section className="space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
           <h2 className="text-2xl text-slate-900">Jobs by state</h2>
           <ul className="stagger grid grid-cols-2 gap-2 lg:grid-cols-1">
             {states.map((p) => (
@@ -79,7 +79,7 @@ export default async function HomePage() {
           </ul>
         </section>
       ) : null}
-      <section className="space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+      <section className="space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
         <h2 className="text-2xl text-slate-900">Join free</h2>
         <p className="text-sm text-slate-600">Teachers upload a CV once and apply to any job. Principals and directors post vacancies and chat with teachers.</p>
         <div className="flex flex-col gap-2 text-sm font-semibold">

@@ -103,7 +103,7 @@ export function ChatThread({ id, back }: { id: string; back: string }) {
 
   return (
     <main className="mx-auto flex h-[calc(100dvh-5rem)] max-w-3xl flex-col px-2 py-3 sm:px-4">
-      <header className="flex flex-wrap items-center justify-between gap-2 rounded-t-md border border-slate-200 bg-panel px-3 py-2">
+      <header className="flex flex-wrap items-center justify-between gap-2 rounded-t-md border border-slate-200 bg-panel shadow-sm px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <Link href={back} aria-label="Back to messages" className="px-1 text-xl text-gold">
             ←
@@ -159,11 +159,11 @@ export function ChatThread({ id, back }: { id: string; back: string }) {
 
       {error ? <Alert>{error}</Alert> : null}
       {c.blocked ? (
-        <p className="rounded-b-md border border-slate-200 bg-panel px-3 py-3 text-center text-sm text-slate-600">
+        <p className="rounded-b-md border border-slate-200 bg-panel shadow-sm px-3 py-3 text-center text-sm text-slate-600">
           {c.blocked === 'me' ? 'You blocked this chat. Unblock to send messages.' : 'You cannot send messages in this chat.'}
         </p>
       ) : c.other.deleted ? (
-        <p className="rounded-b-md border border-slate-200 bg-panel px-3 py-3 text-center text-sm text-slate-600">This account has been deleted.</p>
+        <p className="rounded-b-md border border-slate-200 bg-panel shadow-sm px-3 py-3 text-center text-sm text-slate-600">This account has been deleted.</p>
       ) : (
         <Composer id={id} onSent={upsert} onError={setError} />
       )}
@@ -279,7 +279,7 @@ function Composer({ id, onSent, onError }: { id: string; onSent: (m: MessageItem
   }
 
   return (
-    <form onSubmit={send} className="space-y-2 rounded-b-md border border-slate-200 bg-panel p-2">
+    <form onSubmit={send} className="space-y-2 rounded-b-md border border-slate-200 bg-panel shadow-sm p-2">
       {file ? (
         <p className="flex items-center justify-between gap-2 px-1 text-sm text-slate-700">
           <span className="truncate">

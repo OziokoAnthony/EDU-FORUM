@@ -38,7 +38,7 @@ export function TeacherStats() {
           { label: 'Upcoming interviews', value: interviews.upcoming, href: '/teacher/interviews' },
           { label: 'Saved jobs', value: savedJobs, href: '/teacher/saved' },
         ].map((s) => (
-          <Link key={s.label} href={s.href} className="lift rounded-lg border border-slate-200 bg-panel p-3">
+          <Link key={s.label} href={s.href} className="lift rounded-lg border border-slate-200 bg-panel shadow-sm p-3">
             <dd className="text-2xl font-bold text-slate-900">{s.value}</dd>
             <dt className="text-sm text-slate-600">{s.label}</dt>
           </Link>

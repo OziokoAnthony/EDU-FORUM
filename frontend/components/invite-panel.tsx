@@ -43,7 +43,7 @@ export function InvitePanel({ teacherId, teacherName }: { teacherId: string; tea
   }
 
   return (
-    <section className="space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+    <section className="space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
       <h2 className="text-xl text-slate-900">Invite to apply</h2>
       {notice ? <Alert kind={notice.kind}>{notice.text}</Alert> : null}
       {live.isPending ? null : vacancies.length === 0 ? (

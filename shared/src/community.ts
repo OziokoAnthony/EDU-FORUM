@@ -30,8 +30,13 @@ export const createPostSchema = z
     tag: z.string().trim().min(1).max(80).optional(),
     uploadIds: z.array(z.uuid()).max(COMMUNITY_MAX_PHOTOS, `Add up to ${COMMUNITY_MAX_PHOTOS} photos`).default([]),
     vacancyId: z.uuid().optional(),
+    /** Share (repost) another community post; sharing a share shares the original. */
+    sharedPostId: z.uuid().optional(),
   })
-  .refine((v) => v.body.length > 0 || v.uploadIds.length > 0 || !!v.vacancyId, { path: ['body'], message: 'Write something, add a photo or share a job' });
+  .refine((v) => v.body.length > 0 || v.uploadIds.length > 0 || !!v.vacancyId || !!v.sharedPostId, {
+    path: ['body'],
+    message: 'Write something, add a photo or share a job',
+  });
 export type CreatePostInput = z.input<typeof createPostSchema>;
 
 export const createCommentSchema = z.object({
@@ -87,6 +92,11 @@ export interface CommunitySharedJob {
   open: boolean;
 }
 
+/** The original post inside a share; `available: false` once it was deleted or removed. */
+export type CommunitySharedPost =
+  | { available: true; id: string; author: CommunityAuthor; body: string; tag: CommunityTagItem | null; photos: CommunityPhotoItem[]; job: CommunitySharedJob | null; createdAt: string }
+  | { available: false; id: string };
+
 export interface CommunityPostItem {
   id: string;
   author: CommunityAuthor;
@@ -95,9 +105,11 @@ export interface CommunityPostItem {
   tag: CommunityTagItem | null;
   photos: CommunityPhotoItem[];
   job: CommunitySharedJob | null;
+  shared: CommunitySharedPost | null;
   likes: number;
   likedByMe: boolean;
   comments: number;
+  shares: number;
   createdAt: string;
 }
 
@@ -134,4 +146,5 @@ export interface CommunityPostUpdate {
   postId: string;
   likes: number;
   comments: number;
+  shares: number;
 }

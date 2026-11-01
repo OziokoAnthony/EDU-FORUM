@@ -1,3 +1,4 @@
+import { APP_NAME } from '@edu-forum/shared';
 import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
 import { PhotoCollage, PhotoStrip } from './photo-collage';
 
@@ -63,22 +64,24 @@ export function Alert({ kind = 'error', children }: { kind?: 'error' | 'success'
 }
 
 /**
- * Sign-in, sign-up, verify and reset pages: the form card rises in beside a photo collage
- * (teacher, principal, director, school, CV) on laptops, under a row of round photos on phones.
+ * Sign-in, sign-up, verify and reset pages, laid out like a social-network sign-in: the name and
+ * a one-line promise (with the photo collage on laptops) beside a white card with the form.
  */
 export function AuthCard({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
   return (
-    <main className="mx-auto grid w-full max-w-6xl gap-4 px-4 py-6 lg:grid-cols-[1fr_28rem] lg:py-10">
-      <div className="hidden lg:block">
-        <PhotoCollage />
-      </div>
-      <div className="space-y-4">
-        <PhotoStrip />
-        <div className="animate-fade-up rounded-md border border-slate-200 bg-panel p-6 shadow-xl shadow-black/30 sm:p-8">
-          <h1 className="text-3xl text-slate-900">{title}</h1>
-          <div className="mt-6 space-y-5">{children}</div>
-          {footer ? <div className="mt-6 text-sm text-slate-600">{footer}</div> : null}
+    <main className="mx-auto grid w-full max-w-6xl items-start gap-6 px-4 py-6 lg:grid-cols-[1fr_26rem] lg:gap-12 lg:py-14">
+      <div className="space-y-4 text-center lg:pt-6 lg:text-left">
+        <p className="text-4xl font-extrabold tracking-tight text-brand lg:text-6xl">{APP_NAME}</p>
+        <p className="text-lg text-slate-700 lg:text-2xl lg:leading-snug">Find teaching jobs and recruit teachers across Nigeria, free.</p>
+        <div className="hidden lg:block">
+          <PhotoCollage />
         </div>
+        <PhotoStrip />
+      </div>
+      <div className="animate-fade-up rounded-lg bg-panel p-5 shadow-[0_2px_4px_rgb(0_0_0/0.1),0_8px_16px_rgb(0_0_0/0.1)] sm:p-6">
+        <h1 className="text-2xl text-slate-900">{title}</h1>
+        <div className="mt-5 space-y-5">{children}</div>
+        {footer ? <div className="mt-6 border-t border-slate-200 pt-4 text-sm text-slate-600">{footer}</div> : null}
       </div>
     </main>
   );

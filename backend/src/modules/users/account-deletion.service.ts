@@ -126,6 +126,9 @@ export class AccountDeletionService implements OnModuleInit {
       await tx.communityLike.deleteMany({ where: { userId } });
       await tx.communityBlock.deleteMany({ where: { OR: [{ blockerId: userId }, { blockedId: userId }] } });
       await tx.communityPhoto.deleteMany({ where: { post: { authorId: userId } } });
+      for (const sh of await tx.communityPost.findMany({ where: { authorId: userId, deletedAt: null, sharedPostId: { not: null } }, select: { sharedPostId: true } })) {
+        await tx.communityPost.updateMany({ where: { id: sh.sharedPostId! }, data: { sharesCount: { decrement: 1 } } });
+      }
       await tx.communityPost.updateMany({ where: { authorId: userId }, data: { body: '', deletedAt: now } });
       for (const c of await tx.communityComment.findMany({ where: { authorId: userId, deletedAt: null, removedReason: null }, select: { postId: true } })) {
         await tx.communityPost.update({ where: { id: c.postId }, data: { commentsCount: { decrement: 1 } } });

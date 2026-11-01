@@ -63,12 +63,12 @@ export function HeroSlider() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent sm:bg-gradient-to-r sm:from-black/80 sm:via-black/40" />
           <div className="absolute inset-x-0 bottom-0 space-y-2 p-5 sm:inset-y-0 sm:right-auto sm:flex sm:max-w-md sm:flex-col sm:justify-center sm:p-10">
-            <p className="font-heading text-3xl uppercase tracking-[0.06em] text-gold sm:text-5xl">{s.role}</p>
-            <p className="text-base text-slate-900 sm:text-lg">{s.line}</p>
+            <p className="text-3xl font-extrabold text-white sm:text-5xl">{s.role}</p>
+            <p className="text-base text-white/90 sm:text-lg">{s.line}</p>
             <Link
               href="/register"
               tabIndex={i === index ? 0 : -1}
-              className="press mt-2 inline-block w-fit rounded-sm bg-emerald-700 px-4 py-2 font-heading text-sm uppercase tracking-[0.12em] text-white hover:bg-emerald-600"
+              className="press mt-2 inline-block w-fit rounded-sm bg-emerald-700 px-4 py-2  text-sm text-white hover:bg-emerald-600"
             >
               {s.cta}
             </Link>
@@ -85,7 +85,7 @@ export function HeroSlider() {
             onClick={() => setIndex(i)}
             className="flex h-8 w-8 items-center justify-center"
           >
-            <span className={`block h-2.5 rounded-full transition-all ${i === index ? 'w-6 bg-gold' : 'w-2.5 bg-white/60'}`} />
+            <span className={`block h-2.5 rounded-full transition-all ${i === index ? 'w-6 bg-white' : 'w-2.5 bg-white/60'}`} />
           </button>
         ))}
       </div>

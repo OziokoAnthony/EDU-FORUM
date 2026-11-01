@@ -75,7 +75,7 @@ export function NotificationsView({ backHref }: { backHref: string }) {
       ) : items.length === 0 ? (
         <p className="rounded-md border border-dashed border-slate-300 p-6 text-center text-slate-600">No notifications yet.</p>
       ) : (
-        <ul className="stagger divide-y divide-slate-200 overflow-hidden rounded-md border border-slate-200 bg-panel">
+        <ul className="stagger divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-panel shadow-sm">
           {items.map((n) => (
             <li key={n.id}>
               <button
@@ -118,7 +118,7 @@ function EmailPreferences() {
   });
 
   return (
-    <section className="space-y-4 rounded-md border border-slate-200 bg-panel p-4 sm:p-6">
+    <section className="space-y-4 rounded-lg border border-slate-200 bg-panel shadow-sm p-4 sm:p-6">
       <h2 className="text-2xl text-slate-900">Email me about</h2>
       <p className="text-sm text-slate-600">You always see notifications here. Account notices from our team are always emailed.</p>
       {draft ? (

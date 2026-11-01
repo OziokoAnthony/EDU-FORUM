@@ -5,7 +5,7 @@ import { salaryRange, shortDate } from '@/lib/format';
 /** A vacancy in search results. Anonymous ones show "Confidential school" and no distance. */
 export function VacancyCard({ v, href }: { v: VacancyListItem; href: string }) {
   return (
-    <li className="lift rounded-lg border border-slate-200 bg-panel p-4">
+    <li className="lift rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
       <Link href={href} className="block space-y-1">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="font-semibold text-emerald-900 underline">{v.title}</p>

@@ -41,7 +41,7 @@ export default function Page() {
               No views yet. A complete, published profile shows up more often in searches.
             </p>
           ) : (
-            <ul className="divide-y divide-slate-200 rounded-md border border-slate-200 bg-panel">
+            <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-panel shadow-sm">
               {views.data.data.map((v) => (
                 <li key={v.id} className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3">
                   <span className="text-slate-800">

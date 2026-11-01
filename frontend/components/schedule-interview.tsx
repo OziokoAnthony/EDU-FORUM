@@ -90,7 +90,7 @@ function ScheduleForm({ applicationId, onScheduled }: { applicationId: string; o
   }
 
   return (
-    <form onSubmit={submit} noValidate className="animate-fade-up space-y-4 rounded-md border border-slate-200 bg-panel p-4">
+    <form onSubmit={submit} noValidate className="animate-fade-up space-y-4 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
       <h3 className="text-lg text-slate-900">Schedule an interview</h3>
       <Field label="Date and time" id="iv-when" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} error={errors.scheduledAt} />
       <Select

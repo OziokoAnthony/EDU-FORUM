@@ -28,11 +28,11 @@ export function ConversationList({ base, empty }: { base: '/teacher/messages' | 
   if (list.data.data.length === 0) return <p className="rounded-md border border-dashed border-slate-300 p-6 text-center text-slate-600">{empty}</p>;
 
   return (
-    <ul className="stagger divide-y divide-slate-200 overflow-hidden rounded-md border border-slate-200 bg-panel">
+    <ul className="stagger divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-panel shadow-sm">
       {list.data.data.map((c) => (
         <li key={c.id}>
           <Link href={`${base}/${c.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
-            <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 font-heading text-lg text-gold">
+            <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100  text-lg text-gold">
               {c.other.name.charAt(0).toUpperCase()}
             </span>
             <span className="min-w-0 flex-1">
@@ -45,7 +45,7 @@ export function ConversationList({ base, empty }: { base: '/teacher/messages' | 
                   {c.blocked ? 'Chat blocked' : c.lastMessage ? `${c.lastMessage.mine ? 'You: ' : ''}${c.lastMessage.preview}` : 'No messages yet'}
                 </span>
                 {c.unread ? (
-                  <span className="shrink-0 rounded-full bg-gold px-2 text-xs font-bold leading-5 text-black" aria-label={`${c.unread} unread`}>
+                  <span className="shrink-0 rounded-full bg-brand px-2 text-xs font-bold leading-5 text-white" aria-label={`${c.unread} unread`}>
                     {c.unread}
                   </span>
                 ) : null}

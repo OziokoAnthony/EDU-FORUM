@@ -119,7 +119,7 @@ export function SaveSearch({ filters, savedHref }: { filters: Record<string, str
     <div className="space-y-2">
       {notice ? <Alert kind={notice.kind}>{notice.text}</Alert> : null}
       {open ? (
-        <form onSubmit={save} noValidate className="animate-fade-up space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+        <form onSubmit={save} noValidate className="animate-fade-up space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
           <Field label="Name this search" id="search-name" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Physics jobs near Ikeja" />
           <Select
             label="Alert me"
@@ -174,7 +174,7 @@ export function SavedSearches({ resultsPath }: { resultsPath: string }) {
           {list.data.map((s) => {
             const query = new URLSearchParams(Object.entries(s.filters).map(([k, v]) => [k, Array.isArray(v) ? v.join(',') : v])).toString();
             return (
-              <li key={s.id} className="lift space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+              <li key={s.id} className="lift space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <Link href={`${resultsPath}${query ? `?${query}` : ''}`} className="font-semibold text-emerald-800 underline">
                     {s.name}

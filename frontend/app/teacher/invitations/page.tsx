@@ -63,7 +63,7 @@ function InvitationCard({ i }: { i: ReceivedInvitation }) {
 
   const v = i.vacancy;
   return (
-    <li className="lift space-y-3 rounded-md border border-slate-200 bg-panel p-4">
+    <li className="lift space-y-3 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <Link href={`/teacher/jobs/${v.id}`} className="font-semibold text-emerald-800 underline">

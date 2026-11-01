@@ -127,6 +127,29 @@ describe('Community feed (e2e)', () => {
     await post(teacher, { body: 'share closed', vacancyId: anon.id }, 422);
   });
 
+  it('sharing reposts the original (never a share of a share), counts shares, and shows a removed original as unavailable', async () => {
+    const a = await publishedTeacher(t, 'Ada Original');
+    const b = await verifiedUser(t, 'director');
+    const c = await publishedTeacher(t);
+    const original = (await post(a, { body: 'Free lesson plan template for JSS1 maths' })).body;
+    const share = (await post(b, { body: 'Worth a look', sharedPostId: original.id })).body;
+    expect(share.shared).toMatchObject({ available: true, id: original.id, body: 'Free lesson plan template for JSS1 maths', author: { name: 'Ada Original' } });
+    // Sharing the share shares the original.
+    const again = (await post(c, { sharedPostId: share.id })).body;
+    expect(again.shared.id).toBe(original.id);
+    const fresh = (await t.http.get(`/api/v1/community/posts/${original.id}`).set('Authorization', a.auth).expect(200)).body;
+    expect(fresh.shares).toBe(2);
+    await post(c, { sharedPostId: '00000000-0000-4000-8000-000000000000' }, 404);
+
+    // The author deletes the original: shares stay, showing it is gone.
+    await t.http.delete(`/api/v1/community/posts/${original.id}`).set('Authorization', a.auth).expect(204);
+    const after = (await t.http.get(`/api/v1/community/posts/${share.id}`).set('Authorization', b.auth).expect(200)).body;
+    expect(after.shared).toEqual({ available: false, id: original.id });
+    // Deleting a share lowers the count (checked on the stored row).
+    await t.http.delete(`/api/v1/community/posts/${again.id}`).set('Authorization', c.auth).expect(204);
+    expect((await t.prisma.communityPost.findUniqueOrThrow({ where: { id: original.id } })).sharesCount).toBe(1);
+  });
+
   it('blocking hides both sides from each other', async () => {
     const a = await publishedTeacher(t, 'Blocker Bee');
     const b = await verifiedUser(t, 'principal');
@@ -182,7 +205,7 @@ describe('Community feed (e2e)', () => {
     expect(events).toEqual(
       expect.arrayContaining([
         [COMMUNITY_WS_EVENTS.newPost, { postId: p.id, authorId: writer.userId }],
-        [COMMUNITY_WS_EVENTS.postUpdated, { postId: p.id, likes: 1, comments: 0 }],
+        [COMMUNITY_WS_EVENTS.postUpdated, { postId: p.id, likes: 1, comments: 0, shares: 0 }],
       ]),
     );
   });

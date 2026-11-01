@@ -49,7 +49,7 @@ export default function Page() {
       ) : (
         <ul className="stagger space-y-3">
           {sent.data.data.map((i) => (
-            <li key={i.id} className="lift space-y-2 rounded-md border border-slate-200 bg-panel p-4">
+            <li key={i.id} className="lift space-y-2 rounded-lg border border-slate-200 bg-panel shadow-sm p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <Link href={`/hiring/teachers/${i.teacher.id}`} className="font-semibold text-emerald-800 underline">

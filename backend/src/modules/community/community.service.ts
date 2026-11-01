@@ -10,7 +10,9 @@ import {
   type CommunityCommentItem,
   type CommunityFeedPage,
   type CommunityPostItem,
+  type CommunityPhotoItem,
   type CommunityPostUpdate,
+  type CommunitySharedPost,
   type CommunitySharedJob,
   type CommunityTagItem,
   type createCommentSchema,
@@ -42,11 +44,14 @@ const AUTHOR_SELECT = {
 } satisfies Prisma.UserSelect;
 type AuthorRow = Prisma.UserGetPayload<{ select: typeof AUTHOR_SELECT }>;
 
-const POST_INCLUDE = {
-  author: { select: AUTHOR_SELECT },
+const BASE_INCLUDE = {
+  author: { select: { ...AUTHOR_SELECT, status: true, deletedAt: true, deletionRequestedAt: true } },
   photos: { orderBy: { position: 'asc' }, include: { upload: { select: { scanStatus: true } } } },
   vacancy: { include: { ...VACANCY_INCLUDE, createdBy: { select: { role: true, status: true, deletedAt: true, deletionRequestedAt: true } } } },
 } satisfies Prisma.CommunityPostInclude;
+type BaseRow = Prisma.CommunityPostGetPayload<{ include: typeof BASE_INCLUDE }>;
+/** A post plus, for a share, the original post. */
+const POST_INCLUDE = { ...BASE_INCLUDE, shared: { include: BASE_INCLUDE } } satisfies Prisma.CommunityPostInclude;
 type PostRow = Prisma.CommunityPostGetPayload<{ include: typeof POST_INCLUDE }>;
 
 /** Visible posts: not deleted or removed, author still around. */
@@ -115,6 +120,13 @@ export class CommunityService implements OnModuleInit {
       });
       if (!v) throw rule('Only live jobs can be shared');
     }
+    // Sharing a share shares the original (one level, like other social feeds).
+    let sharedPostId: string | null = null;
+    if (input.sharedPostId) {
+      const original = await this.visiblePost(user, input.sharedPostId);
+      sharedPostId = original.sharedPostId ?? original.id;
+      if (original.sharedPostId) await this.visiblePost(user, sharedPostId);
+    }
     const ids = [...new Set(input.uploadIds)];
     const claimed: Upload[] = [];
     for (const id of ids) claimed.push(await this.uploads.claim(user.id, id, 'community_photo'));
@@ -125,10 +137,15 @@ export class CommunityService implements OnModuleInit {
         body: input.body,
         tag,
         vacancyId: input.vacancyId ?? null,
+        sharedPostId,
         photos: { create: claimed.map((u, i) => ({ uploadId: u.id, objectKey: u.objectKey, position: i })) },
       },
     });
     for (const u of claimed) await this.uploads.enqueueScan(u.id);
+    if (sharedPostId) {
+      await this.prisma.communityPost.update({ where: { id: sharedPostId }, data: { sharesCount: { increment: 1 } } });
+      await this.pushCounts(sharedPostId);
+    }
     this.realtime.emitToCommunity(COMMUNITY_WS_EVENTS.newPost, { postId: post.id, authorId: user.id });
     return this.get(user, post.id);
   }
@@ -143,8 +160,7 @@ export class CommunityService implements OnModuleInit {
   async like(user: AuthUser, id: string, on: boolean): Promise<LikeResponse> {
     await this.visiblePost(user, id);
     const likes = await this.toggleLike(user.id, 'post', id, on);
-    const post = await this.prisma.communityPost.findUniqueOrThrow({ where: { id }, select: { commentsCount: true } });
-    this.pushCounts({ postId: id, likes, comments: post.commentsCount });
+    await this.pushCounts(id);
     return { likes, likedByMe: on };
   }
 
@@ -183,7 +199,7 @@ export class CommunityService implements OnModuleInit {
       this.prisma.communityComment.create({ data: { postId, authorId: user.id, body: input.body }, include: { author: { select: AUTHOR_SELECT } } }),
       this.prisma.communityPost.update({ where: { id: postId }, data: { commentsCount: { increment: 1 } }, select: { likesCount: true, commentsCount: true } }),
     ]);
-    this.pushCounts({ postId, likes: after.likesCount, comments: after.commentsCount });
+    await this.pushCounts(postId);
     this.realtime.emitToCommunity(COMMUNITY_WS_EVENTS.newComment, { postId, commentId: created.id, authorId: user.id });
     if (post.authorId !== user.id) await this.notifyAuthor(user, post, input.body);
     return this.commentItem(user, created, false);
@@ -247,8 +263,8 @@ export class CommunityService implements OnModuleInit {
     const c = await this.prisma.communityComment.findFirst({ where: { id: commentId, deletedAt: null } });
     if (!c) throw notFound('Comment');
     await this.prisma.communityComment.update({ where: { id: commentId }, data: { removedReason: reason } });
-    const post = await this.prisma.communityPost.update({ where: { id: c.postId }, data: { commentsCount: { decrement: 1 } }, select: { likesCount: true, commentsCount: true } });
-    this.pushCounts({ postId: c.postId, likes: post.likesCount, comments: post.commentsCount });
+    await this.prisma.communityPost.update({ where: { id: c.postId }, data: { commentsCount: { decrement: 1 } } });
+    await this.pushCounts(c.postId);
     await this.notifications.notify({
       userId: c.authorId,
       type: 'moderation',
@@ -315,18 +331,25 @@ export class CommunityService implements OnModuleInit {
   private async dropComment(id: string, postId: string): Promise<void> {
     await this.prisma.communityComment.update({ where: { id }, data: { deletedAt: new Date(), body: '' } });
     await this.prisma.communityLike.deleteMany({ where: { targetType: 'comment', targetId: id } });
-    const post = await this.prisma.communityPost.update({ where: { id: postId }, data: { commentsCount: { decrement: 1 } }, select: { likesCount: true, commentsCount: true } });
-    this.pushCounts({ postId, likes: post.likesCount, comments: post.commentsCount });
+    await this.prisma.communityPost.update({ where: { id: postId }, data: { commentsCount: { decrement: 1 } } });
+    await this.pushCounts(postId);
   }
 
   /** Deleting a post erases its text and photos; it disappears for everyone. */
   async erasePost(id: string, photoKeys: string[]): Promise<void> {
-    await this.prisma.communityPost.update({ where: { id }, data: { deletedAt: new Date(), body: '' } });
+    const post = await this.prisma.communityPost.update({ where: { id }, data: { deletedAt: new Date(), body: '' } });
+    if (post.sharedPostId) {
+      await this.prisma.communityPost.update({ where: { id: post.sharedPostId }, data: { sharesCount: { decrement: 1 } } });
+      await this.pushCounts(post.sharedPostId);
+    }
     for (const key of photoKeys) await this.uploads.deleteObject(key).catch(() => undefined);
     this.realtime.emitToCommunity(COMMUNITY_WS_EVENTS.postRemoved, { postId: id });
   }
 
-  private pushCounts(update: CommunityPostUpdate): void {
+  private async pushCounts(postId: string): Promise<void> {
+    const p = await this.prisma.communityPost.findUnique({ where: { id: postId }, select: { likesCount: true, commentsCount: true, sharesCount: true } });
+    if (!p) return;
+    const update: CommunityPostUpdate = { postId, likes: p.likesCount, comments: p.commentsCount, shares: p.sharesCount };
     this.realtime.emitToCommunity(COMMUNITY_WS_EVENTS.postUpdated, update);
   }
 
@@ -335,8 +358,7 @@ export class CommunityService implements OnModuleInit {
     const photo = await this.prisma.communityPhoto.findUnique({ where: { uploadId: upload.id } });
     if (!photo) return;
     if (outcome !== 'clean') await this.prisma.communityPhoto.delete({ where: { id: photo.id } });
-    const post = await this.prisma.communityPost.findUniqueOrThrow({ where: { id: photo.postId }, select: { likesCount: true, commentsCount: true } });
-    this.pushCounts({ postId: photo.postId, likes: post.likesCount, comments: post.commentsCount });
+    await this.pushCounts(photo.postId);
   }
 
   private async notifyAuthor(commenter: AuthUser, post: PostRow, body: string): Promise<void> {
@@ -383,7 +405,7 @@ export class CommunityService implements OnModuleInit {
     return { userId: a.id, name: ROLE_NAME[role], role, photoUrl: null, teacherId: null };
   }
 
-  private sharedJob(row: PostRow): CommunitySharedJob | null {
+  private sharedJob(row: BaseRow): CommunitySharedJob | null {
     const v = row.vacancy;
     if (!v || v.deletedAt || v.takedownReason || !isAvailable(v.createdBy) || (v.status !== 'published' && v.status !== 'closed')) return null;
     // Public serializer, never revealed: anonymous schools stay "Confidential school".
@@ -399,9 +421,35 @@ export class CommunityService implements OnModuleInit {
     };
   }
 
+  private photoItems(row: BaseRow): Promise<CommunityPhotoItem[]> {
+    return Promise.all(
+      row.photos.map(async (p) =>
+        p.upload.scanStatus === 'clean' ? { id: p.id, url: await this.uploads.signedUrl(p.objectKey), status: 'ready' as const } : { id: p.id, url: null, status: 'scanning' as const },
+      ),
+    );
+  }
+
+  /** The original inside a share; gone once deleted, removed, its author left, or blocked. */
+  private async sharedItem(user: AuthUser, r: PostRow, hidden: string[], tags: Map<string, string>): Promise<CommunitySharedPost | null> {
+    if (!r.sharedPostId) return null;
+    const o = r.shared;
+    if (!o || o.deletedAt || o.removedReason || !isAvailable(o.author) || hidden.includes(o.authorId)) return { available: false, id: r.sharedPostId };
+    return {
+      available: true,
+      id: o.id,
+      author: await this.author(user, o.author),
+      body: o.body,
+      tag: o.tag ? { slug: o.tag, name: tags.get(o.tag) ?? o.tag } : null,
+      photos: await this.photoItems(o),
+      job: this.sharedJob(o),
+      createdAt: o.createdAt.toISOString(),
+    };
+  }
+
   private async postItems(user: AuthUser, rows: PostRow[]): Promise<CommunityPostItem[]> {
     const liked = await this.likedSet(user.id, 'post', rows.map((r) => r.id));
     const tags = new Map((await this.prisma.communityTag.findMany()).map((t) => [t.slug, t.name]));
+    const hidden = rows.some((r) => r.sharedPostId) ? await this.hiddenAuthors(user.id) : [];
     return Promise.all(
       rows.map(async (r) => ({
         id: r.id,
@@ -409,15 +457,13 @@ export class CommunityService implements OnModuleInit {
         mine: r.authorId === user.id,
         body: r.body,
         tag: r.tag ? { slug: r.tag, name: tags.get(r.tag) ?? r.tag } : null,
-        photos: await Promise.all(
-          r.photos.map(async (p) =>
-            p.upload.scanStatus === 'clean' ? { id: p.id, url: await this.uploads.signedUrl(p.objectKey), status: 'ready' as const } : { id: p.id, url: null, status: 'scanning' as const },
-          ),
-        ),
+        photos: await this.photoItems(r),
         job: this.sharedJob(r),
+        shared: await this.sharedItem(user, r, hidden, tags),
         likes: r.likesCount,
         likedByMe: liked.has(r.id),
         comments: r.commentsCount,
+        shares: r.sharesCount,
         createdAt: r.createdAt.toISOString(),
       })),
     );

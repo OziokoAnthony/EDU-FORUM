@@ -204,6 +204,9 @@ covers the window).
   work both ways (neither sees the other's posts/comments). Live events: `community:post`,
   `community:post-updated`, `community:post-removed`, `community:comment` to the `community` room.
   Erasing an account removes its posts, comments, likes, blocks and photos.
+  Share (user, 2026-11-01): `POST /community/posts` with `sharedPostId` reposts; a share of a share
+  points at the original; `shares_count` on the original; a deleted/removed/blocked original shows
+  as `shared: { available: false }`. Live `community:post-updated` carries likes, comments, shares.
   Endpoints (`/community`, teacher or leader, verified): `GET tags`, `GET|POST posts`,
   `GET|DELETE posts/:id`, `POST|DELETE posts/:id/like`, `GET|POST posts/:id/comments`,
   `DELETE comments/:id`, `POST|DELETE comments/:id/like`, `GET|POST blocks`, `DELETE blocks/:userId`;
@@ -356,10 +359,25 @@ covers the window).
   `AccountModule` is listed after `SearchModule` in `AppModule`: importing `SeoModule` earlier puts
   `/teachers/:id` ahead of `/teachers/me`.
 
-- **Look (user, 2026-10-31):** dark portal style inspired by zone94.com, done by remapping the
-  Tailwind palette in `globals.css` (slate = dark neutrals, emerald-800/900 = gold text), Oswald
-  headings via `next/font`, photo banner (`SiteBanner`), home slideshow (`HeroSlider`), auth photo
-  collage. Stock photos are Pexels, sources in `frontend/public/images/stock/CREDITS.md`.
+- **Look (user, 2026-11-01; replaces the 2026-10-31 dark zone94 style):** a light Facebook-like
+  layout on every page: white cards on a light grey page, blue buttons/links, system font, sticky
+  white top bar (logo, job search, main tabs, bell, account menu), bottom tab bar on phones for
+  signed-in users. No Facebook logo, name or branding. Still done by remapping the Tailwind palette
+  in `globals.css` (emerald-600/700 = blue buttons, emerald-800/900 and `gold` = blue link text) so
+  pages change together. Community gets: three columns on desktop (menu left, feed middle,
+  suggested jobs/teachers right), a "What's on your mind?" box that opens the composer pop-up, a
+  photo grid with a full-screen swipeable viewer, and Like / Comment / Share buttons, where Share
+  reposts the post to the feed. Stock photos are Pexels, sources in
+  `frontend/public/images/stock/CREDITS.md`.
+- **Blog (user, 2026-11-01; replaces the PRD's admin-only CMS):** any registered teacher, principal
+  or director writes posts (Tiptap); publishing sends the post to an admin, who approves (it goes
+  public, into the sitemap) or rejects it with a reason. Fields: title, body, category, summary,
+  cover photo (scanned upload), SEO title/description. Public pages: `/blog` (newest first, 12 per
+  page), `/blog/category/{category}`, `/blog/{slug}` (Article + BreadcrumbList JSON-LD, 3 related
+  posts, up to 3 in-article ad slots). Everyone, signed out too, sees comments and like counts;
+  only registered users like and comment. Share buttons (WhatsApp, Facebook, X, copy link) and
+  "share into the community feed". Community rules apply: phone numbers blocked, report, admin
+  remove with a reason, blocks hide comments both ways.
 
 ## API conventions
 

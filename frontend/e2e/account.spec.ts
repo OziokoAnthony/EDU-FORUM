@@ -24,6 +24,7 @@ test('dashboards show CV views and the overview; a teacher downloads their data,
   await expect(page.getByText('A director viewed your profile')).toBeVisible();
 
   // Download my data.
+  await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('link', { name: 'Account' }).click();
   await expect(page.getByRole('heading', { name: 'Account', exact: true })).toBeVisible();
   const download = page.waitForEvent('download');

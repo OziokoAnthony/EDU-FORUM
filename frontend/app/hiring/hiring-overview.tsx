@@ -34,11 +34,11 @@ export function HiringOverview() {
             </>
           );
           return s.href ? (
-            <Link key={s.label} href={s.href} className="lift rounded-lg border border-slate-200 bg-panel p-3">
+            <Link key={s.label} href={s.href} className="lift rounded-lg border border-slate-200 bg-panel shadow-sm p-3">
               {body}
             </Link>
           ) : (
-            <div key={s.label} className="rounded-lg border border-slate-200 bg-panel p-3">
+            <div key={s.label} className="rounded-lg border border-slate-200 bg-panel shadow-sm p-3">
               {body}
             </div>
           );

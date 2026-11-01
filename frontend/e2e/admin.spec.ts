@@ -49,7 +49,7 @@ test('teacher reports a job; admin takes it down, resolves the report and suspen
   await adminPage.getByRole('button', { name: 'Sign in' }).click();
   await expect(adminPage).toHaveURL(/\/admin$/);
   await expect(adminPage.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
-  await adminPage.getByRole('link', { name: 'Reports', exact: true }).click();
+  await adminPage.getByRole('navigation', { name: 'Admin' }).getByRole('link', { name: 'Reports', exact: true }).click();
 
   const report = adminPage.getByRole('listitem').filter({ hasText: `Scam Job ${tag}` });
   await expect(report.getByText('They asked me to pay a registration fee.')).toBeVisible();
@@ -61,7 +61,7 @@ test('teacher reports a job; admin takes it down, resolves the report and suspen
   await expect(adminPage.getByText('Report resolved.')).toBeVisible();
   await expect(report).toHaveCount(0);
 
-  await adminPage.getByRole('link', { name: 'Users', exact: true }).click();
+  await adminPage.getByRole('navigation', { name: 'Admin' }).getByRole('link', { name: 'Users', exact: true }).click();
   await adminPage.getByLabel('Email, phone or name').fill(directorEmail);
   await adminPage.getByRole('button', { name: 'Search' }).click();
   const row = adminPage.getByRole('listitem').filter({ hasText: directorEmail });

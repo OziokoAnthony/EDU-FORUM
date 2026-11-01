@@ -1,85 +1,55 @@
 @import 'tailwindcss';
 
 /*
- * Look (user request, 2026-10-31): a dark "portal" style inspired by zone94.com: textured
- * charcoal background, dark panels, cream/gold condensed capital headings and gold links,
- * with EDU-FORUM green kept for main buttons and success. Implemented by remapping the palette
- * the components already use (slate = neutrals, inverted for dark; emerald-800/900 = gold
- * link text), so every page changes consistently.
+ * Look (user request, 2026-11-01): a light, Facebook-like layout: white cards on a light grey
+ * page, blue buttons and links, the device's own system font (no font download). Done by
+ * remapping the palette the components already use (emerald-600/700 = blue buttons,
+ * emerald-800/900 and `gold` = blue link text), so every page changes together.
+ * Slate, red, amber, sky and violet keep Tailwind's own light values.
  */
 @theme {
-  --font-heading: var(--font-oswald), 'Arial Narrow', sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: var(--font-sans);
 
-  --color-page: #1d1f22;
-  --color-panel: #2a2c30;
-  --color-gold: #e2b04a;
+  --color-page: #f0f2f5;
+  --color-panel: #ffffff;
+  --color-gold: #1b74e4;
+  --color-brand: #1b74e4;
 
-  --color-slate-50: #2e3035;
-  --color-slate-100: #34373c;
-  --color-slate-200: #3d4046;
-  --color-slate-300: #4d5057;
-  --color-slate-400: #7a756c;
-  --color-slate-500: #98928a;
-  --color-slate-600: #b4aea2;
-  --color-slate-700: #cdc7b9;
-  --color-slate-800: #e2dccd;
-  --color-slate-900: #f2e8cf;
-
-  --color-emerald-50: #1c3a2f;
-  --color-emerald-100: #224536;
-  --color-emerald-200: #2d5a47;
-  --color-emerald-800: #e2b04a;
-  --color-emerald-900: #f0d28c;
-
-  --color-red-50: #3b2326;
-  --color-red-100: #4a2a2d;
-  --color-red-200: #6b3539;
-  --color-red-600: #f08a8a;
-  --color-red-700: #f3a2a2;
-  --color-red-800: #f6b6b6;
-
-  --color-amber-50: #392f20;
-  --color-amber-100: #463a22;
-  --color-amber-200: #6b5524;
-  --color-amber-800: #f1cf8b;
-  --color-amber-900: #f6dca4;
-
-  --color-sky-100: #1f3443;
-  --color-sky-800: #a9d6f5;
-  --color-violet-100: #2f2945;
-  --color-violet-800: #cdbcf7;
+  --color-emerald-50: #e7f0fd;
+  --color-emerald-100: #dbe7f9;
+  --color-emerald-200: #c3d7f5;
+  --color-emerald-500: #3b88ec;
+  --color-emerald-600: #1668d6;
+  --color-emerald-700: #1b74e4;
+  --color-emerald-800: #1461c4;
+  --color-emerald-900: #0e4a99;
 }
 
 @layer base {
   body {
     background-color: var(--color-page);
-    /* Faint texture, like brushed charcoal, without an image download. */
-    background-image:
-      repeating-linear-gradient(45deg, rgb(255 255 255 / 0.012) 0 2px, transparent 2px 4px),
-      radial-gradient(circle at 50% 0%, #2a2d31 0%, transparent 60%);
-    color: var(--color-slate-700);
+    color: var(--color-slate-800);
   }
   h1,
   h2,
   h3 {
-    font-family: var(--font-heading);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
   input,
   select,
   textarea {
-    background-color: #24262a;
+    background-color: #ffffff;
     color: var(--color-slate-900);
-    color-scheme: dark;
+    color-scheme: light;
   }
   input::placeholder,
   textarea::placeholder {
     color: var(--color-slate-500);
   }
   ::selection {
-    background: rgb(226 176 74 / 0.35);
+    background: rgb(27 116 228 / 0.2);
   }
 }
 
@@ -179,8 +149,8 @@
 .lift:hover,
 .lift:focus-within {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px -14px rgb(0 0 0 / 0.8);
-  border-color: rgb(226 176 74 / 0.6);
+  box-shadow: 0 8px 20px -12px rgb(0 0 0 / 0.25);
+  border-color: rgb(27 116 228 / 0.45);
 }
 
 /* Buttons press in. */
