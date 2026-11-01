@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import {
   COMMUNITY_COMMENT_MAX_CHARS,
+  COMMUNITY_WS_EVENTS,
   containsPhoneNumber,
   type CommunityAuthor,
   type CommunityCommentItem,
@@ -16,6 +17,7 @@ import { ReportButton } from '@/components/report-button';
 import { Alert } from '@/components/ui';
 import { ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useSocketEvent } from '@/lib/realtime';
 import { money } from '@/lib/format';
 import { COMMUNITY_KEY } from './keys';
 
@@ -210,6 +212,10 @@ function Comments({ post, onCount }: { post: CommunityPostItem; onCount: (n: num
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Someone else commented while this thread is open: show it.
+  useSocketEvent<{ postId: string; authorId: string }>(COMMUNITY_WS_EVENTS.newComment, (e) => {
+    if (e.postId === post.id) void qc.invalidateQueries({ queryKey: key });
+  });
   const phone = containsPhoneNumber(body);
 
   async function send(e: React.FormEvent) {
@@ -220,7 +226,7 @@ function Comments({ post, onCount }: { post: CommunityPostItem; onCount: (n: num
     try {
       await authed(`/community/posts/${post.id}/comments`, { method: 'POST', body: { body } });
       setBody('');
-      const fresh = await qc.fetchQuery({ queryKey: key, queryFn: () => authed<Paginated<CommunityCommentItem>>(`/community/posts/${post.id}/comments?limit=50`) });
+      const fresh = await qc.fetchQuery({ queryKey: key, queryFn: () => authed<Paginated<CommunityCommentItem>>(`/community/posts/${post.id}/comments?limit=50`), staleTime: 0 });
       onCount(fresh.meta.total);
     } catch (err) {
       setError(err instanceof ApiError ? (Object.values(err.fieldErrors())[0] ?? err.message) : 'Could not post the comment.');
@@ -233,7 +239,7 @@ function Comments({ post, onCount }: { post: CommunityPostItem; onCount: (n: num
     setError(null);
     try {
       await fn();
-      const fresh = await qc.fetchQuery({ queryKey: key, queryFn: () => authed<Paginated<CommunityCommentItem>>(`/community/posts/${post.id}/comments?limit=50`) });
+      const fresh = await qc.fetchQuery({ queryKey: key, queryFn: () => authed<Paginated<CommunityCommentItem>>(`/community/posts/${post.id}/comments?limit=50`), staleTime: 0 });
       onCount(fresh.meta.total);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
