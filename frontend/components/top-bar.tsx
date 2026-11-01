@@ -7,6 +7,7 @@ import { APP_NAME } from '@edu-forum/shared';
 import logoFull from '@/public/brand/logo.png';
 import logoIcon from '@/public/brand/logo-icon.png';
 import { SearchIcon } from './icons';
+import { InstallButton } from './pwa/install-button';
 
 export type Tab = { href: string; label: string; icon: React.ReactNode; exact?: boolean };
 
@@ -89,6 +90,7 @@ export function TopBar({
               <SearchIcon className="h-5 w-5" />
             </Link>
           ) : null}
+          <InstallButton className="shrink-0 rounded-full bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-200" />
           {right}
         </div>
       </div>

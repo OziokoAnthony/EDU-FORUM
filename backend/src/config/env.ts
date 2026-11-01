@@ -23,6 +23,11 @@ const envSchema = z.object({
   /** Contact messages per email address and per network per hour (raised for browser tests). */
   CONTACT_RATE_LIMIT: z.coerce.number().int().positive().default(3),
   SMS_DRIVER: z.enum(['console', 'memory']).default('console'),
+  // Push alerts to phones and browsers (web push). Off until VAPID keys exist; memory in tests.
+  PUSH_DRIVER: z.enum(['webpush', 'memory', 'off']).default('off'),
+  VAPID_PUBLIC_KEY: z.string().default(''),
+  VAPID_PRIVATE_KEY: z.string().default(''),
+  VAPID_SUBJECT: z.string().default('mailto:admin@edu-forum.local'),
 
   // Background jobs (virus scan, DOC→PDF, purges). "inline" runs a job inside the request (tests).
   QUEUE_DRIVER: z.enum(['bullmq', 'inline']).default('bullmq'),

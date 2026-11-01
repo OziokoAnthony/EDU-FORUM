@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { UserRole } from '@edu-forum/shared';
 import { AuthProvider, homeFor, useAuth } from '@/lib/auth';
+import { disablePush } from '@/lib/push';
 import { RealtimeProvider } from '@/lib/realtime';
 import { DeletionCancelledNotice } from './account-settings';
 import { NotificationBell } from './notification-bell';
@@ -26,7 +27,7 @@ export function PrivateShell({ roles, children }: { roles: UserRole[]; children:
 
 function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNode }) {
   const router = useRouter();
-  const { status, user, logout } = useAuth();
+  const { status, user, logout, authed } = useAuth();
   const allowed = status === 'signed-in' && user && user.verified && roles.includes(user.role);
 
   useEffect(() => {
@@ -40,6 +41,8 @@ function Gate({ roles, children }: { roles: UserRole[]; children: React.ReactNod
 
   const nav = NAV[user.role === 'teacher' ? 'teacher' : user.role === 'admin' ? 'admin' : 'hiring'];
   const signOut = async () => {
+    // A shared phone should stop getting this person's alerts.
+    await disablePush(authed).catch(() => undefined);
     await logout();
     router.replace('/login');
   };

@@ -396,6 +396,7 @@ model User {
   communityBlocks        CommunityBlock[]           @relation("CommunityBlocker")
   communityBlockedBy     CommunityBlock[]           @relation("CommunityBlocked")
   contactMessages        ContactMessage[]
+  pushSubscriptions      PushSubscription[]
 
   @@index([role, status])
   @@map("users")
@@ -1256,4 +1257,21 @@ model ContactMessage {
   @@index([email, createdAt])
   @@index([ipHash, createdAt])
   @@map("contact_messages")
+}
+
+/// A browser or installed app that allowed push alerts (user, 2026-11-01). One row per device.
+model PushSubscription {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?   @map("user_agent")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }

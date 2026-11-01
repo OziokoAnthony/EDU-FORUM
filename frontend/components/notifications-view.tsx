@@ -14,6 +14,7 @@ import {
 } from '@edu-forum/shared';
 import { Alert, Button } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
+import { PushSettings } from '@/components/pwa/push-settings';
 import { NOTIFICATIONS_KEY, UNREAD_KEY } from '@/lib/notifications';
 
 const timeAgo = (iso: string) => {
@@ -98,6 +99,7 @@ export function NotificationsView({ backHref }: { backHref: string }) {
         </ul>
       )}
 
+      <PushSettings />
       <EmailPreferences />
     </main>
   );

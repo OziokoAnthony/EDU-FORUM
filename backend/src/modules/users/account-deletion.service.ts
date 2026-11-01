@@ -74,6 +74,7 @@ export class AccountDeletionService implements OnModuleInit {
       }
     }
     await this.sessions.revokeAllForUser(userId);
+    await this.prisma.pushSubscription.deleteMany({ where: { userId } });
     this.realtime.disconnectUser(userId);
     return erasesOn;
   }
@@ -111,6 +112,7 @@ export class AccountDeletionService implements OnModuleInit {
       await tx.savedItem.deleteMany({ where: { userId } });
       await tx.savedSearch.deleteMany({ where: { userId } });
       await tx.notification.deleteMany({ where: { userId } });
+      await tx.pushSubscription.deleteMany({ where: { userId } });
       // Files go from storage below; the rows lose their names and keys here.
       await tx.message.updateMany({
         where: { senderId: userId, attachmentKey: { not: null } },

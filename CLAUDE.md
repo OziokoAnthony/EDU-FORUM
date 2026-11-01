@@ -417,6 +417,18 @@ covers the window).
   default 3; emailed to `SUPPORT_EMAIL` when set), admin `GET /admin/contact-messages?status=`,
   `POST /admin/contact-messages/:id/close` (Admin → Messages). IPs are stored only as SHA-256 hashes.
 
+- **Installable app and push alerts (PWA, user 2026-11-01):** `app/manifest.ts` (icons in
+  `public/brand/`, maskable 512), hand-written `public/sw.js` (no library; registered in production
+  only; served `no-cache`): build files and images cache-first, public pages network-first with a saved
+  copy, private areas, `/api` and RSC requests never cached, `/offline` when nothing is saved. Push uses
+  the `web-push` library (VAPID keys in `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT`;
+  `PUSH_DRIVER=webpush|memory|off`, off without keys). Every `NotificationsService.notify` also pushes
+  to each of the user's devices (`push_subscriptions`, queued `send-push` job; 404/410 devices
+  dropped). Endpoints: `GET /push/public-key`, `POST|DELETE /me/push-subscriptions`. Users turn alerts
+  on per device on their Notifications page; signing out turns them off for that device; deletion
+  requests drop all devices. "Install" appears in the top bar when the browser offers it; iPhone users
+  add to Home Screen from Safari's Share menu.
+
 ## API conventions
 
 - Base `/api/v1`, JSON, `camelCase` fields in JSON, `snake_case` in the database.

@@ -17,6 +17,7 @@ import type { Prisma } from '../../generated/prisma/client';
 import { EmailQueue } from '../../infra/mail/email-queue';
 import type { MailMessage } from '../../infra/mail/mailer';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { PushService } from '../push/push.module';
 import { RealtimeGateway } from '../../infra/realtime/realtime.gateway';
 
 export interface NotifyInput {
@@ -55,6 +56,7 @@ export class NotificationsService {
     private readonly prisma: PrismaService,
     private readonly emails: EmailQueue,
     private readonly realtime: RealtimeGateway,
+    private readonly push: PushService,
   ) {}
 
   async notify(input: NotifyInput): Promise<void> {
@@ -69,6 +71,8 @@ export class NotificationsService {
     });
     this.realtime.emitToUser(user.id, WS_EVENTS.notification, toItem(row));
     this.realtime.emitToUser(user.id, WS_EVENTS.unreadCount, { count: await this.unreadCount(user.id) });
+    // Also to each phone or browser the user allowed (PWA push alerts).
+    await this.push.sendToUser(user.id, { title: input.title, body: input.body, link: input.link ?? null, tag: input.type });
 
     const category = NOTIFICATION_TYPES[input.type];
     if (input.email && (input.alwaysEmail || emailPreferences(user.notificationSettings)[category])) {
